@@ -23,10 +23,8 @@ export default function Login() {
     e.preventDefault();
     try{
         const authResponse = await login(data!);
-        // Simulamos un login exitoso
-        console.log(data)
         localStorage.setItem("token", authResponse.jwt);
-        //navigate("/private/dashboard");
+        navigate("/dashboard/nueva_Acta");
          alert('Usuario autenticado')
     }catch(error){
         console.error(error, data)

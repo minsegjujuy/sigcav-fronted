@@ -1,4 +1,4 @@
 export interface Ley {
-  id?: number;
+  idLey?: number;
   nro: string;
 }
