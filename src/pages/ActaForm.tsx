@@ -1,16 +1,14 @@
 import { useEffect, useState } from "react";
 import type { ActaRequest } from "../models/ActaRequest";
-import { Box, Button, Checkbox, Container, FormControl, FormControlLabel, FormGroup, InputLabel, ListItemText, MenuItem, OutlinedInput, Paper, Select, TextField, Typography, type SelectChangeEvent } from "@mui/material";
+import { Box, Button, Checkbox, Container, FormControl, FormControlLabel, FormGroup, InputLabel, MenuItem, Paper, Select, TextField, Typography, type SelectChangeEvent } from "@mui/material";
 import type { Articulo } from "../models/Articulo";
 import type { Tipo } from "../models/Tipo";
 import type { Grupo } from "../models/Grupo";
-import type { Puesto } from "../models/Puesto";
 import type { Ley } from "../models/Ley";
 import { getAllTipoActas } from "../services/TipoActaService";
 import { getGrupos } from "../services/GrupoService";
 import { getLeyes } from "../services/LeyService";
 import { getArticulosByLey } from "../services/ArticuloService";
-import { getPuestos } from "../services/PuestoService";
 import { crearActa } from "../services/ActaService";
 
 const initialState: ActaRequest = {
@@ -19,7 +17,6 @@ const initialState: ActaRequest = {
   idUser: 3,
   motivo: "",
   nro: "",
-  idPuesto: 1,
   articulos: [],
   infractor: {
     nombre: "",
@@ -49,11 +46,9 @@ export default function ActaForm() {
   const [tipoActa, setTipoActa] = useState<Tipo[]>([]);
   const [selectedTipoActa, setSelectedTipoActa] = useState<number | ''>('');
   const [selectedGrupo, setSelectedGrupo] = useState<number | ''>('');
-  const [selectedPuesto, setSelectedPuesto] = useState<string>(''); 
   const [grupos, setGrupos] = useState<Grupo[]>([]);
   const [selectedLey, setSelectedLey] = useState<number | ''>('');
   const [articulosSeleccionados, setArticulosSeleccionados] = useState<number[]>([]);
-  const [puestos, setPuestos] = useState<Puesto[]>([]);
   const [leyes, setLeyes] = useState<Ley[]>([]);
 
   const handleChange = (path: string, value: any) => {
@@ -80,10 +75,6 @@ export default function ActaForm() {
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
-
-  const handlePuestoChange = (event: SelectChangeEvent) => {
-      setSelectedPuesto(event.target.value); // sigue siendo string
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,20 +112,20 @@ export default function ActaForm() {
     console.log('articulo por ley ', data)
   }
 
-  const fetchPuestos = async () => {
+  /*const fetchPuestos = async () => {
     try {
       const data = await getPuestos();
       setPuestos(data);
     } catch (error) {
       console.error('Error al obtener puestos', error);
     }
-  };
+  };*/
 
   useEffect(()=> {
     fetchTipo();
     fetchGrupo();
     fetchLeyes();
-    fetchPuestos();
+    //fetchPuestos();
   }, [])
 
   return (
@@ -145,23 +136,6 @@ export default function ActaForm() {
         </Typography>
 
         <Box component="form" onSubmit={handleSubmit}>
-          <FormControl fullWidth margin="normal">
-            <InputLabel id="puesto-label">Puesto</InputLabel>
-            <Select
-              labelId="puesto-label"
-              id="puesto"
-              value={selectedPuesto}
-              label="Puesto"
-              onChange={handlePuestoChange}
-            >
-              <MenuItem value="">Seleccione un puesto</MenuItem>
-              {puestos.map((puesto) => (
-                <MenuItem key={puesto.idPuesto} value={puesto.idPuesto.toString()}>
-                  {puesto.nombre}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
 
           {/* Tipo de Acta */}
           <FormControl fullWidth margin="normal">
