@@ -23,6 +23,7 @@ const initialState: ActaRequest = {
     apellido: "",
     dni: "",
     lugar: "",
+    propietario: true
   },
   vehiculo: {
     marca: "",
@@ -50,6 +51,7 @@ export default function ActaForm() {
   const [selectedLey, setSelectedLey] = useState<number | ''>('');
   const [articulosSeleccionados, setArticulosSeleccionados] = useState<number[]>([]);
   const [leyes, setLeyes] = useState<Ley[]>([]);
+  const [propietario, setPropietario] = useState(false);
 
   const handleChange = (path: string, value: any) => {
     const keys = path.split(".");
@@ -184,7 +186,15 @@ export default function ActaForm() {
           <TextField label="Apellido" fullWidth margin="normal" value={form.infractor.apellido} onChange={(e) => handleChange("infractor.apellido", e.target.value)} />
           <TextField label="DNI" fullWidth margin="normal" value={form.infractor.dni} onChange={(e) => handleChange("infractor.dni", e.target.value)} />
           <TextField label="Lugar" fullWidth margin="normal" value={form.infractor.lugar} onChange={(e) => handleChange("infractor.lugar", e.target.value)} />
-
+          <FormControlLabel
+            control={
+              <Checkbox
+                      checked={propietario}
+                      onChange={(e) => setPropietario(e.target.checked)}
+                    />
+                  }
+                  label="¿Es propietario?"
+                />
           {/* Vehículo */}
           <Typography variant="h6" sx={{ mt: 3 }}>Vehículo</Typography>
           <TextField label="Marca" fullWidth margin="normal" value={form.vehiculo.marca} onChange={(e) => handleChange("vehiculo.marca", e.target.value)} />
@@ -195,11 +205,15 @@ export default function ActaForm() {
           <TextField label="Cuadro" fullWidth margin="normal" value={form.vehiculo.cuadro} onChange={(e) => handleChange("vehiculo.cuadro", e.target.value)} />
 
           {/* Propietario */}
-          <Typography variant="h6" sx={{ mt: 3 }}>Propietario</Typography>
-          <TextField label="Nombre" fullWidth margin="normal" value={form.vehiculo.propietario.nombre} onChange={(e) => handleChange("vehiculo.propietario.nombre", e.target.value)} />
-          <TextField label="Apellido" fullWidth margin="normal" value={form.vehiculo.propietario.apellido} onChange={(e) => handleChange("vehiculo.propietario.apellido", e.target.value)} />
-          <TextField label="DNI" fullWidth margin="normal" value={form.vehiculo.propietario.dni} onChange={(e) => handleChange("vehiculo.propietario.dni", e.target.value)} />
-          <TextField label="Dirección" fullWidth margin="normal" value={form.vehiculo.propietario.direccion} onChange={(e) => handleChange("vehiculo.propietario.direccion", e.target.value)} />
+          {!propietario && (
+            <Box>
+              <Typography variant="h6" sx={{ mt: 3 }}>Propietario</Typography>
+              <TextField label="Nombre" fullWidth margin="normal" value={form.vehiculo.propietario.nombre} onChange={(e) => handleChange("vehiculo.propietario.nombre", e.target.value)} />
+              <TextField label="Apellido" fullWidth margin="normal" value={form.vehiculo.propietario.apellido} onChange={(e) => handleChange("vehiculo.propietario.apellido", e.target.value)} />
+              <TextField label="DNI" fullWidth margin="normal" value={form.vehiculo.propietario.dni} onChange={(e) => handleChange("vehiculo.propietario.dni", e.target.value)} />
+              <TextField label="Dirección" fullWidth margin="normal" value={form.vehiculo.propietario.direccion} onChange={(e) => handleChange("vehiculo.propietario.direccion", e.target.value)} />
+            </Box>
+          )}
 
           {/* Ley */}
           <FormControl fullWidth margin="normal">
