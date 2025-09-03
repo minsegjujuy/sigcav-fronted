@@ -81,6 +81,7 @@ export default function ActaForm() {
     const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      form.infractor.propietario = propietario;
       const response = await crearActa(form);
       console.log('Acta creada:', response);
       alert('Acta creada exitosamente')
