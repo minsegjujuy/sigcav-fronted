@@ -7,5 +7,5 @@ export interface VehiculoSolicitud {
   dominio: string;
   motor: string;
   cuadro: string;
-  propietario: Propietario;
+  propietario: Propietario | null;
 }

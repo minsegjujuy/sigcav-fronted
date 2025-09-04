@@ -81,6 +81,10 @@ export default function ActaForm() {
     const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      if(propietario){
+        form.vehiculo.propietario = null;
+      }
+      console.log('propietario ', form.vehiculo.propietario)
       form.infractor.propietario = propietario;
       const response = await crearActa(form);
       console.log('Acta creada:', response);
@@ -209,10 +213,10 @@ export default function ActaForm() {
           {!propietario && (
             <Box>
               <Typography variant="h6" sx={{ mt: 3 }}>Propietario</Typography>
-              <TextField label="Nombre" fullWidth margin="normal" value={form.vehiculo.propietario.nombre} onChange={(e) => handleChange("vehiculo.propietario.nombre", e.target.value)} />
-              <TextField label="Apellido" fullWidth margin="normal" value={form.vehiculo.propietario.apellido} onChange={(e) => handleChange("vehiculo.propietario.apellido", e.target.value)} />
-              <TextField label="DNI" fullWidth margin="normal" value={form.vehiculo.propietario.dni} onChange={(e) => handleChange("vehiculo.propietario.dni", e.target.value)} />
-              <TextField label="Dirección" fullWidth margin="normal" value={form.vehiculo.propietario.direccion} onChange={(e) => handleChange("vehiculo.propietario.direccion", e.target.value)} />
+              <TextField label="Nombre" fullWidth margin="normal" value={form.vehiculo.propietario?.nombre} onChange={(e) => handleChange("vehiculo.propietario.nombre", e.target.value)} />
+              <TextField label="Apellido" fullWidth margin="normal" value={form.vehiculo.propietario?.apellido} onChange={(e) => handleChange("vehiculo.propietario.apellido", e.target.value)} />
+              <TextField label="DNI" fullWidth margin="normal" value={form.vehiculo.propietario?.dni} onChange={(e) => handleChange("vehiculo.propietario.dni", e.target.value)} />
+              <TextField label="Dirección" fullWidth margin="normal" value={form.vehiculo.propietario?.direccion} onChange={(e) => handleChange("vehiculo.propietario.direccion", e.target.value)} />
             </Box>
           )}
 
