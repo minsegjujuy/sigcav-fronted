@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ActaRequest } from "../models/ActaRequest";
-import { Box, Button, Checkbox, Container, FormControl, FormControlLabel, FormGroup, InputLabel, MenuItem, Paper, Select, TextField, Typography, type SelectChangeEvent } from "@mui/material";
+import { Box, Button, Checkbox, Container, FormControl, FormControlLabel, FormGroup, FormHelperText, InputLabel, MenuItem, Paper, Select, TextField, Typography, type SelectChangeEvent } from "@mui/material";
 import type { Articulo } from "../models/Articulo";
 import type { Tipo } from "../models/Tipo";
 import type { Grupo } from "../models/Grupo";
@@ -10,6 +10,8 @@ import { getGrupos } from "../services/GrupoService";
 import { getLeyes } from "../services/LeyService";
 import { getArticulosByLey } from "../services/ArticuloService";
 import { crearActa } from "../services/ActaService";
+import { useActaForm } from "../hooks/useActaForm";
+import { Controller } from "react-hook-form";
 
 const initialState: ActaRequest = {
   idGrupo: 1,
@@ -52,6 +54,8 @@ export default function ActaForm() {
   const [articulosSeleccionados, setArticulosSeleccionados] = useState<number[]>([]);
   const [leyes, setLeyes] = useState<Ley[]>([]);
   const [propietario, setPropietario] = useState(false);
+  const { register, watch, control, formState: { errors , isSubmitting } } =
+  useActaForm(1);
 
   const handleChange = (path: string, value: any) => {
     const keys = path.split(".");
@@ -79,21 +83,22 @@ export default function ActaForm() {
   };
 
     const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if(propietario){
-        form.vehiculo.propietario = null;
+      e.preventDefault();
+      try {
+        if(propietario){
+          form.vehiculo.propietario = null;
+        }
+        console.log('acta request ', watch())
+        console.log('propietario ', form.vehiculo.propietario)
+        form.infractor.propietario = propietario;
+        const response = await crearActa(form);
+        console.log('Acta creada:', response);
+        alert('Acta creada exitosamente')
+        // mostrar mensaje de éxito o redireccionar
+      } catch (error) {
+        console.error('Error al crear el acta:', error);
       }
-      console.log('propietario ', form.vehiculo.propietario)
-      form.infractor.propietario = propietario;
-      const response = await crearActa(form);
-      console.log('Acta creada:', response);
-      alert('Acta creada exitosamente')
-      // mostrar mensaje de éxito o redireccionar
-    } catch (error) {
-      console.error('Error al crear el acta:', error);
-    }
-  };
+    };
 
   const fetchTipo = async () => {
     const data = await getAllTipoActas();
@@ -163,22 +168,23 @@ export default function ActaForm() {
           </FormControl>
 
           {/* Grupo */}
-          <FormControl fullWidth margin="normal">
+          <FormControl fullWidth margin="normal" error={!!errors.idGrupo}>
             <InputLabel id="grupo-label">Grupo</InputLabel>
-            <Select
-              labelId="grupo-label"
-              id="grupo"
-              value={selectedGrupo}
-              label="Grupo"
-              onChange={(e) => setSelectedGrupo(e.target.value)}
-            >
-              <MenuItem value="">Seleccione un grupo</MenuItem>
-              {grupos.map((grupo) => (
-                <MenuItem key={grupo.idGrupo} value={grupo.idGrupo}>
-                  {grupo.nombre}
-                </MenuItem>
-              ))}
-            </Select>
+            <Controller
+              name="idGrupo"
+              control={control}
+              render={({ field, fieldState }) => (
+                <>
+                  <Select {...field} labelId="grupo-label" label="Grupo">
+                    <MenuItem value={0}>Seleccione...</MenuItem>
+                    {grupos.map((g) => (
+                      <MenuItem key={g.idGrupo} value={g.idGrupo}>{g.nombre}</MenuItem>
+                    ))}
+                  </Select>
+                  <FormHelperText>{fieldState.error?.message || (errors.idGrupo?.message as string)}</FormHelperText>
+                </>
+              )}
+            />
           </FormControl>
 
           {/* Datos generales */}
@@ -187,10 +193,11 @@ export default function ActaForm() {
 
           {/* Infractor */}
           <Typography variant="h6" sx={{ mt: 3 }}>Infractor</Typography>
-          <TextField label="Nombre" fullWidth margin="normal" value={form.infractor.nombre} onChange={(e) => handleChange("infractor.nombre", e.target.value)} />
-          <TextField label="Apellido" fullWidth margin="normal" value={form.infractor.apellido} onChange={(e) => handleChange("infractor.apellido", e.target.value)} />
-          <TextField label="DNI" fullWidth margin="normal" value={form.infractor.dni} onChange={(e) => handleChange("infractor.dni", e.target.value)} />
-          <TextField label="Lugar" fullWidth margin="normal" value={form.infractor.lugar} onChange={(e) => handleChange("infractor.lugar", e.target.value)} />
+          <TextField label="Nombre" fullWidth margin="normal" {...register("infractor.nombre")} error={!!errors.infractor?.nombre} helperText={errors.infractor?.nombre?.message} />
+          <TextField label="Apellido" fullWidth margin="normal" {...register("infractor.apellido")} error={!!errors.infractor?.apellido} helperText={errors.infractor?.apellido?.message} />
+          <TextField label="DNI" fullWidth margin="normal" {...register("infractor.dni")} error={!!errors.infractor?.dni} helperText={errors.infractor?.dni?.message} />
+          <TextField label="Lugar" fullWidth margin="normal" {...register("infractor.lugar")} error={!!errors.infractor?.lugar} helperText={errors.infractor?.lugar?.message} />
+
           <FormControlLabel
             control={
               <Checkbox
@@ -202,21 +209,21 @@ export default function ActaForm() {
                 />
           {/* Vehículo */}
           <Typography variant="h6" sx={{ mt: 3 }}>Vehículo</Typography>
-          <TextField label="Marca" fullWidth margin="normal" value={form.vehiculo.marca} onChange={(e) => handleChange("vehiculo.marca", e.target.value)} />
-          <TextField label="Modelo" fullWidth margin="normal" value={form.vehiculo.modelo} onChange={(e) => handleChange("vehiculo.modelo", e.target.value)} />
-          <TextField label="Año" type="number" fullWidth margin="normal" value={form.vehiculo.año} onChange={(e) => handleChange("vehiculo.año", Number(e.target.value))} />
-          <TextField label="Dominio" fullWidth margin="normal" value={form.vehiculo.dominio} onChange={(e) => handleChange("vehiculo.dominio", e.target.value)} />
-          <TextField label="Motor" fullWidth margin="normal" value={form.vehiculo.motor} onChange={(e) => handleChange("vehiculo.motor", e.target.value)} />
-          <TextField label="Cuadro" fullWidth margin="normal" value={form.vehiculo.cuadro} onChange={(e) => handleChange("vehiculo.cuadro", e.target.value)} />
+          <TextField label="Marca" fullWidth margin="normal" {...register("vehiculo.marca")} error={!!errors.vehiculo?.marca} helperText={errors.vehiculo?.marca?.message} />
+          <TextField label="Modelo" fullWidth margin="normal" {...register("vehiculo.modelo")} error={!!errors.vehiculo?.modelo} helperText={errors.vehiculo?.modelo?.message} />
+          <TextField label="Año" type="number" fullWidth margin="normal" {...register("vehiculo.año", { valueAsNumber: true })} error={!!errors.vehiculo?.año} helperText={errors.vehiculo?.año?.message} />
+          <TextField label="Dominio" fullWidth margin="normal" inputProps={{ style: { textTransform: "uppercase" } }} {...register("vehiculo.dominio", { setValueAs: v => (v ? String(v).toUpperCase() : v) })} error={!!errors.vehiculo?.dominio} helperText={errors.vehiculo?.dominio?.message} />
+          <TextField label="Motor" fullWidth margin="normal" {...register("vehiculo.motor")} error={!!errors.vehiculo?.motor} helperText={errors.vehiculo?.motor?.message} />
+          <TextField label="Cuadro" fullWidth margin="normal" {...register("vehiculo.cuadro")} error={!!errors.vehiculo?.cuadro} helperText={errors.vehiculo?.cuadro?.message} />
 
-          {/* Propietario */}
+          {/* Propietario del vehículo (si NO es propietario) */}
           {!propietario && (
             <Box>
               <Typography variant="h6" sx={{ mt: 3 }}>Propietario</Typography>
-              <TextField label="Nombre" fullWidth margin="normal" value={form.vehiculo.propietario?.nombre} onChange={(e) => handleChange("vehiculo.propietario.nombre", e.target.value)} />
-              <TextField label="Apellido" fullWidth margin="normal" value={form.vehiculo.propietario?.apellido} onChange={(e) => handleChange("vehiculo.propietario.apellido", e.target.value)} />
-              <TextField label="DNI" fullWidth margin="normal" value={form.vehiculo.propietario?.dni} onChange={(e) => handleChange("vehiculo.propietario.dni", e.target.value)} />
-              <TextField label="Dirección" fullWidth margin="normal" value={form.vehiculo.propietario?.direccion} onChange={(e) => handleChange("vehiculo.propietario.direccion", e.target.value)} />
+              <TextField label="Nombre" fullWidth margin="normal" {...register("vehiculo.propietario.nombre")} error={!!errors.vehiculo?.propietario?.nombre} helperText={errors.vehiculo?.propietario?.nombre?.message} />
+              <TextField label="Apellido" fullWidth margin="normal" {...register("vehiculo.propietario.apellido")} error={!!errors.vehiculo?.propietario?.apellido} helperText={errors.vehiculo?.propietario?.apellido?.message} />
+              <TextField label="DNI" fullWidth margin="normal" {...register("vehiculo.propietario.dni")} error={!!errors.vehiculo?.propietario?.dni} helperText={errors.vehiculo?.propietario?.dni?.message} />
+              <TextField label="Dirección" fullWidth margin="normal" {...register("vehiculo.propietario.direccion")} error={!!errors.vehiculo?.propietario?.direccion} helperText={errors.vehiculo?.propietario?.direccion?.message} />
             </Box>
           )}
 
