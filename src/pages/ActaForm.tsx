@@ -10,7 +10,9 @@ import { getGrupos } from "../services/GrupoService";
 import { getLeyes } from "../services/LeyService";
 import { getArticulosByLey } from "../services/ArticuloService";
 import { crearActa } from "../services/ActaService";
+import { SnackbarUtilities } from "../utilities/SnackbarUtilities";
 
+//Quitar estado inicial
 const initialState: ActaRequest = {
   idGrupo: 1,
   idTipo: 2,
@@ -79,8 +81,7 @@ export default function ActaForm() {
   };
 
     const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
+      e.preventDefault();
       if(propietario){
         form.vehiculo.propietario = null;
       }
@@ -88,12 +89,10 @@ export default function ActaForm() {
       form.infractor.propietario = propietario;
       const response = await crearActa(form);
       console.log('Acta creada:', response);
-      alert('Acta creada exitosamente')
+      SnackbarUtilities.success('Acta creada exitasomente')
       // mostrar mensaje de éxito o redireccionar
-    } catch (error) {
-      console.error('Error al crear el acta:', error);
-    }
-  };
+      
+    };
 
   const fetchTipo = async () => {
     const data = await getAllTipoActas();
