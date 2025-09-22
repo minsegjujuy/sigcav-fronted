@@ -5,6 +5,7 @@ export interface ActaRequest {
   idGrupo: number;
   idTipo: number;
   idUser: number;
+  idPuesto: number;
   motivo: string;
   nro: string;
   articulos: number[];

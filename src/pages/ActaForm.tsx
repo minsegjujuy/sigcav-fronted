@@ -11,12 +11,15 @@ import { getLeyes } from "../services/LeyService";
 import { getArticulosByLey } from "../services/ArticuloService";
 import { crearActa } from "../services/ActaService";
 import { SnackbarUtilities } from "../utilities/SnackbarUtilities";
+import type { Puesto } from "../models/Puesto";
+import { getPuestos } from "../services/PuestoService";
 
 //Quitar estado inicial
 const initialState: ActaRequest = {
   idGrupo: 1,
   idTipo: 2,
   idUser: 3,
+  idPuesto:1,
   motivo: "",
   nro: "",
   articulos: [],
@@ -46,7 +49,9 @@ const initialState: ActaRequest = {
 export default function ActaForm() {
   const [form, setForm] = useState<ActaRequest>(initialState);
   const [articulos, setArticulos] = useState<Articulo[]>([]);
+  const [puestos, setPuestos] = useState<Puesto[]>([]);
   const [tipoActa, setTipoActa] = useState<Tipo[]>([]);
+  const [selectedPuesto, setSelectedPuesto] = useState<number | ''>('');
   const [selectedTipoActa, setSelectedTipoActa] = useState<number | ''>('');
   const [selectedGrupo, setSelectedGrupo] = useState<number | ''>('');
   const [grupos, setGrupos] = useState<Grupo[]>([]);
@@ -93,7 +98,6 @@ export default function ActaForm() {
         console.log('Acta creada:', response);
         SnackbarUtilities.success('Acta creada exitasomente')
       }
-      // mostrar mensaje de éxito o redireccionar
       
     };
   
@@ -103,6 +107,7 @@ export default function ActaForm() {
       // selects
       if (!selectedTipoActa) e.tipoActa = "El tipo de acta es obligatorio";
       if (!selectedGrupo) e.grupo = "El grupo es obligatorio";
+      if (!selectedPuesto) e.puesto = "El puesto es obligatorio";
 
 
       // campos generales
@@ -173,20 +178,20 @@ export default function ActaForm() {
     console.log('articulo por ley ', data)
   }
 
-  /*const fetchPuestos = async () => {
+  const fetchPuestos = async () => {
     try {
       const data = await getPuestos();
       setPuestos(data);
     } catch (error) {
       console.error('Error al obtener puestos', error);
     }
-  };*/
+  };
 
   useEffect(()=> {
     fetchTipo();
     fetchGrupo();
     fetchLeyes();
-    //fetchPuestos();
+    fetchPuestos();
   }, [])
 
   return (
@@ -200,22 +205,42 @@ export default function ActaForm() {
 
           {/* Tipo de Acta */}
           <FormControl fullWidth margin="normal" error={!!errors.tipoActa}>
-          <InputLabel id="tipo-acta-label">Tipo de Acta</InputLabel>
-          <Select
-          labelId="tipo-acta-label"
-          id="tipo-acta"
-          value={selectedTipoActa}
-          label="Tipo de Acta"
-          onChange={(e) => { setSelectedTipoActa(e.target.value as any); setErrors((er) => { const c = { ...er }; delete c.tipoActa; return c; }); }}
-          >
-          <MenuItem value="">Seleccione un tipo</MenuItem>
-          {tipoActa.map((tipo) => (
-          <MenuItem key={tipo.idTipo} value={tipo.idTipo}>
-          {tipo.detalle}
-          </MenuItem>
-          ))}
-          </Select>
-          {!!errors.tipoActa && <FormHelperText>{errors.tipoActa}</FormHelperText>}
+            <InputLabel id="tipo-acta-label">Tipo de Acta</InputLabel>
+            <Select
+            labelId="tipo-acta-label"
+            id="tipo-acta"
+            value={selectedTipoActa}
+            label="Tipo de Acta"
+            onChange={(e) => { setSelectedTipoActa(e.target.value as any); setErrors((er) => { const c = { ...er }; delete c.tipoActa; return c; }); }}
+            >
+            <MenuItem value="">Seleccione un tipo</MenuItem>
+            {tipoActa.map((tipo) => (
+            <MenuItem key={tipo.idTipo} value={tipo.idTipo}>
+            {tipo.detalle}
+            </MenuItem>
+            ))}
+            </Select>
+            {!!errors.tipoActa && <FormHelperText>{errors.tipoActa}</FormHelperText>}
+          </FormControl>
+
+          {/* Puesto */}
+          <FormControl fullWidth margin="normal" error={!!errors.puesto}>
+            <InputLabel id="puesto-label">Puesto</InputLabel>
+            <Select
+            labelId="puesto-label"
+            id="puesto"
+            value={selectedPuesto}
+            label="Puesto"
+            onChange={(e) => { setSelectedPuesto(e.target.value as any); setErrors((er) => { const c = { ...er }; delete c.tipoActa; return c; }); }}
+            >
+            <MenuItem value="">Seleccione un puesto</MenuItem>
+            {puestos.map((puesto) => (
+            <MenuItem key={puesto.idPuesto} value={puesto.idPuesto}>
+            {puesto.nombre}
+            </MenuItem>
+            ))}
+            </Select>
+            {!!errors.puesto && <FormHelperText>{errors.puesto}</FormHelperText>}
           </FormControl>
 
 
