@@ -18,7 +18,7 @@ import { getPuestos } from "../services/PuestoService";
 const initialState: ActaRequest = {
   idGrupo: 1,
   idTipo: 2,
-  idUser: 3,
+  idUser: 1,
   idPuesto:1,
   motivo: "",
   nro: "",
@@ -94,6 +94,7 @@ export default function ActaForm() {
         }
         console.log('propietario ', form.vehiculo.propietario)
         form.infractor.propietario = propietario;
+        console.log('acta ', form)
         const response = await crearActa(form);
         console.log('Acta creada:', response);
         SnackbarUtilities.success('Acta creada exitasomente')
