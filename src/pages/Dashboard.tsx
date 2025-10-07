@@ -1,39 +1,16 @@
-import { List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material"
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import ControlPointIcon from '@mui/icons-material/ControlPoint';
-import PeopleIcon from "@mui/icons-material/People";
-
+import { Drawer } from "@mui/material"
+import { useState } from "react"
+import NavListDrawer from "../components/NavListDrawer"
 
 const Dashboard = () => {
+  const [open, setOpen] = useState(false)
   return (
-    <List>
-      <ListItem disablePadding>
-        <ListItemButton>
-          <ListItemIcon>
-            <ControlPointIcon />
-          </ListItemIcon>
-          <ListItemText primary="Nueva acta" />
-        </ListItemButton>
-      </ListItem>
-
-      <ListItem disablePadding>
-        <ListItemButton>
-          <ListItemIcon>
-            <DashboardIcon />
-          </ListItemIcon>
-          <ListItemText primary="Mis actas" />
-        </ListItemButton>
-      </ListItem>
-
-      <ListItem disablePadding>
-        <ListItemButton>
-          <ListItemIcon>
-            <PeopleIcon />
-          </ListItemIcon>
-          <ListItemText primary="Usuarios" />
-        </ListItemButton>
-      </ListItem>
-    </List>
+    <>
+      <button onClick={()=> setOpen(true)}>Menu</button>
+      <Drawer open={open} anchor="bottom" onClose={()=> setOpen(false)}>
+        <NavListDrawer />
+      </Drawer>
+    </>
   )
 }
 
