@@ -15,8 +15,8 @@ function App() {
         <SnackbarUtilitiesConfigurator />
           <Routes>
             <Route path="/" element={<Login />} />
-            <Route path='/dashboard/nueva_acta' element={<ActaForm />} />
-            <Route path='/dashboard/actas' element={<ActaResumenTable />} />
+            <Route path='/dashboard/nueva-acta' element={<ActaForm />} />
+            <Route path='/dashboard/mis-actas' element={<ActaResumenTable />} />
             <Route path='/dashboard' element={<Dashboard />} />
           </Routes>
       </SnackbarProvider>
