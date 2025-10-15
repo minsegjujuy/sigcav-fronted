@@ -1,19 +1,15 @@
 import { useEffect, useState } from "react";
 import { getResumenActas } from "../services/ActaService";
-import { Card, CardContent, FormControl, Grid, InputLabel, MenuItem, Pagination, Paper, Select, Stack, Typography } from "@mui/material";
+import { Autocomplete, Card, CardContent, FormControl, Grid, InputLabel, MenuItem, Pagination, Paper, Select, Stack, TextField, Typography } from "@mui/material";
 import type { ActaResumenDto } from "../models/ActaResumenDto";
-
-interface Filters {
-  grupo?: number,
-  puesto?: number,
-  articulo?: number,
-  page: number
-}
+import { useArticulo } from "../context/ArticuloContext";
 
 const ActaResumenTable: React.FC = () => {
   const [actas, setActas] = useState<ActaResumenDto[]>([]);
+  const {articulos} = useArticulo();
   const [totalPages , setTotalPages] = useState(0);
-  const [filters, setFilters] = useState<Filters>({page: 1});
+  const [filters, setFilters] = useState<Record<string, any>>({
+    page: 1, grupo:null, puesto:null,articulo:null});
 
   const handleChange = (event: React.ChangeEvent<unknown>, value: number) => {
     setFilters({...filters, page:value});
@@ -33,12 +29,11 @@ const ActaResumenTable: React.FC = () => {
       current[keys[keys.length - 1]] = value;
       return updated;
     });
-    console.log('filters ', filters)
   };
 
   const fetchData = async () => {
       try {
-        const {content, totalPages} = await getResumenActas(filters.page, filters.grupo);
+        const {content, totalPages} = await getResumenActas(filters);
         setTotalPages(totalPages);
         setActas(content);
         console.log('actas ', content)
@@ -70,6 +65,14 @@ const ActaResumenTable: React.FC = () => {
           <MenuItem value={3}>Grupo 3</MenuItem>
         </Select>
       </FormControl>
+      <Autocomplete
+        disablePortal
+        options={articulos}
+        getOptionLabel={(option) => option.nro}
+        sx={{ width: 300 }}
+        renderInput={(params) => <TextField {...params} label="Articulos"
+        onChange={(e) => handleFilterChange("articulo", e.target.value)} />}
+      />
 
       <Grid container spacing={2} >
         {actas.map((acta, index) => (
