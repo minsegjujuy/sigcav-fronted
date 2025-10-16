@@ -24,7 +24,7 @@ export default function Login() {
     try{
         const authResponse = await login(data!);
         localStorage.setItem("token", authResponse.jwt);
-        navigate("/dashboard/nueva_Acta");
+        navigate("/dashboard");
          alert('Usuario autenticado')
     }catch(error){
         console.error(error, data)
