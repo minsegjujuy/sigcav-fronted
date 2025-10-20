@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { getResumenActas } from "../services/ActaService";
-import { Autocomplete, Card, CardContent, FormControl, Grid, InputLabel, MenuItem, Pagination, Paper, Select, Stack, TextField, Typography, type AutocompleteChangeDetails, type AutocompleteChangeReason } from "@mui/material";
+import { getResumenActas, getResumenActasPersonal } from "../services/ActaService";
+import { Autocomplete, Box, Card, CardContent, FormControl, Grid, InputLabel, MenuItem, Pagination, Paper, Select, Stack, TextField, Typography, type AutocompleteChangeDetails, type AutocompleteChangeReason } from "@mui/material";
 import type { ActaResumenDto } from "../models/ActaResumenDto";
 import { useArticulo } from "../context/ArticuloContext";
 import type { Articulo } from "../models/Articulo";
@@ -9,13 +9,16 @@ const ActaResumenTable: React.FC = () => {
   const [actas, setActas] = useState<ActaResumenDto[]>([]);
   const {articulos} = useArticulo();
   const [totalPages , setTotalPages] = useState(0);
+  const [totalElements , setTotalElements] = useState(0);
   const [filters, setFilters] = useState<Record<string, any>>({
-    page: 1, grupo:null, puesto:null,articulo:null, size:12});
-  const [articulo, setArticulo] = useState<Articulo | null>(null);
+    page: 0, grupo:null, puesto:null,articulo:null, size:12});
+    const [filtersPersonal, setFiltersPersonal] = useState<Record<string, any>>({
+    page: 0});
 
   const handleChange = (event: React.ChangeEvent<unknown>, value: number) => {
-    setFilters({...filters, page :value});
-    console.log("Página activa:", filters?.page);
+    const realPage = value -1;
+    setFilters({...filters, page : realPage});
+    setFiltersPersonal({...filtersPersonal, page : realPage});
     // Aquí podés llamar a tu API con la nueva página, por ejemplo:
     // fetchActas(value);
   };
@@ -50,24 +53,46 @@ const ActaResumenTable: React.FC = () => {
   };
 
   const fetchData = async () => {
-      try {
-        const {content, totalPages} = await getResumenActas(filters);
-        setTotalPages(totalPages);
-        setActas(content);
-        console.log('actas ', content)
-      } catch (error) {
-        console.error('Error al obtener resumen de actas', error);
+    try {
+      let content: any[] = [];
+      let totalPages = 0;
+      let totalElements = 0;
+      const authString = localStorage.getItem("auth");
+      const authObject = authString ? JSON.parse(authString) : null;
+      const role = authObject?.role;
+      if (role === 'PERSONAL') {
+        console.log('rol personal seleccionado')
+        const data = await getResumenActasPersonal(filtersPersonal);
+        content = data.content;
+        totalPages = data.totalPages;
+        totalElements = data.totalElements;
+      } else {
+        const data = await getResumenActas(filters);
+        content = data.content;
+        totalPages = data.totalPages;
+        totalElements = data.totalElements;
       }
-    };
+
+      setTotalElements(totalElements);
+      setTotalPages(totalPages);
+      setActas(content);
+
+      console.log('actas', content);
+    } catch (error) {
+      console.error('Error al obtener resumen de actas', error);
+    }
+  };
+
 
   useEffect(() => {
     fetchData();
     console.log('filters ', filters)
-  }, [filters?.page, filters?.grupo, filters?.articulo]);
+    console.log('filters para el personal', filtersPersonal)
+  }, [filters?.page, filters?.grupo, filters?.articulo, filtersPersonal?.page]);
 
   return (
     <Paper sx={{ mt: 4, p: 2 }}>
-      <Typography variant="h6" sx={{ mb: 2 }}>
+      <Typography variant="h4" sx={{ mb: 2 }}>
         Resumen de Actas
       </Typography>
       <FormControl fullWidth>
@@ -96,57 +121,68 @@ const ActaResumenTable: React.FC = () => {
           />
         )}
       />
+      <Typography variant="h6" sx={{ mb: 2 }}>
+        Cantidad de actas: {totalElements}
+      </Typography>
+      <Box sx={{ flexGrow: 1 }}>
+        <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12 }}>
+          {actas.map((acta, index) => (
+            <Grid key={index} size={{ xs: 2, sm: 4, md: 4 }}>
+              <Card
+                sx={{
+                  borderRadius: 2,
+                  boxShadow: 3,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  height: "100%",
+                  width: "100%",
+                }}
+              >
+                <CardContent>
+                  <Typography variant="subtitle1" fontWeight="bold">
+                    Acta Nº {acta.nro}
+                  </Typography>
 
-      <Grid container spacing={2} >
-        {actas.map((acta, index) => (
-            <Card
-              sx={{
-                borderRadius: 2,
-                boxShadow: 3,
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <CardContent>
-                <Typography variant="subtitle1" fontWeight="bold">
-                  Acta Nº {acta.nro}
-                </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>Grupo:</strong> {acta.idGrupo}
+                  </Typography>
 
-                <Typography variant="body2" color="text.secondary">
-                  <strong>Grupo:</strong> {acta.idGrupo}
-                </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>Fecha:</strong> {new Date(acta.fecha).toLocaleString()}
+                  </Typography>
 
-                <Typography variant="body2" color="text.secondary">
-                  <strong>Fecha:</strong>{" "}
-                  {new Date(acta.fecha).toLocaleString()}
-                </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>Motivo:</strong> {acta.motivo}
+                  </Typography>
 
-                <Typography variant="body2" color="text.secondary">
-                  <strong>Motivo:</strong> {acta.motivo}
-                </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>Retención:</strong> {acta.retencion}
+                  </Typography>
 
-                <Typography variant="body2" color="text.secondary">
-                  <strong>Retención:</strong> {acta.retencion}
-                </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>Infractor:</strong> {acta.nombre}
+                  </Typography>
 
-                <Typography variant="body2" color="text.secondary">
-                  <strong>Infractor:</strong> {acta.nombre}
-                </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>Vehículo:</strong> {acta.dominio}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+      <Grid container spacing={2}>
+    
+  </Grid>
 
-                <Typography variant="body2" color="text.secondary">
-                  <strong>Vehículo:</strong> {acta.dominio}
-                </Typography>
-              </CardContent>
-            </Card>
-        ))}
-      </Grid>
       <Stack spacing={2} alignItems="center" sx={{ mt: 3 }}>
-        <Typography> Página actual: {filters.page} </Typography>
+        <Typography> Página actual: {filters.page + 1} </Typography>
 
         <Pagination
           count={totalPages}
-          page={filters.page}
+          page={filtersPersonal.page}
           onChange={handleChange}
           showFirstButton
           showLastButton

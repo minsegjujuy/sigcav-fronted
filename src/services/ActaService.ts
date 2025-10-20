@@ -22,3 +22,9 @@ export const getResumenActas = async (params:Record<string, any>): Promise<PageR
   const response = await axios.get<PageResponse<ActaResumenDto>>(newUrl, getAuthHeader());
   return response.data;
 };
+
+export const getResumenActasPersonal = async (params:Record<string, any>): Promise<PageResponse<ActaResumenDto>> => {
+  const newUrl = buildUrl(`${baseURL}/acta/private/user`, params);
+  const response = await axios.get<PageResponse<ActaResumenDto>>(newUrl, getAuthHeader());
+  return response.data;
+};

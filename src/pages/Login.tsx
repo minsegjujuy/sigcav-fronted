@@ -3,6 +3,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../services/AuthService";
 import type { AuthenticationRequest } from "../models/AuthenticationRequest";
+import type { AppDispatch } from "../redux/store/Store";
+import { useDispatch } from "react-redux";
+import { loginAction } from "../redux/slice/AuthSlice";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -10,6 +13,7 @@ export default function Login() {
     username: "",
     password: "",
   });
+  const dispatch = useDispatch<AppDispatch>();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   const { name, value } = e.target;
@@ -22,10 +26,11 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try{
+      console.log(data)
         const authResponse = await login(data!);
-        localStorage.setItem("token", authResponse.jwt);
+        dispatch(loginAction(authResponse.jwt));
         navigate("/dashboard");
-         alert('Usuario autenticado')
+        alert('Usuario autenticado')
     }catch(error){
         console.error(error, data)
         alert('Credenciales incorrectas')
