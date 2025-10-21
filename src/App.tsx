@@ -7,26 +7,36 @@ import { SnackbarProvider } from 'notistack'
 import { SnackbarUtilitiesConfigurator } from './utilities/SnackbarUtilities'
 import Dashboard from './pages/Dashboard'
 import { ArticuloProvider } from './context/ArticuloContext'
-import { Provider } from 'react-redux'
-import { store } from './redux/store/Store'
+import { RequireAuth } from './guards/RequireGuard'
 
 function App() {
 
   return (
     <>
-    <Provider store={store}>
-      <SnackbarProvider>
-        <SnackbarUtilitiesConfigurator />
-        <ArticuloProvider>
-          <Routes>
-            <Route path="/" element={<Login />} />
-            <Route path='/dashboard/nueva-acta' element={<ActaForm />} />
-            <Route path='/dashboard/mis-actas' element={<ActaResumenTable />} />
-            <Route path='/dashboard' element={<Dashboard />} />
-          </Routes>
-        </ArticuloProvider>
-      </SnackbarProvider>
-      </Provider>
+        <SnackbarProvider>
+          <SnackbarUtilitiesConfigurator />
+          <ArticuloProvider>
+            <Routes>
+              <Route path="/" element={<Login />} />
+              <Route path='/dashboard/nueva-acta' element={
+                <RequireAuth allowedRoles={["ADMIN", "PERSONAL"]}>
+                  <ActaForm />
+                </RequireAuth>
+                } />
+              <Route path='/dashboard/mis-actas' element={
+                <RequireAuth allowedRoles={["ADMIN", "PERSONAL"]}>
+                  <ActaResumenTable />
+                </RequireAuth>
+                } />
+              <Route path='/dashboard' element={
+                <RequireAuth allowedRoles={["ADMIN", "PERSONAL"]}>
+                  <Dashboard />
+                </RequireAuth>
+                } />
+              
+            </Routes>
+          </ArticuloProvider>
+        </SnackbarProvider>
     </>
   )
 }

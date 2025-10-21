@@ -18,7 +18,7 @@ export const ArticuloProvider: React.FC<{ children: ReactNode }> = ({ children }
   }
 
   useEffect(()=>{
-    fetchArticulos()
+    fetchArticulos();
   }, [])
 
   return (

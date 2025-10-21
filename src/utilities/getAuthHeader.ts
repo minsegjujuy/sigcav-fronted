@@ -1,12 +1,16 @@
-// utils/authHeader.ts
-export const getAuthHeader = () => {
-  const authString = localStorage.getItem("auth");
-  const authObject = authString ? JSON.parse(authString) : null;
-  const token = authObject?.token;
-  
-  return {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-};
+import { store, type RootState } from "../redux/store/Store";
+
+export function getAuthHeader(){
+    const state: RootState = store.getState();
+    
+    const token = state.auth.token;
+
+    if (token) {
+        return {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        };
+    }
+    return {};
+}

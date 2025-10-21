@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
-import { parseJwt } from "../../helpers/extractExtraClaims";
+import { parseJwt2 } from "../../utilities/jwt";
 
 
 interface AuthState {
@@ -9,39 +9,24 @@ interface AuthState {
   token: string | null;
 }
 
-const savedData = localStorage.getItem("auth");
-const initialState: AuthState = savedData
-  ? JSON.parse(savedData)
-  : { username: null, role: null, token: null };
+const initialState: AuthState = { name: null, rol: null, token: null };
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
+    // payload: token string
     loginAction(state, action: PayloadAction<string>) {
       const token = action.payload;
-      const payload = parseJwt(token);
-      console.log('payload ', payload)
-
-      state.name = payload.name;
-      state.rol = payload.rol;
+      const payload = parseJwt2<any>(token);
+      state.name = payload?.name ?? null;
+      state.rol = payload?.rol ?? null;
       state.token = token;
-
-      // guardar en localStorage
-      localStorage.setItem(
-        "auth",
-        JSON.stringify({
-          username: payload.name,
-          role: payload.rol,
-          token,
-        })
-      );
     },
     logout(state) {
       state.name = null;
       state.rol = null;
       state.token = null;
-      localStorage.removeItem("auth");
     },
   },
 });
