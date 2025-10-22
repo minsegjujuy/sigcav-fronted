@@ -4,12 +4,15 @@ import { Autocomplete, Box, Card, CardContent, FormControl, Grid, InputLabel, Me
 import type { ActaResumenDto } from "../models/ActaResumenDto";
 import { useArticulo } from "../context/ArticuloContext";
 import type { Articulo } from "../models/Articulo";
+import { useSelector } from "react-redux";
+import type { RootState } from "../redux/store/Store";
 
 const ActaResumenTable: React.FC = () => {
   const [actas, setActas] = useState<ActaResumenDto[]>([]);
   const {articulos} = useArticulo();
   const [totalPages , setTotalPages] = useState(0);
   const [totalElements , setTotalElements] = useState(0);
+  const { rol } = useSelector((state: RootState) => state.auth);
   const [filters, setFilters] = useState<Record<string, any>>({
     page: 0, grupo:null, puesto:null,articulo:null, size:12});
     const [filtersPersonal, setFiltersPersonal] = useState<Record<string, any>>({
@@ -57,10 +60,7 @@ const ActaResumenTable: React.FC = () => {
       let content: any[] = [];
       let totalPages = 0;
       let totalElements = 0;
-      const authString = localStorage.getItem("auth");
-      const authObject = authString ? JSON.parse(authString) : null;
-      const role = authObject?.role;
-      if (role === 'PERSONAL') {
+      if (rol === 'PERSONAL') {
         console.log('rol personal seleccionado')
         const data = await getResumenActasPersonal(filtersPersonal);
         content = data.content;
