@@ -13,6 +13,7 @@ import { crearActa } from "../services/ActaService";
 import { SnackbarUtilities } from "../utilities/SnackbarUtilities";
 import type { Puesto } from "../models/Puesto";
 import { getPuestos } from "../services/PuestoService";
+import ScrollButton from "../components/ScrollFilter";
 
 //Quitar estado inicial
 const initialState: ActaRequest = {
@@ -354,6 +355,7 @@ export default function ActaForm() {
             Enviar
           </Button>
         </Box>
+        <ScrollButton />
       </Paper>
     </Container>
   );

@@ -8,6 +8,7 @@ import { SnackbarUtilitiesConfigurator } from './utilities/SnackbarUtilities'
 import Dashboard from './pages/Dashboard'
 import { ArticuloProvider } from './context/ArticuloContext'
 import { RequireAuth } from './guards/RequireGuard'
+import Navbar from './components/Navbar'
 
 function App() {
 
@@ -16,8 +17,10 @@ function App() {
         <SnackbarProvider>
           <SnackbarUtilitiesConfigurator />
           <ArticuloProvider>
+            <Navbar></Navbar>
             <Routes>
               <Route path="/" element={<Login />} />
+              
               <Route path='/dashboard/nueva-acta' element={
                 <RequireAuth allowedRoles={["ADMIN", "PERSONAL"]}>
                   <ActaForm />

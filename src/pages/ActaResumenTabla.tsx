@@ -6,6 +6,8 @@ import { useArticulo } from "../context/ArticuloContext";
 import type { Articulo } from "../models/Articulo";
 import { useSelector } from "react-redux";
 import type { RootState } from "../redux/store/Store";
+import FilterForm from "../components/FIlterUser";
+import ScrollButton from "../components/ScrollFilter";
 
 const ActaResumenTable: React.FC = () => {
   const [actas, setActas] = useState<ActaResumenDto[]>([]);
@@ -13,6 +15,7 @@ const ActaResumenTable: React.FC = () => {
   const [totalPages , setTotalPages] = useState(0);
   const [totalElements , setTotalElements] = useState(0);
   const { rol } = useSelector((state: RootState) => state.auth);
+  const [showFilterUser, setShowFilterUser] = useState(false);
   const [filters, setFilters] = useState<Record<string, any>>({
     page: 0, grupo:null, puesto:null,articulo:null, size:12});
     const [filtersPersonal, setFiltersPersonal] = useState<Record<string, any>>({
@@ -66,6 +69,7 @@ const ActaResumenTable: React.FC = () => {
         content = data.content;
         totalPages = data.totalPages;
         totalElements = data.totalElements;
+        setShowFilterUser(true)
       } else {
         const data = await getResumenActas(filters);
         content = data.content;
@@ -83,44 +87,56 @@ const ActaResumenTable: React.FC = () => {
     }
   };
 
+  const handleFilter = (filters: { infractor: string; nro: string }) => {
+    console.log("Filtros aplicados:", filters);
+    setFiltersPersonal({...filtersPersonal, nro:filters.nro, infractor: filters.infractor});
+  };
+
 
   useEffect(() => {
     fetchData();
     console.log('filters ', filters)
     console.log('filters para el personal', filtersPersonal)
-  }, [filters?.page, filters?.grupo, filters?.articulo, filtersPersonal?.page]);
+  }, [filters?.page, filters?.grupo, filters?.articulo, filtersPersonal.page,
+    filtersPersonal.infractor, filtersPersonal.nro
+  ]);
 
   return (
     <Paper sx={{ mt: 4, p: 2 }}>
       <Typography variant="h4" sx={{ mb: 2 }}>
         Resumen de Actas
       </Typography>
-      <FormControl fullWidth>
-        <InputLabel id="demo-simple-select-label">Seleccionar grupo</InputLabel>
-        <Select
-          labelId="demo-simple-select-label"
-          id="demo-simple-select"
-          value={filters?.grupo}
-          label="Seleccionar grupo"
-          onChange={(e) => handleFilterChange("grupo", e.target.value)}
-        >
-          <MenuItem value={1}>Grupo 1</MenuItem>
-          <MenuItem value={2}>Grupo 2</MenuItem>
-          <MenuItem value={3}>Grupo 3</MenuItem>
-        </Select>
-      </FormControl>
-      <Autocomplete
-        options={articulos}
-        getOptionLabel={(a) => a.nro}
-        onChange={handleAutoChange}  
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Artículo"
-            onChange={handleInputChange}    
-          />
-        )}
-      />
+      {!showFilterUser && (
+        <>
+          <FormControl fullWidth>
+          <InputLabel id="demo-simple-select-label">Seleccionar grupo</InputLabel>
+          <Select
+            labelId="demo-simple-select-label"
+            id="demo-simple-select"
+            value={filters?.grupo}
+            label="Seleccionar grupo"
+            onChange={(e) => handleFilterChange("grupo", e.target.value)}
+          >
+            <MenuItem value={1}>Grupo 1</MenuItem>
+            <MenuItem value={2}>Grupo 2</MenuItem>
+            <MenuItem value={3}>Grupo 3</MenuItem>
+          </Select>
+        </FormControl>
+        <Autocomplete
+          options={articulos}
+          getOptionLabel={(a) => a.nro}
+          onChange={handleAutoChange}  
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Artículo"
+              onChange={handleInputChange}    
+            />
+          )}
+        />
+        </>
+      )}
+      {showFilterUser && <FilterForm onFilter={handleFilter}/>}
       <Typography variant="h6" sx={{ mb: 2 }}>
         Cantidad de actas: {totalElements}
       </Typography>
@@ -188,6 +204,7 @@ const ActaResumenTable: React.FC = () => {
           showLastButton
         />
       </Stack>
+      <ScrollButton />
     </Paper>
   );
 };
