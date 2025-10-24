@@ -8,9 +8,18 @@ import {
   Box,
   Drawer,
   List,
+  ListItem,
+  ListItemButton,
   ListItemText,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
+import { NavLink } from "react-router-dom";
+
+const menuItems = [
+  { label: "INICIO", to: "/dashboard" },
+  { label: "MIS ACTAS", to: "/dashboard/mis-actas" },
+  { label: "NUEVA ACTA", to: "/dashboard/nueva-acta" }
+];
 
 const Navbar: React.FC = () => {
   const [openDrawer, setOpenDrawer] = useState(false);
@@ -19,7 +28,14 @@ const Navbar: React.FC = () => {
     setOpenDrawer(open);
   };
 
-  const menuItems = ["Inicio", "Menu", "Mis actas", "Nueva acta"];
+  // Estilo para los botones NavLink activos (usando la clase .active que NavLink aplica)
+  const linkButtonSx = {
+    color: "inherit",
+    textTransform: "none",
+    "&.active": {
+      bgcolor: "action.selected", // pequeño highlight cuando está activo
+    },
+  };
 
   return (
     <>
@@ -39,17 +55,28 @@ const Navbar: React.FC = () => {
           {/* Título del sitio */}
           <Typography
             variant="h6"
-            component="div"
-            sx={{ flexGrow: 1, fontWeight: "bold", cursor: "pointer" }}
+            component={NavLink}
+            to="/dashboard"
+            sx={{
+              flexGrow: 1,
+              fontWeight: "bold",
+              textDecoration: "none",
+              color: "inherit",
+            }}
           >
-            Seguridad vial
+            SEGURIDAD VIAL JUJUY
           </Typography>
 
           {/* Menú en pantallas grandes */}
-          <Box sx={{ display: { xs: "none", md: "flex" }, gap: 2 }}>
+          <Box sx={{ display: { xs: "none", md: "flex" }, gap: 1 }}>
             {menuItems.map((item) => (
-              <Button key={item} color="inherit">
-                {item}
+              <Button
+                key={item.to}
+                component={NavLink}
+                to={item.to}
+                sx={linkButtonSx}
+              >
+                {item.label}
               </Button>
             ))}
           </Box>
@@ -66,7 +93,20 @@ const Navbar: React.FC = () => {
         >
           <List>
             {menuItems.map((item) => (
-                <ListItemText primary={item} />
+              <ListItem key={item.to} disablePadding>
+                <ListItemButton
+                  component={NavLink}
+                  to={item.to}
+                  // NavLink aplicará la clase 'active' cuando corresponda
+                  sx={{
+                    "&.active": {
+                      bgcolor: "action.selected",
+                    },
+                  }}
+                >
+                  <ListItemText primary={item.label} />
+                </ListItemButton>
+              </ListItem>
             ))}
           </List>
         </Box>
