@@ -35,7 +35,7 @@ export const obtenerActasPorDia = async (fi: string, ff: string): Promise<DiasCa
     fechaInicio:fi,
     fechaFin:ff
   }
-  const newUrl = buildUrl(`${baseURL}/acta/private/user`, params);
+  const newUrl = buildUrl(`${baseURL}/acta/private/dias`, params);
   const response = await axios.get<DiasCantidad[]>(newUrl, getAuthHeader());
   return response.data;
 }

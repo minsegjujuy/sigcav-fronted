@@ -1,5 +1,5 @@
 // BarChartExample.tsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -12,22 +12,29 @@ import {
 } from "chart.js";
 import type { DiasCantidad } from "../models/DiasCantidad";
 import { obtenerActasPorDia } from "../services/ActaService";
-import type { ParamsDate } from "../models/ParamsDate";
 
 // Registramos los componentes que usaremos
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, Title);
 
-const ReportePorDia: React.FC = () => {
-    const [actasCantidad, setActasCantidad] = useState<DiasCantidad[]>([]);
-    const [params, setParams] = useState<ParamsDate>({
-        fechaInicio:'',
-        fechaFin:''
-    })
+interface ReportePorDiaProps {
+  fechaInicio: string;
+  fechaFin: string;
+}
 
+const ReportePorDia: React.FC<ReportePorDiaProps> = ({
+  fechaInicio,
+  fechaFin,
+}) => {
+    const [actasCantidad, setActasCantidad] = useState<DiasCantidad[]>([]);
     const fetchData = async () => {
-        const res = await obtenerActasPorDia(params.fechaInicio, params.fechaFin);
+        const res = await obtenerActasPorDia(fechaInicio, fechaFin);
         setActasCantidad(res);
     }
+
+    useEffect(()=> {
+      fetchData();
+      console.log('cantidad de actas ', actasCantidad);
+    }, [fechaInicio, fechaFin])
   // Datos que se grafican
   const data = {
     labels: ["Enero", "Febrero", "Marzo", "Abril", "Mayo"],

@@ -9,7 +9,7 @@ import Dashboard from './pages/Dashboard'
 import { ArticuloProvider } from './context/ArticuloContext'
 import { RequireAuth } from './guards/RequireGuard'
 import Navbar from './components/Navbar'
-import ReportePorDia from './pages/ReportePorDia'
+import Reporte from './pages/Reporte'
 
 function App() {
 
@@ -21,7 +21,7 @@ function App() {
             <Navbar></Navbar>
             <Routes>
               <Route path="/" element={<Login />} />
-              <Route path="/dashboard/informes" element={<ReportePorDia />} />
+              <Route path="/dashboard/informes" element={<Reporte />} />
               <Route path='/dashboard/nueva-acta' element={
                 <RequireAuth allowedRoles={["ADMIN", "PERSONAL"]}>
                   <ActaForm />
