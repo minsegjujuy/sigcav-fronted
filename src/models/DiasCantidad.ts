@@ -1,4 +1,4 @@
 export interface DiasCantidad{
-    dias: string,
+    dia: string,
     cantidad: number
 }

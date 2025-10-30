@@ -12,72 +12,87 @@ import {
 } from "chart.js";
 import type { DiasCantidad } from "../models/DiasCantidad";
 import { obtenerActasPorDia } from "../services/ActaService";
+import { Typography } from "@mui/material";
 
 // Registramos los componentes que usaremos
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, Title);
 
-interface ReportePorDiaProps {
+export interface RangoDeFechas {
   fechaInicio: string;
   fechaFin: string;
+  //onToggle: () => void;
 }
 
-const ReportePorDia: React.FC<ReportePorDiaProps> = ({
-  fechaInicio,
-  fechaFin,
-}) => {
-    const [actasCantidad, setActasCantidad] = useState<DiasCantidad[]>([]);
-    const fetchData = async () => {
-        const res = await obtenerActasPorDia(fechaInicio, fechaFin);
-        setActasCantidad(res);
-    }
+const ReportePorDia: React.FC<RangoDeFechas> = ({ fechaInicio, fechaFin }) => {
+  const [actasCantidad, setActasCantidad] = useState<DiasCantidad[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    useEffect(()=> {
-      fetchData();
-      console.log('cantidad de actas ', actasCantidad);
-    }, [fechaInicio, fechaFin])
-  // Datos que se grafican
+  const fetchData = async (fi: string, ff: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      // Si tu API espera null en vez de "", deberías adaptarlo.
+      const res = await obtenerActasPorDia(fi, ff); // se asume que retorna DiasCantidad[]
+      setActasCantidad(res);
+    } catch (err: any) {
+      console.error("Error al obtener actas:", err);
+      setError(err?.message ?? "Error desconocido");
+      setActasCantidad([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Solo ejecutar si ambas fechas están presentes
+    if (!fechaInicio || !fechaFin) {
+      return;
+    }
+    fetchData(fechaInicio, fechaFin);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fechaInicio, fechaFin]);
+
+  // Preparar datos del gráfico basados en actasCantidad
+  const labels = actasCantidad.map((d) => d.dia);
+  const values = actasCantidad.map((d) => d.cantidad);
+
   const data = {
-    labels: ["Enero", "Febrero", "Marzo", "Abril", "Mayo"],
+    labels,
     datasets: [
       {
-        label: "Ventas (en miles)",
-        data: [12, 19, 8, 15, 10],
-        backgroundColor: [
-          "rgba(75, 192, 192, 0.6)",
-          "rgba(54, 162, 235, 0.6)",
-          "rgba(255, 206, 86, 0.6)",
-          "rgba(255, 99, 132, 0.6)",
-          "rgba(153, 102, 255, 0.6)",
-        ],
+        label: "Actas",
+        data: values,
         borderColor: "rgba(0,0,0,0.2)",
         borderWidth: 1,
       },
     ],
   };
 
-  // Configuración del gráfico
   const options = {
-    responsive: true, // se adapta al tamaño del contenedor
+    responsive: true,
     plugins: {
-      legend: {
-        position: "top" as const, // posición del título del dataset
-      },
-      title: {
-        display: true,
-        text: "Ventas por Mes",
-      },
+      legend: { position: "top" as const },
+      title: { display: true, text: "Actas por día" },
     },
-    scales: {
-      y: {
-        beginAtZero: true, // eje Y comienza en 0
-      },
-    },
+    scales: { y: { beginAtZero: true } },
   };
 
   return (
-    <div style={{ width: "80%", margin: "0 auto" }}>
-      <Bar data={data} options={options} />
-    </div>
+      <div style={{ width: "90%", margin: "1rem auto" }}>
+        {loading && <p>Cargando actas...</p>}
+        {error && <p style={{ color: "red" }}>Error: {error}</p>}
+        {!loading && !error && actasCantidad.length === 0 && (
+          <p>No hay actas para el rango seleccionado.</p>
+        )}
+
+        {!loading && !error && actasCantidad.length > 0 && (
+          <>
+          <Typography variant="h6">Resumen semanal de actas realizadas</Typography>
+          <Bar data={data} options={options} />
+          </>
+        )}
+      </div>
   );
 };
 
