@@ -6,6 +6,7 @@ import dayjs, { Dayjs } from "dayjs";
 import ReportePorDia from "./ReportePorDia";
 import type { ParamsDate } from "../models/ParamsDate";
 import ReporteInfracciones from "./ReporteInfracciones";
+import ReportePorGrupo from "./ReportePorGrupo";
 
 const Reporte: React.FC = () => {
   const [fechaInicio, setFechaInicio] = useState<Dayjs | null>(dayjs());
@@ -59,6 +60,10 @@ const Reporte: React.FC = () => {
         fechaFin={params?.fechaFin ?? ""}
       />
       <ReporteInfracciones
+        fechaInicio={params?.fechaInicio ?? ""}
+        fechaFin={params?.fechaFin ?? ""}
+      />
+      <ReportePorGrupo
         fechaInicio={params?.fechaInicio ?? ""}
         fechaFin={params?.fechaFin ?? ""}
       />

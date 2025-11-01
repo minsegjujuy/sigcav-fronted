@@ -9,6 +9,12 @@ const ReporteInfracciones: React.FC<RangoDeFechas> = ({ fechaInicio, fechaFin })
   const [actasCantidad, setActasCantidad] = useState<ArticuloCantidad[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const top5 = [...actasCantidad]
+    .sort((a, b) => b.cantActas - a.cantActas)
+    .slice(0, 5);
+  const textoTop = top5
+    .map((a) => `${a.articulo}`)
+    .join(" / ");
 
   const fetchData = async (fi: string, ff: string) => {
     try {
@@ -72,6 +78,8 @@ const ReporteInfracciones: React.FC<RangoDeFechas> = ({ fechaInicio, fechaFin })
           <>
           <Typography variant="h6">Infracciones mas recurrentes</Typography>
           <Bar data={data} options={options} />
+          <p>NOTA: Del análisis de la tabla se concluye que durante el periodo del {fechaInicio} al {fechaFin}, los articulados que se realizaron con mayor frecuencia son {textoTop}
+             </p>
           </>
         )}
       </div>

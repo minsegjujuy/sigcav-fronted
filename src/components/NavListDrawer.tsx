@@ -27,11 +27,11 @@ const NavListDrawer = () => {
     </ListItem>
 
     <ListItem disablePadding>
-      <ListItemButton component={Link} to="/dashboard/usuarios">
+      <ListItemButton component={Link} to="/dashboard/informes">
         <ListItemIcon>
           <PeopleIcon />
         </ListItemIcon>
-        <ListItemText primary="Usuarios" />
+        <ListItemText primary="Informes" />
       </ListItemButton>
     </ListItem>
   </List>
