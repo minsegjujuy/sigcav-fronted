@@ -1,3 +1,5 @@
+import type { Vehiculo } from "./Vehiculo";
+
 export interface Infractor {
   idInfrac: number;
   nombre: string;
@@ -5,4 +7,5 @@ export interface Infractor {
   dni: string;
   lugar?: string | null;
   propietario?: boolean;
+  vehiculos: Vehiculo[]
 }

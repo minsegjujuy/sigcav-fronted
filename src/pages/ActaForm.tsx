@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ActaRequest } from "../models/ActaRequest";
-import { Box, Button, Checkbox, Container, FormControl, FormControlLabel, FormGroup, FormHelperText, InputLabel, MenuItem, Paper, Select, TextField, Typography, type SelectChangeEvent } from "@mui/material";
+import { Box, Button, Checkbox, Collapse, Container, FormControl, FormControlLabel, FormGroup, FormHelperText, FormLabel, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, TextField, Typography, type SelectChangeEvent } from "@mui/material";
 import type { Articulo } from "../models/Articulo";
 import type { Tipo } from "../models/Tipo";
 import type { Grupo } from "../models/Grupo";
@@ -15,6 +15,7 @@ import type { Puesto } from "../models/Puesto";
 import { getPuestos } from "../services/PuestoService";
 import ScrollButton from "../components/ScrollFilter";
 import { findByDni } from "../services/InfractorService";
+import type { Vehiculo } from "../models/Vehiculo";
 
 //Quitar estado inicial
 const initialState: ActaRequest = {
@@ -62,6 +63,8 @@ export default function ActaForm() {
   const [leyes, setLeyes] = useState<Ley[]>([]);
   const [propietario, setPropietario] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
+  const [selectedVehicle, setSelectedVehicle] = useState<string>("");
 
   const handleChange = (path: string, value: any) => {
     const keys = path.split(".");
@@ -102,6 +105,10 @@ export default function ActaForm() {
         SnackbarUtilities.success('Acta creada exitasomente')
       }
       
+    };
+
+    const handleVehicleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      setSelectedVehicle(event.target.value);
     };
   
     const validate = () => {
@@ -195,6 +202,7 @@ export default function ActaForm() {
     if(dni.length === 8){
       const data = await findByDni(dni);
       console.log('infractor encontrado ', data)
+      setVehiculos(data.vehiculos);
     }
   }
 
@@ -299,9 +307,8 @@ export default function ActaForm() {
           {/* Infractor */}
             <Typography variant="h6" sx={{ mt: 3 }}>Infractor</Typography>
             <TextField label="DNI" fullWidth margin="normal" value={form.infractor.dni} onChange={(e) => handleChange("infractor.dni", e.target.value)} error={!!errors["infractor.dni"]} helperText={errors["infractor.dni"]} />
-              <button onClick={fetchInfractorbyDni}>Buscar</button>
-            <TextField label="Nombre" fullWidth margin="normal" value={form.infractor.nombre} onChange={(e) => handleChange("infractor.nombre", e.target.value)} error={!!errors["infractor.nombre"]} helperText={errors["infractor.nombre"]} />
-            <TextField label="Apellido" fullWidth margin="normal" value={form.infractor.apellido} onChange={(e) => handleChange("infractor.apellido", e.target.value)} error={!!errors["infractor.apellido"]} helperText={errors["infractor.apellido"]} />
+              <button type="button" onClick={fetchInfractorbyDni}>Buscar</button>
+            <TextField label="Apellido y Nombre" fullWidth margin="normal" value={form.infractor.nombre} onChange={(e) => handleChange("infractor.nombre", e.target.value)} error={!!errors["infractor.nombre"]} helperText={errors["infractor.nombre"]} />
             <TextField label="Lugar" fullWidth margin="normal" value={form.infractor.lugar} onChange={(e) => handleChange("infractor.lugar", e.target.value)} error={!!errors["infractor.lugar"]} helperText={errors["infractor.lugar"]} />
 
 
@@ -309,14 +316,47 @@ export default function ActaForm() {
             control={<Checkbox checked={propietario} onChange={(e) => { setPropietario(e.target.checked); if (!e.target.checked) setErrors((er) => { const c = { ...er }; delete c["vehiculo.propietario.nombre"]; delete c["vehiculo.propietario.apellido"]; delete c["vehiculo.propietario.dni"]; delete c["vehiculo.propietario.direccion"]; return c; }); }} />}
             label="¿Es propietario?"
             />
+          
           {/* Vehículo */}
-          <Typography variant="h6" sx={{ mt: 3 }}>Vehículo</Typography>
-          <TextField label="Marca" fullWidth margin="normal" value={form.vehiculo.marca} onChange={(e) => handleChange("vehiculo.marca", e.target.value)} error={!!errors["vehiculo.marca"]} helperText={errors["vehiculo.marca"]} />
-          <TextField label="Modelo" fullWidth margin="normal" value={form.vehiculo.modelo} onChange={(e) => handleChange("vehiculo.modelo", e.target.value)} error={!!errors["vehiculo.modelo"]} helperText={errors["vehiculo.modelo"]} />
-          <TextField label="Año" type="number" fullWidth margin="normal" value={form.vehiculo.año as any} onChange={(e) => handleChange("vehiculo.año", e.target.value ? Number(e.target.value) : "")} error={!!errors["vehiculo.año"]} helperText={errors["vehiculo.año"]} />
-          <TextField label="Dominio" fullWidth margin="normal" value={form.vehiculo.dominio} onChange={(e) => handleChange("vehiculo.dominio", e.target.value)} error={!!errors["vehiculo.dominio"]} helperText={errors["vehiculo.dominio"]} />
-          <TextField label="Motor" fullWidth margin="normal" value={form.vehiculo.motor} onChange={(e) => handleChange("vehiculo.motor", e.target.value)} error={!!errors["vehiculo.motor"]} helperText={errors["vehiculo.motor"]} />
-          <TextField label="Cuadro" fullWidth margin="normal" value={form.vehiculo.cuadro} onChange={(e) => handleChange("vehiculo.cuadro", e.target.value)} error={!!errors["vehiculo.cuadro"]} helperText={errors["vehiculo.cuadro"]} />
+          {vehiculos && (
+            <FormControl component="fieldset" fullWidth>
+              <FormLabel component="legend" sx={{ mb: 2 }}>
+                Selecciona un vehículo
+              </FormLabel>
+
+              <RadioGroup
+                name="vehicle"
+                value={selectedVehicle}
+                onChange={handleVehicleChange}
+              >
+                {vehiculos.map((vehicle) => (
+                  <FormControlLabel
+                    key={vehicle.idVeh}
+                    value={vehicle.idVeh.toString()}
+                    control={<Radio />}
+                    label={`DOMINIO ${vehicle.dominio}`}
+                  />
+                ))}
+
+                {/* Opción adicional */}
+                <FormControlLabel
+                  value=""
+                  control={<Radio />}
+                  label="Otro"
+                />
+              </RadioGroup>
+            </FormControl>
+          )}
+          
+          <Collapse in={selectedVehicle === ""}>
+            <Typography variant="h6" sx={{ mt: 3 }}>Vehículo</Typography>
+            <TextField label="Marca" fullWidth margin="normal" value={form.vehiculo.marca} onChange={(e) => handleChange("vehiculo.marca", e.target.value)} error={!!errors["vehiculo.marca"]} helperText={errors["vehiculo.marca"]} />
+            <TextField label="Modelo" fullWidth margin="normal" value={form.vehiculo.modelo} onChange={(e) => handleChange("vehiculo.modelo", e.target.value)} error={!!errors["vehiculo.modelo"]} helperText={errors["vehiculo.modelo"]} />
+            <TextField label="Año" type="number" fullWidth margin="normal" value={form.vehiculo.año as any} onChange={(e) => handleChange("vehiculo.año", e.target.value ? Number(e.target.value) : "")} error={!!errors["vehiculo.año"]} helperText={errors["vehiculo.año"]} />
+            <TextField label="Dominio" fullWidth margin="normal" value={form.vehiculo.dominio} onChange={(e) => handleChange("vehiculo.dominio", e.target.value)} error={!!errors["vehiculo.dominio"]} helperText={errors["vehiculo.dominio"]} />
+            <TextField label="Motor" fullWidth margin="normal" value={form.vehiculo.motor} onChange={(e) => handleChange("vehiculo.motor", e.target.value)} error={!!errors["vehiculo.motor"]} helperText={errors["vehiculo.motor"]} />
+            <TextField label="Cuadro" fullWidth margin="normal" value={form.vehiculo.cuadro} onChange={(e) => handleChange("vehiculo.cuadro", e.target.value)} error={!!errors["vehiculo.cuadro"]} helperText={errors["vehiculo.cuadro"]} />
+          </Collapse>
 
           {/* Propietario: se muestra sólo si propietario === true */}
             {!propietario && (
