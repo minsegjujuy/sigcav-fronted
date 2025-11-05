@@ -14,6 +14,7 @@ import { SnackbarUtilities } from "../utilities/SnackbarUtilities";
 import type { Puesto } from "../models/Puesto";
 import { getPuestos } from "../services/PuestoService";
 import ScrollButton from "../components/ScrollFilter";
+import { findByDni } from "../services/InfractorService";
 
 //Quitar estado inicial
 const initialState: ActaRequest = {
@@ -189,6 +190,14 @@ export default function ActaForm() {
     }
   };
 
+  const fetchInfractorbyDni = async () => {
+    const dni = form.infractor.dni;
+    if(dni.length === 8){
+      const data = await findByDni(dni);
+      console.log('infractor encontrado ', data)
+    }
+  }
+
   useEffect(()=> {
     fetchTipo();
     fetchGrupo();
@@ -289,9 +298,10 @@ export default function ActaForm() {
 
           {/* Infractor */}
             <Typography variant="h6" sx={{ mt: 3 }}>Infractor</Typography>
+            <TextField label="DNI" fullWidth margin="normal" value={form.infractor.dni} onChange={(e) => handleChange("infractor.dni", e.target.value)} error={!!errors["infractor.dni"]} helperText={errors["infractor.dni"]} />
+              <button onClick={fetchInfractorbyDni}>Buscar</button>
             <TextField label="Nombre" fullWidth margin="normal" value={form.infractor.nombre} onChange={(e) => handleChange("infractor.nombre", e.target.value)} error={!!errors["infractor.nombre"]} helperText={errors["infractor.nombre"]} />
             <TextField label="Apellido" fullWidth margin="normal" value={form.infractor.apellido} onChange={(e) => handleChange("infractor.apellido", e.target.value)} error={!!errors["infractor.apellido"]} helperText={errors["infractor.apellido"]} />
-            <TextField label="DNI" fullWidth margin="normal" value={form.infractor.dni} onChange={(e) => handleChange("infractor.dni", e.target.value)} error={!!errors["infractor.dni"]} helperText={errors["infractor.dni"]} />
             <TextField label="Lugar" fullWidth margin="normal" value={form.infractor.lugar} onChange={(e) => handleChange("infractor.lugar", e.target.value)} error={!!errors["infractor.lugar"]} helperText={errors["infractor.lugar"]} />
 
 
