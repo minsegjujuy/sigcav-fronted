@@ -197,14 +197,50 @@ export default function ActaForm() {
     }
   };
 
-  const fetchInfractorbyDni = async () => {
+  const fetchInfractorByDni = async () => {
     const dni = form.infractor.dni;
-    if(dni.length === 8){
-      const data = await findByDni(dni);
-      console.log('infractor encontrado ', data)
-      setVehiculos(data.vehiculos);
+
+    if (dni.length === 8) {
+      try {
+        const data = await findByDni(dni);
+        console.log("infractor encontrado", data);
+
+        setForm((prev) => ({
+          ...prev,
+          infractor: {
+            ...prev.infractor,
+            idInfrac: data.idInfrac,
+            nombre: data.nombre || "",
+            apellido: data.apellido || "",
+            dni: data.dni,
+            lugar: data.lugar || "",
+            propietario: data.propietario ?? true,
+          },
+        }));
+        if(data.propietario === null){
+          setPropietario(true)
+        }
+
+        // Si el backend también devuelve los vehículos del infractor
+        setVehiculos(data.vehiculos || []);
+      } catch (error) {
+        console.error("Error al buscar infractor:", error);
+      }
+    }else{
+      setForm((prev) => ({
+          ...prev,
+          infractor: {
+            ...prev.infractor,
+            idInfrac: undefined,
+            nombre: "",
+            apellido: "",
+            lugar: "",
+            propietario: false,
+          }
+        }));
+        setVehiculos([]);
     }
-  }
+  };
 
   useEffect(()=> {
     fetchTipo();
@@ -307,7 +343,7 @@ export default function ActaForm() {
           {/* Infractor */}
             <Typography variant="h6" sx={{ mt: 3 }}>Infractor</Typography>
             <TextField label="DNI" fullWidth margin="normal" value={form.infractor.dni} onChange={(e) => handleChange("infractor.dni", e.target.value)} error={!!errors["infractor.dni"]} helperText={errors["infractor.dni"]} />
-              <button type="button" onClick={fetchInfractorbyDni}>Buscar</button>
+              <button type="button" onClick={fetchInfractorByDni}>Buscar</button>
             <TextField label="Apellido y Nombre" fullWidth margin="normal" value={form.infractor.nombre} onChange={(e) => handleChange("infractor.nombre", e.target.value)} error={!!errors["infractor.nombre"]} helperText={errors["infractor.nombre"]} />
             <TextField label="Lugar" fullWidth margin="normal" value={form.infractor.lugar} onChange={(e) => handleChange("infractor.lugar", e.target.value)} error={!!errors["infractor.lugar"]} helperText={errors["infractor.lugar"]} />
 
