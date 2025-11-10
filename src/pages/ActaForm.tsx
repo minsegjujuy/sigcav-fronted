@@ -9,13 +9,13 @@ import { getAllTipoActas } from "../services/TipoActaService";
 import { getGrupos } from "../services/GrupoService";
 import { getLeyes } from "../services/LeyService";
 import { getArticulosByLey } from "../services/ArticuloService";
-import { crearActa } from "../services/ActaService";
 import { SnackbarUtilities } from "../utilities/SnackbarUtilities";
 import type { Puesto } from "../models/Puesto";
 import { getPuestos } from "../services/PuestoService";
 import ScrollButton from "../components/ScrollFilter";
 import { findByDni } from "../services/InfractorService";
 import type { Vehiculo } from "../models/Vehiculo";
+import { crearActa } from "../services/ActaService";
 
 //Quitar estado inicial
 const initialState: ActaRequest = {
@@ -64,7 +64,7 @@ export default function ActaForm() {
   const [propietario, setPropietario] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
-  const [selectedVehicle, setSelectedVehicle] = useState<string>("");
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehiculo | null>(null);
 
   const handleChange = (path: string, value: any) => {
     const keys = path.split(".");
@@ -85,10 +85,18 @@ export default function ActaForm() {
     fetchArticulosPorLey(leyId);
   };
 
-  const handleCheck = (id: number) => {
-    setArticulosSeleccionados((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
+  const handleCheck = (idArt: number) => {
+    const alreadySelected = articulosSeleccionados.includes(idArt);
+    const updated = alreadySelected
+      ? articulosSeleccionados.filter((id) => id !== idArt)
+      : [...articulosSeleccionados, idArt];
+
+    // actualizamos tanto el estado local como el form
+    setArticulosSeleccionados(updated);
+    setForm({
+      ...form,
+      articulos: updated,
+    });
   };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -108,7 +116,20 @@ export default function ActaForm() {
     };
 
     const handleVehicleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      setSelectedVehicle(event.target.value);
+        const id = Number(event.target.value);
+
+        if (!id) {
+          setSelectedVehicle(null);
+          return;
+        }
+
+        const vehiculo = vehiculos.find((v) => v.idVeh === id) || null;
+        console.log('vehiculo seleccionado ',vehiculo)
+        setSelectedVehicle(vehiculo);
+        setForm({...form, vehiculo: {dominio: vehiculo?.dominio!}});
+        if(!vehiculo?.propietario){
+          setPropietario(true)
+        }
     };
   
     const validate = () => {
@@ -127,16 +148,16 @@ export default function ActaForm() {
 
       // infractor
       if (!form.infractor.nombre || form.infractor.nombre.trim() === "") e["infractor.nombre"] = "Nombre del infractor obligatorio";
-      if (!form.infractor.apellido || form.infractor.apellido.trim() === "") e["infractor.apellido"] = "Apellido del infractor obligatorio";
+      //if (!form.infractor.apellido || form.infractor.apellido.trim() === "") e["infractor.apellido"] = "Apellido del infractor obligatorio";
       if (!/^[0-9]{8}$/.test(form.infractor.dni || "")) e["infractor.dni"] = "DNI del infractor debe tener 8 dígitos";
       if (!form.infractor.lugar || form.infractor.lugar.trim() === "") e["infractor.lugar"] = "Lugar obligatorio";
 
 
       // vehiculo
       const v = form.vehiculo;
-      if (!v.marca || String(v.marca).trim() === "") e["vehiculo.marca"] = "Marca obligatoria";
-      if (!v.modelo || String(v.modelo).trim() === "") e["vehiculo.modelo"] = "Modelo obligatorio";
-      if (!v.año) e["vehiculo.año"] = "Año obligatorio";
+      //if (!v.marca || String(v.marca).trim() === "") e["vehiculo.marca"] = "Marca obligatoria";
+      //if (!v.modelo || String(v.modelo).trim() === "") e["vehiculo.modelo"] = "Modelo obligatorio";
+      //f (!v.año) e["vehiculo.año"] = "Año obligatorio";
       if (!v.dominio || String(v.dominio).trim() === "") e["vehiculo.dominio"] = "Dominio obligatorio";
       //if (!v.motor || String(v.motor).trim() === "") e["vehiculo.motor"] = "Motor obligatorio";
       //if (!v.cuadro || String(v.cuadro).trim() === "") e["vehiculo.cuadro"] = "Cuadro obligatorio";
@@ -217,9 +238,7 @@ export default function ActaForm() {
             propietario: data.propietario ?? true,
           },
         }));
-        if(data.propietario === null){
-          setPropietario(true)
-        }
+        setPropietario(true)
 
         // Si el backend también devuelve los vehículos del infractor
         setVehiculos(data.vehiculos || []);
@@ -362,29 +381,24 @@ export default function ActaForm() {
 
               <RadioGroup
                 name="vehicle"
-                value={selectedVehicle}
+                value={selectedVehicle?.idVeh ?? ""}
                 onChange={handleVehicleChange}
               >
                 {vehiculos.map((vehicle) => (
                   <FormControlLabel
                     key={vehicle.idVeh}
-                    value={vehicle.idVeh.toString()}
+                    value={vehicle.idVeh}
                     control={<Radio />}
                     label={`DOMINIO ${vehicle.dominio}`}
                   />
                 ))}
 
-                {/* Opción adicional */}
-                <FormControlLabel
-                  value=""
-                  control={<Radio />}
-                  label="Otro"
-                />
+                <FormControlLabel value="" control={<Radio />} label="Otro" />
               </RadioGroup>
             </FormControl>
           )}
           
-          <Collapse in={selectedVehicle === ""}>
+          <Collapse in={!selectedVehicle}>
             <Typography variant="h6" sx={{ mt: 3 }}>Vehículo</Typography>
             <TextField label="Marca" fullWidth margin="normal" value={form.vehiculo.marca} onChange={(e) => handleChange("vehiculo.marca", e.target.value)} error={!!errors["vehiculo.marca"]} helperText={errors["vehiculo.marca"]} />
             <TextField label="Modelo" fullWidth margin="normal" value={form.vehiculo.modelo} onChange={(e) => handleChange("vehiculo.modelo", e.target.value)} error={!!errors["vehiculo.modelo"]} helperText={errors["vehiculo.modelo"]} />
