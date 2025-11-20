@@ -16,6 +16,8 @@ import ScrollButton from "../components/ScrollFilter";
 import { findByDni } from "../services/InfractorService";
 import type { Vehiculo } from "../models/Vehiculo";
 import { crearActa } from "../services/ActaService";
+import { PropietarioService } from "../services/PropietarioService";
+import type { Propietario } from "../models/Propietario";
 
 //Quitar estado inicial
 const initialState: ActaRequest = {
@@ -27,6 +29,7 @@ const initialState: ActaRequest = {
   nro: "",
   articulos: [],
   infractor: {
+    idInfrac: null,
     nombre: "",
     apellido: "",
     dni: "",
@@ -66,18 +69,69 @@ export default function ActaForm() {
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehiculo | null>(null);
 
-  const handleChange = (path: string, value: any) => {
+  const handleChange = async (path: string, value: any) => {
     const keys = path.split(".");
-    setForm((prev) => {
-      const updated = { ...prev };
-      let current: any = updated;
-      for (let i = 0; i < keys.length - 1; i++) {
-        current = current[keys[i]];
+    if (path === "vehiculo.propietario.dni" && value.length === 8) {
+        try {
+          const { apellido, direccion, nombre, dni, idProp } =
+            await PropietarioService.obtenerPorDni(value);
+
+          setForm((prev) => ({
+            ...prev,
+            vehiculo: {
+              ...prev.vehiculo,
+              propietario: {
+                idProp,
+                nombre,
+                apellido,
+                dni,
+                direccion,
+              },
+            },
+          }));
+        } catch (err) {
+          console.error("Propietario no encontrado");
+        }
+      }else if (path === "vehiculo.propietario.dni" && value.length === 7){
+        limpiarPropietario();
       }
+
+    setForm(prev => {
+      const updated = structuredClone(prev); // copia profunda segura
+      let current: any = updated;
+
+      for (let i = 0; i < keys.length - 1; i++) {
+        const key = keys[i];
+
+        if (current[key] === undefined || current[key] === null) {
+          current[key] = {}; // ⚠️ si no existe, lo creo
+        }
+
+        current = current[key];
+      }
+
       current[keys[keys.length - 1]] = value;
+
       return updated;
     });
   };
+
+  const limpiarPropietario = () => {
+    setForm((prev) => ({
+            ...prev,
+            vehiculo: {
+              ...prev.vehiculo,
+              propietario: {
+                idProp: undefined,
+                nombre : '',
+                apellido: '',
+                dni : '',
+                direccion : '',
+              },
+            },
+          }));
+  }
+
 
   const handleLeyChange = (event: SelectChangeEvent) => {
     const leyId = Number(event.target.value);
@@ -126,9 +180,13 @@ export default function ActaForm() {
         const vehiculo = vehiculos.find((v) => v.idVeh === id) || null;
         console.log('vehiculo seleccionado ',vehiculo)
         setSelectedVehicle(vehiculo);
-        setForm({...form, vehiculo: {dominio: vehiculo?.dominio!}});
-        if(!vehiculo?.propietario){
-          setPropietario(true)
+        setForm({...form, vehiculo: {dominio: vehiculo?.dominio!, año: vehiculo?.año,
+          cuadro: vehiculo?.cuadro!, marca: vehiculo?.marca, modelo: vehiculo?.modelo, idVeh: vehiculo?.idVeh
+        }});
+        if (!vehiculo?.propietario) {
+          setPropietario(true);
+        } else {
+          setPropietario(!vehiculo.propietario); 
         }
     };
   
@@ -225,41 +283,47 @@ export default function ActaForm() {
       try {
         const data = await findByDni(dni);
         console.log("infractor encontrado", data);
-
-        setForm((prev) => ({
-          ...prev,
-          infractor: {
-            ...prev.infractor,
-            idInfrac: data.idInfrac,
-            nombre: data.nombre || "",
-            apellido: data.apellido || "",
-            dni: data.dni,
-            lugar: data.lugar || "",
-            propietario: data.propietario ?? true,
-          },
-        }));
-        setPropietario(true)
-
+        if(data.idInfrac){
+          setForm((prev) => ({
+                    ...prev,
+                    infractor: {
+                      ...prev.infractor,
+                      idInfrac: data.idInfrac || null,
+                      nombre: data.nombre || "",
+                      apellido: data.apellido || "",
+                      dni: data.dni,
+                      lugar: data.lugar || "",
+                      propietario: data.propietario ?? true,
+                    },
+                  }));
+                  setPropietario(true)
+        }else{
+          clearInfractor();
+        }
         // Si el backend también devuelve los vehículos del infractor
         setVehiculos(data.vehiculos || []);
       } catch (error) {
-        console.error("Error al buscar infractor:", error);
+        SnackbarUtilities.info('Infractor no encontrado, continue completando los datos')
       }
     }else{
-      setForm((prev) => ({
+      clearInfractor()
+    }
+  };
+
+  const clearInfractor = () => {
+    setForm((prev) => ({
           ...prev,
           infractor: {
             ...prev.infractor,
-            idInfrac: undefined,
+            idInfrac: null,
             nombre: "",
             apellido: "",
             lugar: "",
             propietario: false,
           }
         }));
-        setVehiculos([]);
-    }
-  };
+      setVehiculos([]);
+  }
 
   useEffect(()=> {
     fetchTipo();
@@ -340,15 +404,21 @@ export default function ActaForm() {
 
 
           {/* Datos generales */}
-          <TextField
-            label="Motivo"
-            fullWidth
-            margin="normal"
-            onChange={(e) => handleChange("motivo", e.target.value)}
-            value={form.motivo}
-            error={!!errors.nro}
-            helperText={errors.nro}
-            />
+            <FormControl sx={{ display: 'flex', alignItems: 'flex-start' }}>
+              <FormLabel id="demo-radio-buttons-group-label">Observacion</FormLabel>
+              <RadioGroup
+                aria-labelledby="demo-radio-buttons-group-label"
+                defaultValue="ALCOHOTEST"
+                name="radio-buttons-group"
+                onChange={(e) => handleChange("motivo", e.target.value)}
+              >
+                <FormControlLabel value="POR HECHO VIAL" control={<Radio />} label="POR HECHO VIAL" />
+                <FormControlLabel value="CONTROL RUTINARIO" control={<Radio />} label="CONTROL RUTINARIO" />
+                <FormControlLabel value="CAMION VARADO" control={<Radio />} label="CAMION VARADO" />
+                <FormControlLabel value="CONTROL DE VELOCIDAD" control={<Radio />} label="CONTROL DE VELOCIDAD" />
+                <FormControlLabel value="ALCOHOTEST" control={<Radio />} label="ALCOHOTEST" />
+              </RadioGroup>
+            </FormControl>
           <TextField
             label="Número de Acta"
             fullWidth
@@ -398,7 +468,7 @@ export default function ActaForm() {
             </FormControl>
           )}
           
-          <Collapse in={!selectedVehicle}>
+          
             <Typography variant="h6" sx={{ mt: 3 }}>Vehículo</Typography>
             <TextField label="Marca" fullWidth margin="normal" value={form.vehiculo.marca} onChange={(e) => handleChange("vehiculo.marca", e.target.value)} error={!!errors["vehiculo.marca"]} helperText={errors["vehiculo.marca"]} />
             <TextField label="Modelo" fullWidth margin="normal" value={form.vehiculo.modelo} onChange={(e) => handleChange("vehiculo.modelo", e.target.value)} error={!!errors["vehiculo.modelo"]} helperText={errors["vehiculo.modelo"]} />
@@ -406,15 +476,15 @@ export default function ActaForm() {
             <TextField label="Dominio" fullWidth margin="normal" value={form.vehiculo.dominio} onChange={(e) => handleChange("vehiculo.dominio", e.target.value)} error={!!errors["vehiculo.dominio"]} helperText={errors["vehiculo.dominio"]} />
             <TextField label="Motor" fullWidth margin="normal" value={form.vehiculo.motor} onChange={(e) => handleChange("vehiculo.motor", e.target.value)} error={!!errors["vehiculo.motor"]} helperText={errors["vehiculo.motor"]} />
             <TextField label="Cuadro" fullWidth margin="normal" value={form.vehiculo.cuadro} onChange={(e) => handleChange("vehiculo.cuadro", e.target.value)} error={!!errors["vehiculo.cuadro"]} helperText={errors["vehiculo.cuadro"]} />
-          </Collapse>
+          
 
           {/* Propietario: se muestra sólo si propietario === true */}
             {!propietario && (
             <Box>
             <Typography variant="h6" sx={{ mt: 3 }}>Propietario</Typography>
+            <TextField label="DNI" fullWidth margin="normal" value={form.vehiculo.propietario?.dni} onChange={(e) => handleChange("vehiculo.propietario.dni", e.target.value)} error={!!errors["vehiculo.propietario.dni"]} helperText={errors["vehiculo.propietario.dni"]} />
             <TextField label="Nombre" fullWidth margin="normal" value={form.vehiculo.propietario?.nombre} onChange={(e) => handleChange("vehiculo.propietario.nombre", e.target.value)} error={!!errors["vehiculo.propietario.nombre"]} helperText={errors["vehiculo.propietario.nombre"]} />
             <TextField label="Apellido" fullWidth margin="normal" value={form.vehiculo.propietario?.apellido} onChange={(e) => handleChange("vehiculo.propietario.apellido", e.target.value)} error={!!errors["vehiculo.propietario.apellido"]} helperText={errors["vehiculo.propietario.apellido"]} />
-            <TextField label="DNI" fullWidth margin="normal" value={form.vehiculo.propietario?.dni} onChange={(e) => handleChange("vehiculo.propietario.dni", e.target.value)} error={!!errors["vehiculo.propietario.dni"]} helperText={errors["vehiculo.propietario.dni"]} />
             <TextField label="Dirección" fullWidth margin="normal" value={form.vehiculo.propietario?.direccion} onChange={(e) => handleChange("vehiculo.propietario.direccion", e.target.value)} error={!!errors["vehiculo.propietario.direccion"]} helperText={errors["vehiculo.propietario.direccion"]} />
             </Box>
             )}

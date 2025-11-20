@@ -1,5 +1,5 @@
 export interface InfractorSolicitud {
-  idInfrac?: number;
+  idInfrac: number | null;
   nombre: string;
   apellido: string;
   dni: string;
