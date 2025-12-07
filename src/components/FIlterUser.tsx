@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useCallback,  useRef, useState } from "react";
+import { TextField } from "@mui/material";
 
 interface FilterValues {
   infractor: string;
@@ -9,63 +10,52 @@ interface FilterFormProps {
   onFilter: (filters: FilterValues) => void;
 }
 
+interface FilterValues { infractor: string; nro: string; }
+interface FilterFormProps { onFilter: (filters: FilterValues) => void; }
+
+function useDebouncedCallback<T extends (...args: any[]) => void>(fn: T, wait = 1000) {
+  const timeoutRef = useRef<number | null>(null);
+  const fnRef = useRef(fn);
+
+  // keep latest fn
+  fnRef.current = fn;
+
+  const cancel = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+
+  const debounced = useCallback((...args: Parameters<T>) => {
+    cancel();
+    timeoutRef.current = window.setTimeout(() => {
+      fnRef.current(...args);
+      timeoutRef.current = null;
+    }, wait);
+  }, [wait]);
+
+  return { debounced, cancel };
+}
+
 const FilterForm: React.FC<FilterFormProps> = ({ onFilter }) => {
   const [filters, setFilters] = useState<FilterValues>({ infractor: "", nro: "" });
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const { debounced } = useDebouncedCallback(onFilter, 500);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onFilter(filters);
-  };
-
-  const handleReset = () => {
-    const cleared = { infractor: "", nro: "" };
-    setFilters(cleared);
-    onFilter(cleared);
+    const updated = { ...filters, [name]: value };
+    setFilters(updated);
+    debounced(updated); // usamos la misma referencia siempre
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-    >
-      <input
-        type="text"
-        name="infractor"
-        placeholder="Nombre del infractor"
-        value={filters.infractor}
-        onChange={handleChange}
-      />
-
-      <input
-        type="text"
-        name="nro"
-        placeholder="Número de acta PDA o serie B"
-        value={filters.nro}
-        onChange={handleChange}
-      />
-
-      <div>
-        <button
-          type="submit"
-        >
-          Filtrar
-        </button>
-        <button
-          type="button"
-          onClick={handleReset}
-        >
-          Limpiar
-        </button>
-      </div>
+    <form onSubmit={(e) => e.preventDefault()}>
+      <TextField placeholder="nombre del infractor" name="infractor" value={filters.infractor} onChange={handleChange} />
+      <TextField placeholder="Numero de acta" name="nro" value={filters.nro} onChange={handleChange} />
     </form>
   );
 };
 
 export default FilterForm;
-

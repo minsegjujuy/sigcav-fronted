@@ -12,6 +12,8 @@ import Navbar from './components/Navbar'
 import Reporte from './pages/Reporte'
 import { useMemo, useState } from 'react'
 import { createTheme, CssBaseline, ThemeProvider } from '@mui/material'
+import Talonario from './pages/Talonario'
+import RegistroTalonario from './pages/RegistroTalonario'
 
 function App() {
   const [mode, setMode] = useState<"light" | "dark">("light");
@@ -72,7 +74,16 @@ function App() {
                     <Dashboard />
                   </RequireAuth>
                   } />
-                
+                <Route path='/dashboard/talonarios' element={
+                  <RequireAuth allowedRoles={["ADMIN"]}>
+                    <Talonario />
+                  </RequireAuth>
+                  } />
+                  <Route path='/dashboard/talonarios/registros' element={
+                  <RequireAuth allowedRoles={["ADMIN"]}>
+                    <RegistroTalonario />
+                  </RequireAuth>
+                  } />
               </Routes>
             </ArticuloProvider>
           </SnackbarProvider>

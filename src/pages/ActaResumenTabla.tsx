@@ -8,6 +8,9 @@ import { useSelector } from "react-redux";
 import type { RootState } from "../redux/store/Store";
 import FilterForm from "../components/FIlterUser";
 import ScrollButton from "../components/ScrollFilter";
+import type { UserFilter } from "../models/UserFilter";
+import AutocompleteApi from "../components/containers/AutocompleteApi";
+import Button from "../components/ui/button/Button";
 
 const ActaResumenTable: React.FC = () => {
   const [actas, setActas] = useState<ActaResumenDto[]>([]);
@@ -23,10 +26,15 @@ const ActaResumenTable: React.FC = () => {
 
   const handleChange = (event: React.ChangeEvent<unknown>, value: number) => {
     const realPage = value -1;
-    setFilters({...filters, page : realPage});
-    setFiltersPersonal({...filtersPersonal, page : realPage});
-    // Aquí podés llamar a tu API con la nueva página, por ejemplo:
-    // fetchActas(value);
+      setFilters(prev => ({
+      ...prev,
+      page: realPage,
+    }));
+
+    setFiltersPersonal(prev => ({
+      ...prev,
+      page: realPage,
+    }));
   };
 
   const handleFilterChange = (path: string, value: any) => {
@@ -48,8 +56,24 @@ const ActaResumenTable: React.FC = () => {
     newValue: Articulo | null
   ) => {
     console.log("Seleccionado:", newValue?.idArt);
-    setFilters({...filters, articulo:newValue?.idArt})
+    setFilters(prev => ({
+      ...prev,
+      articulo: newValue?.idArt
+    }));
   };
+
+  const cleanFIlters = () => {
+    setFilters({
+      page:0,
+      size:12,
+      grupo:'',
+      puesto:'',
+      articulo:'',
+      userId:'',
+      infractor:'',
+      nro:''
+    })
+  }
 
   // handler para typing en el input del Autocomplete (TextField)
   const handleInputChange = (
@@ -89,7 +113,26 @@ const ActaResumenTable: React.FC = () => {
 
   const handleFilter = (filters: { infractor: string; nro: string }) => {
     console.log("Filtros aplicados:", filters);
-    setFiltersPersonal({...filtersPersonal, nro:filters.nro, infractor: filters.infractor});
+        setFiltersPersonal(prev => ({
+      ...prev,
+      nro: filters.nro,
+      infractor: filters.infractor,
+    }));
+
+    setFilters(prev => ({
+      ...prev,
+      nro: filters.nro,
+      infractor: filters.infractor,
+    }));
+
+  };
+
+  const handleSelect = (option: UserFilter | null) => {
+    console.log("Seleccionado:", option);
+    setFilters(prev => ({
+      ...prev,
+      userId: option?.idUser,
+    }));
   };
 
 
@@ -97,7 +140,7 @@ const ActaResumenTable: React.FC = () => {
     fetchData();
     console.log('filters ', filters)
     console.log('filters para el personal', filtersPersonal)
-  }, [filters?.page, filters?.grupo, filters?.articulo, filtersPersonal.page,
+  }, [filters?.page, filters?.grupo, filters?.articulo, filters?.userId, filtersPersonal.page,
     filtersPersonal.infractor, filtersPersonal.nro
   ]);
 
@@ -134,9 +177,10 @@ const ActaResumenTable: React.FC = () => {
             />
           )}
         />
+        <AutocompleteApi onSelect={handleSelect} />
         </>
       )}
-      {showFilterUser && <FilterForm onFilter={handleFilter}/>}
+      <FilterForm onFilter={handleFilter}/>
       <Typography variant="h6" sx={{ mb: 2 }}>
         Cantidad de actas: {totalElements}
       </Typography>
