@@ -26,7 +26,6 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try{
-      console.log(data)
         const authResponse = await login(data!);
         dispatch(loginAction(authResponse.jwt));
         navigate("/dashboard");

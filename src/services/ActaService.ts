@@ -8,6 +8,8 @@ import buildUrl from "../utilities/BuildUrl";
 import type { DiasCantidad } from "../models/DiasCantidad";
 import type { ArticuloCantidad } from "../models/ArticuloCantidad";
 import type { ActaGrupo } from "../models/ActaGrupo";
+import type { GrupoInforme } from "../models/GrupoInforme";
+import type { TipoInformeList } from "../models/TipoInformeList";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 
@@ -59,5 +61,25 @@ export const obtenerActasPorGrupo = async (fi: string, ff: string): Promise<Acta
   }
   const newUrl = buildUrl(`${baseURL}/acta/private/por-grupo`, params);
   const response = await axios.get<ActaGrupo[]>(newUrl, getAuthHeader());
+  return response.data;
+}
+
+export const obtenerActasPorGrupoPorPuesto = async (fi: string, ff: string): Promise<GrupoInforme[]> => {
+  const params = {
+    fechaInicio:fi,
+    fechaFin:ff
+  }
+  const newUrl = buildUrl(`${baseURL}/acta/private/grupos-por-puesto`, params);
+  const response = await axios.get<GrupoInforme[]>(newUrl, getAuthHeader());
+  return response.data;
+}
+
+export const obtenerTipoDeActasPorPuesto = async (fi: string, ff: string): Promise<TipoInformeList[]> => {
+  const params = {
+    fechaInicio:fi,
+    fechaFin:ff
+  }
+  const newUrl = buildUrl(`${baseURL}/acta/private/tipos-por-puesto`, params);
+  const response = await axios.get<TipoInformeList[]>(newUrl, getAuthHeader());
   return response.data;
 }

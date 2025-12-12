@@ -60,7 +60,7 @@ function App() {
                 <Route path="/" element={<Login />} />
                 <Route path="/dashboard/informes" element={<Reporte />} />
                 <Route path='/dashboard/nueva-acta' element={
-                  <RequireAuth allowedRoles={["ADMIN", "PERSONAL"]}>
+                  <RequireAuth allowedRoles={["ADMIN"]}>
                     <ActaForm />
                   </RequireAuth>
                   } />

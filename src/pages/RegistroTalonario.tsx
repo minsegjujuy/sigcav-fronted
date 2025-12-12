@@ -10,6 +10,11 @@ import {
   Paper,
   CircularProgress,
   Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  type SelectChangeEvent,
 } from "@mui/material";
 import { getRegistrostalonarios } from "../services/RegistroTalonarioService";
 import type { RegistroTalonario } from "../models/RegistroTalonario";
@@ -18,10 +23,14 @@ import type { RegistroTalonario } from "../models/RegistroTalonario";
 const RegistroTalonario = () => {
   const [searchParams] = useSearchParams();
   const idTal = Number(searchParams.get("idTal"));
-
+  //const [estado, setEstado] = useState<string | null>(null);
   const [registros, setRegistros] = useState<RegistroTalonario[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [params, setParams] = useState<Record<string, any>>({
+    talonario:idTal,
+    estado: undefined
+  })
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,7 +41,7 @@ const RegistroTalonario = () => {
           return;
         }
 
-        const data = await getRegistrostalonarios(idTal);
+        const data = await getRegistrostalonarios(params);
         setRegistros(data);
       } catch (e) {
         setError("Error al cargar los registros");
@@ -42,7 +51,17 @@ const RegistroTalonario = () => {
     };
 
     fetchData();
-  }, [idTal]);
+  }, [idTal, params.estado]);
+
+  const handleChange = (event: SelectChangeEvent) => {
+    const value = event.target.value;
+    console.log(value);
+    if(value === ''){
+      setParams(prevParams => ({...prevParams, estado:undefined}));
+    }else{
+      setParams(prevParams => ({...prevParams, estado:value}));
+    }
+  };
 
   if (loading) return <CircularProgress />;
   if (error) return <Typography color="error">{error}</Typography>;
@@ -52,6 +71,20 @@ const RegistroTalonario = () => {
       <Typography variant="h6" p={2}>
         Registros del talonario {idTal}
       </Typography>
+      <FormControl fullWidth>
+        <InputLabel>Estado</InputLabel>
+        <Select
+          value={params.estado}
+          label="Estado"
+          onChange={handleChange}
+        >
+          <MenuItem value="">
+            <em>Todos</em>
+          </MenuItem>
+          <MenuItem value="REGISTRADA">REGISTRADA</MenuItem>
+          <MenuItem value="FALTANTE">FALTANTE</MenuItem>
+        </Select>
+      </FormControl>
 
       <Table>
         <TableHead>

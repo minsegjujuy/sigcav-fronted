@@ -34,6 +34,15 @@ const NavListDrawer = () => {
         <ListItemText primary="Informes" />
       </ListItemButton>
     </ListItem>
+
+    <ListItem disablePadding>
+      <ListItemButton component={Link} to="/dashboard/talonarios">
+        <ListItemIcon>
+          <PeopleIcon />
+        </ListItemIcon>
+        <ListItemText primary="talonarios" />
+      </ListItemButton>
+    </ListItem>
   </List>
 </nav>
 

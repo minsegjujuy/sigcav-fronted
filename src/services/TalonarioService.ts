@@ -4,23 +4,25 @@ import type { PageResponse } from "../models/PageResponse";
 import type { TalonarioRequest } from "../models/TalonarioRequest";
 import { getAuthHeader } from "../utilities/getAuthHeader";
 import api from "../interceptors/axios.interceptors";
+import buildUrl from "../utilities/BuildUrl";
 
 const API_URL = `${import.meta.env.VITE_API_BASE_URL}/talonarios`;
 
 export const TalonarioService = {
-  crearTalonario: async (data: TalonarioRequest): Promise<string> => {
-    const response = await api.post<string>(`${API_URL}/nuevo`, data, getAuthHeader());
-    return response.data; // "Talonario creado exitosamente."
+  crearTalonario: async (data: TalonarioRequest): Promise<Talonario> => {
+    const response = await api.post<Talonario>(`${API_URL}/nuevo`, data, getAuthHeader());
+    return response.data;
   },
 
-  obtenerTalonarios: async (params: {
-    page?: number;
-    size?: number;
-    sort?: string[];
-    idPuesto?: number;
-  }): Promise<PageResponse<Talonario>> => {
-    const response = await axios.get<PageResponse<Talonario>>(`${API_URL}/`, getAuthHeader());
+  obtenerTalonarios: async (params: Record<string, any>): Promise<PageResponse<Talonario>> => {
+    const newUrl = buildUrl(`${API_URL}/`, params)
+    const response = await axios.get<PageResponse<Talonario>>(newUrl, getAuthHeader());
 
     return response.data;
   },
+
+  eliminarTalonario: async (idTal: Number) => {
+    const response = await api.delete(`${API_URL}/${idTal}`, getAuthHeader());
+    return response.data;
+  }
 };

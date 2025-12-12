@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ActaRequest } from "../models/ActaRequest";
-import { Box, Button, Checkbox, Collapse, Container, FormControl, FormControlLabel, FormGroup, FormHelperText, FormLabel, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, TextField, Typography, type SelectChangeEvent } from "@mui/material";
+import { Box, Button, Checkbox, Container, FormControl, FormControlLabel, FormGroup, FormHelperText, FormLabel, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, TextField, Typography, type SelectChangeEvent } from "@mui/material";
 import type { Articulo } from "../models/Articulo";
 import type { Tipo } from "../models/Tipo";
 import type { Grupo } from "../models/Grupo";
@@ -17,8 +17,8 @@ import { findByDni } from "../services/InfractorService";
 import type { Vehiculo } from "../models/Vehiculo";
 import { crearActa } from "../services/ActaService";
 import { PropietarioService } from "../services/PropietarioService";
-import type { Propietario } from "../models/Propietario";
-
+import { southAmericanCountries } from "../utilities/Paises";
+import { argentinaProvinces } from "../utilities/Provincias";
 //Quitar estado inicial
 const initialState: ActaRequest = {
   idGrupo: 1,
@@ -33,7 +33,8 @@ const initialState: ActaRequest = {
     nombre: "",
     apellido: "",
     dni: "",
-    lugar: "",
+    nacionalidad: "",
+    provincia: '',
     propietario: true
   },
   vehiculo: {
@@ -68,6 +69,33 @@ export default function ActaForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehiculo | null>(null);
+
+  const handleCountryChange = (e: SelectChangeEvent) => {
+    const pais = e.target.value;
+
+    setForm((prev) => ({
+      ...prev,
+      infractor: {
+        ...prev.infractor,
+        nacionalidad: pais,
+        provincia: pais === "ARGENTINA" ? prev.infractor.provincia : "" // si no es Argentina, provincia en blanco
+      }
+    }));
+  };
+
+  const handleProvinceChange = (e: SelectChangeEvent) => {
+    const provincia = e.target.value;
+
+    setForm((prev) => ({
+      ...prev,
+      infractor: {
+        ...prev.infractor,
+        provincia
+      }
+    }));
+  };
+
+
 
   const handleChange = async (path: string, value: any) => {
     const keys = path.split(".");
@@ -104,7 +132,7 @@ export default function ActaForm() {
         const key = keys[i];
 
         if (current[key] === undefined || current[key] === null) {
-          current[key] = {}; // ⚠️ si no existe, lo creo
+          current[key] = {};
         }
 
         current = current[key];
@@ -208,7 +236,7 @@ export default function ActaForm() {
       if (!form.infractor.nombre || form.infractor.nombre.trim() === "") e["infractor.nombre"] = "Nombre del infractor obligatorio";
       //if (!form.infractor.apellido || form.infractor.apellido.trim() === "") e["infractor.apellido"] = "Apellido del infractor obligatorio";
       if (!/^[0-9]{8}$/.test(form.infractor.dni || "")) e["infractor.dni"] = "DNI del infractor debe tener 8 dígitos";
-      if (!form.infractor.lugar || form.infractor.lugar.trim() === "") e["infractor.lugar"] = "Lugar obligatorio";
+      if (!form.infractor.nacionalidad || form.infractor.nacionalidad.trim() === "") e["infractor.nacionalidad"] = "Nacionalidad obligatoria";
 
 
       // vehiculo
@@ -434,9 +462,37 @@ export default function ActaForm() {
             <TextField label="DNI" fullWidth margin="normal" value={form.infractor.dni} onChange={(e) => handleChange("infractor.dni", e.target.value)} error={!!errors["infractor.dni"]} helperText={errors["infractor.dni"]} />
               <button type="button" onClick={fetchInfractorByDni}>Buscar</button>
             <TextField label="Apellido y Nombre" fullWidth margin="normal" value={form.infractor.nombre} onChange={(e) => handleChange("infractor.nombre", e.target.value)} error={!!errors["infractor.nombre"]} helperText={errors["infractor.nombre"]} />
-            <TextField label="Lugar" fullWidth margin="normal" value={form.infractor.lugar} onChange={(e) => handleChange("infractor.lugar", e.target.value)} error={!!errors["infractor.lugar"]} helperText={errors["infractor.lugar"]} />
+            <FormControl fullWidth>
+            <InputLabel>Pais</InputLabel>
+            <Select
+              value={form.infractor.nacionalidad}
+              label="Pais"
+              onChange={handleCountryChange}
+            >
+              {southAmericanCountries.map((p) => (
+                <MenuItem key={p} value={p}>
+                  {p}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-
+          {form.infractor.nacionalidad === "ARGENTINA" && (
+            <FormControl fullWidth>
+              <InputLabel>Provincia</InputLabel>
+              <Select
+                value={form.infractor.provincia}
+                label="Provincia"
+                onChange={handleProvinceChange}
+              >
+                {argentinaProvinces.map((prov) => (
+                  <MenuItem key={prov} value={prov}>
+                    {prov}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
             <FormControlLabel
             control={<Checkbox checked={propietario} onChange={(e) => { setPropietario(e.target.checked); if (!e.target.checked) setErrors((er) => { const c = { ...er }; delete c["vehiculo.propietario.nombre"]; delete c["vehiculo.propietario.apellido"]; delete c["vehiculo.propietario.dni"]; delete c["vehiculo.propietario.direccion"]; return c; }); }} />}
             label="¿Es propietario?"

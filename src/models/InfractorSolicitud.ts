@@ -3,6 +3,7 @@ export interface InfractorSolicitud {
   nombre: string;
   apellido: string;
   dni: string;
-  lugar: string;
+  nacionalidad: string;
+  provincia:string
   propietario: boolean;
 }

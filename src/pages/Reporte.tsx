@@ -7,13 +7,21 @@ import ReportePorDia from "./ReportePorDia";
 import type { ParamsDate } from "../models/ParamsDate";
 import ReporteInfracciones from "./ReporteInfracciones";
 import ReportePorGrupo from "./ReportePorGrupo";
+import BarChart from "./ReportePorGrupoYPuesto";
+import { obtenerActasPorGrupoPorPuesto, obtenerTipoDeActasPorPuesto } from "../services/ActaService";
+import type { GrupoInforme } from "../models/GrupoInforme";
+import type { TipoInformeList } from "../models/TipoInformeList";
 
 const Reporte: React.FC = () => {
   const [fechaInicio, setFechaInicio] = useState<Dayjs | null>(dayjs());
   const [fechaFin, setFechaFin] = useState<Dayjs | null>(dayjs());
   const [params, setParams] = useState<ParamsDate | null>(null);
 
-  const handleFilter = () => {
+  const [grupoInforme, setGrupoInforme] = useState<GrupoInforme[]>([])
+  const [tipoInforme, setTipoInforme] = useState<TipoInformeList[]>([])
+
+  const handleFilter = async () => {
+    
     if (!fechaInicio || !fechaFin) {
       // validar
       console.warn("Faltan fechas");
@@ -25,8 +33,45 @@ const Reporte: React.FC = () => {
     const ff = fechaFin.format("YYYY-MM-DDTHH:mm:ssZ");
 
     console.log("Enviando fechas:", fi, ff);
+    await fetchGruposPorPuesto(fi,ff);
+    await fetchTiposDeActaPorPuesto(fi,ff);
     setParams({ fechaInicio: fi, fechaFin: ff });
   };
+
+  const fetchGruposPorPuesto = async (fechaInicio: string, fechaFin: string) => {
+    const data = await obtenerActasPorGrupoPorPuesto(fechaInicio,fechaFin);
+    console.log('grupos ', data, 'fecha ', params)
+    setGrupoInforme(data);
+  }
+
+  const fetchTiposDeActaPorPuesto = async (fechaInicio: string, fechaFin: string) => {
+    const data = await obtenerTipoDeActasPorPuesto(fechaInicio,fechaFin);
+    console.log('tipos ', data, 'fecha ', params)
+    setTipoInforme(data);
+  }
+  //grupos
+  const labelsGrupoInformes = grupoInforme?.map(item => item.puesto);
+  const gruposIds = grupoInforme[0]?.grupos.map(g => g.idGrupo);
+  const seriesGruposPorPuesto = gruposIds?.map(id => ({
+    label: `Grupo ${id}`,
+    data: grupoInforme?.map(p => {
+      const item = p.grupos.find(g => g.idGrupo === id);
+      return item ? item.totalActas : 0;
+    })
+  }));
+
+  //tipo acta
+  const labelsTipoInformes = tipoInforme?.map(item => item.puesto);
+  const tiposIds = tipoInforme[3]?.grupos.map(g => g.tipo);
+  const seriesTiposPorPuesto = tiposIds?.map(tipo => ({
+    label: `Tipo de acta ${tipo}`,
+    data: tipoInforme?.map(p => {
+      const item = p.grupos.find(g => g.tipo === tipo);
+      return item ? item.totalActas : 0;
+    })
+  }));
+
+
 
   return (
     <>
@@ -55,18 +100,26 @@ const Reporte: React.FC = () => {
       </LocalizationProvider>
 
       {/* Paso las fechas formateadas; si no hay params, paso strings vacíos */}
-      <ReportePorDia
-        fechaInicio={params?.fechaInicio ?? ""}
-        fechaFin={params?.fechaFin ?? ""}
-      />
-      <ReporteInfracciones
-        fechaInicio={params?.fechaInicio ?? ""}
-        fechaFin={params?.fechaFin ?? ""}
-      />
-      <ReportePorGrupo
-        fechaInicio={params?.fechaInicio ?? ""}
-        fechaFin={params?.fechaFin ?? ""}
-      />
+      {params ? (
+        <>
+        <ReportePorDia
+          fechaInicio={params.fechaInicio}
+          fechaFin={params.fechaFin}
+        />
+        <ReporteInfracciones
+          fechaInicio={params.fechaInicio}
+          fechaFin={params.fechaFin}
+        />
+        <ReportePorGrupo
+          fechaInicio={params.fechaInicio}
+          fechaFin={params.fechaFin}
+        />
+        <BarChart labels={labelsGrupoInformes} series={seriesGruposPorPuesto} height={400} />
+        <BarChart labels={labelsTipoInformes} series={seriesTiposPorPuesto} height={400} />
+        </>
+      ) : (
+        <p>No se ha seleccionado ningun rango de fechas</p>
+      )}
     </>
   );
 };

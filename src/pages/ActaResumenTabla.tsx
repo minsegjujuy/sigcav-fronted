@@ -10,7 +10,6 @@ import FilterForm from "../components/FIlterUser";
 import ScrollButton from "../components/ScrollFilter";
 import type { UserFilter } from "../models/UserFilter";
 import AutocompleteApi from "../components/containers/AutocompleteApi";
-import Button from "../components/ui/button/Button";
 
 const ActaResumenTable: React.FC = () => {
   const [actas, setActas] = useState<ActaResumenDto[]>([]);
