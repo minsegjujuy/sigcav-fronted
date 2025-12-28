@@ -12,16 +12,18 @@ import {
   type ChartOptions,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import ChartDataLabels from "chartjs-plugin-datalabels";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartDataLabels);
 
 type Props = {
   labels: string[];
   series: { label: string; data: number[] }[];
   height?: number; // opcional
+  titulo: string;
 };
 
-const BarChart: React.FC<Props> = ({ labels, series, height = 300 }) => {
+const BarChart: React.FC<Props> = ({ labels, series, height = 300, titulo }) => {
   // data memoizado
   const data: ChartData<'bar'> = useMemo(() => ({
     labels,
@@ -37,10 +39,23 @@ const BarChart: React.FC<Props> = ({ labels, series, height = 300 }) => {
   const options: ChartOptions<'bar'> = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
+    
     plugins: {
       legend: { position: 'top' },
-      title: { display: true, text: 'Gráfico de Barras' },
-      tooltip: { mode: 'index', intersect: false }
+      title: { display: true, text: titulo },
+      tooltip: { mode: 'index', intersect: false },
+
+      // 👇 NUEVO
+      datalabels: {
+        anchor: 'end',
+        align: 'top',
+        color: '#757575',
+        font: {
+          weight: 'bold',
+          size: 12
+        },
+        formatter: (value) => value
+      }
     },
     scales: {
       x: { stacked: false, title: { display: true, text: 'Categorías' } },

@@ -4,13 +4,14 @@ import { TextField } from "@mui/material";
 interface FilterValues {
   infractor: string;
   nro: string;
+  dni:string;
 }
 
 interface FilterFormProps {
   onFilter: (filters: FilterValues) => void;
 }
 
-interface FilterValues { infractor: string; nro: string; }
+interface FilterValues { infractor: string; nro: string, dni: string; }
 interface FilterFormProps { onFilter: (filters: FilterValues) => void; }
 
 function useDebouncedCallback<T extends (...args: any[]) => void>(fn: T, wait = 1000) {
@@ -39,7 +40,7 @@ function useDebouncedCallback<T extends (...args: any[]) => void>(fn: T, wait = 
 }
 
 const FilterForm: React.FC<FilterFormProps> = ({ onFilter }) => {
-  const [filters, setFilters] = useState<FilterValues>({ infractor: "", nro: "" });
+  const [filters, setFilters] = useState<FilterValues>({ infractor: "", nro: "", dni:"" });
 
   const { debounced } = useDebouncedCallback(onFilter, 500);
 
@@ -52,8 +53,9 @@ const FilterForm: React.FC<FilterFormProps> = ({ onFilter }) => {
 
   return (
     <form onSubmit={(e) => e.preventDefault()}>
-      <TextField placeholder="nombre del infractor" name="infractor" value={filters.infractor} onChange={handleChange} />
+      <TextField placeholder="Nombre del infractor" name="infractor" value={filters.infractor} onChange={handleChange} />
       <TextField placeholder="Numero de acta" name="nro" value={filters.nro} onChange={handleChange} />
+      <TextField placeholder="Dni del infractor" name="dni" value={filters.dni} onChange={handleChange} />
     </form>
   );
 };

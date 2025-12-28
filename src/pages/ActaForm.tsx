@@ -15,10 +15,14 @@ import { getPuestos } from "../services/PuestoService";
 import ScrollButton from "../components/ScrollFilter";
 import { findByDni } from "../services/InfractorService";
 import type { Vehiculo } from "../models/Vehiculo";
-import { crearActa } from "../services/ActaService";
+import { actualizarActa, crearActa } from "../services/ActaService";
 import { PropietarioService } from "../services/PropietarioService";
 import { southAmericanCountries } from "../utilities/Paises";
 import { argentinaProvinces } from "../utilities/Provincias";
+import { actaResumenToActaRequest } from "../utilities/actaResumenToActaRequest";
+import { useActa } from "../context/ActaResumenContext";
+import { useNavigate } from "react-router-dom";
+import { ADJUNTA } from "../utilities/adjunta";
 //Quitar estado inicial
 const initialState: ActaRequest = {
   idGrupo: 1,
@@ -27,6 +31,7 @@ const initialState: ActaRequest = {
   idPuesto:1,
   motivo: "",
   nro: "",
+  adjunta:"",
   articulos: [],
   infractor: {
     idInfrac: null,
@@ -69,6 +74,10 @@ export default function ActaForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehiculo | null>(null);
+  const { actaSeleccionada, limpiarActa } = useActa();
+  const [selected, setSelected] = useState<string[]>([]);
+  const [otroTexto, setOtroTexto] = useState("");
+  const navigate = useNavigate();
 
   const handleCountryChange = (e: SelectChangeEvent) => {
     const pais = e.target.value;
@@ -93,6 +102,32 @@ export default function ActaForm() {
         provincia
       }
     }));
+  };
+
+  const joinSelected = (updatedSelected: string[]): string => {
+    return updatedSelected.join(", ");
+  };
+
+
+  const handleToggle = (value: string) => {
+    setSelected(prev => {
+      const updatedSelected = prev.includes(value)
+        ? prev.filter(v => v !== value)
+        : [...prev, value];
+
+      // Si se desmarca "Otro", limpiamos texto
+      if (!updatedSelected.includes("Otro")) {
+        setOtroTexto("");
+      }
+
+      // Actualizamos adjunta con el array ya actualizado
+      setForm(prevForm => ({
+        ...prevForm,
+        adjunta: joinSelected(updatedSelected)
+      }));
+
+      return updatedSelected;
+    });
   };
 
 
@@ -189,19 +224,32 @@ export default function ActaForm() {
         }
         console.log('propietario ', form.vehiculo.propietario)
         form.infractor.propietario = propietario;
-        console.log('acta ', form)
-        const response = await crearActa(form);
-        console.log('Acta creada:', response);
-        SnackbarUtilities.success('Acta creada exitasomente')
+        form.idTipo = Number(selectedTipoActa);
+        console.log('acta ', form);
+        let response = null;
+        if(actaSeleccionada){
+          response = await actualizarActa(form);
+          limpiarActa();
+          SnackbarUtilities.success('Acta modificada exitasomente')
+        }else{
+          response = await crearActa(form);
+          SnackbarUtilities.success('Acta creada exitasomente')
+          console.log('Acta creada:', response);
+        }
+        navigate('/dashboard/mis-actas')
       }
       
     };
 
     const handleVehicleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const id = Number(event.target.value);
-
+        console.log('estado vehiculo ',event.target.value);
         if (!id) {
+          console.log('estado if ',event.target.value);
           setSelectedVehicle(null);
+          setForm((prevForm) => ({...prevForm, vehiculo:{dominio: '', año: 2025,
+            cuadro: '', marca: '', modelo: '', idVeh: null
+          }}));
           return;
         }
 
@@ -224,7 +272,6 @@ export default function ActaForm() {
       // selects
       if (!selectedTipoActa) e.tipoActa = "El tipo de acta es obligatorio";
       if (!selectedGrupo) e.grupo = "El grupo es obligatorio";
-      if (!selectedPuesto) e.puesto = "El puesto es obligatorio";
 
 
       // campos generales
@@ -354,6 +401,26 @@ export default function ActaForm() {
   }
 
   useEffect(()=> {
+    if (actaSeleccionada?.idActa) {
+      console.log('acta para editar ', actaSeleccionada);
+      const articulos = actaSeleccionada.articulos.map(a => a.idArt)
+      setSelectedTipoActa(actaSeleccionada.idTipo);
+      setSelectedGrupo(actaSeleccionada.idGrupo)
+      setForm(actaResumenToActaRequest(actaSeleccionada));
+      setArticulosSeleccionados(articulos);
+      setSelectedLey(1);
+      fetchArticulosPorLey(1);
+      if(actaSeleccionada.adjunta){
+        let partes = actaSeleccionada.adjunta?.split(',').map(item => item.trim());
+        console.log('partes ', partes);
+        setSelected(partes);
+      }else{
+        setSelected([]);
+      }
+      if(!actaSeleccionada.vehiculo.propietario){
+        setPropietario(true);
+      }
+    }
     fetchTipo();
     fetchGrupo();
     fetchLeyes();
@@ -364,7 +431,7 @@ export default function ActaForm() {
     <Container maxWidth="md">
       <Paper sx={{ p: 4, mt: 4 }}>
         <Typography variant="h5" gutterBottom>
-          Crear Acta de Infracción
+          Formulario de actas
         </Typography>
 
         <Box component="form" onSubmit={handleSubmit}>
@@ -388,7 +455,7 @@ export default function ActaForm() {
             </Select>
             {!!errors.tipoActa && <FormHelperText>{errors.tipoActa}</FormHelperText>}
           </FormControl>
-
+          
           {/* Puesto */}
           <FormControl fullWidth margin="normal" error={!!errors.puesto}>
             <InputLabel id="puesto-label">Puesto</InputLabel>
@@ -397,9 +464,8 @@ export default function ActaForm() {
             id="puesto"
             value={selectedPuesto}
             label="Puesto"
-            onChange={(e) => { setSelectedPuesto(e.target.value as any); setErrors((er) => { const c = { ...er }; delete c.tipoActa; return c; }); }}
+            onChange={(e) => setSelectedPuesto(e.target.value as any)}
             >
-            <MenuItem value="">Seleccione un puesto</MenuItem>
             {puestos.map((puesto) => (
             <MenuItem key={puesto.idPuesto} value={puesto.idPuesto}>
             {puesto.nombre}
@@ -439,6 +505,7 @@ export default function ActaForm() {
                 defaultValue="ALCOHOTEST"
                 name="radio-buttons-group"
                 onChange={(e) => handleChange("motivo", e.target.value)}
+                value={form.motivo}
               >
                 <FormControlLabel value="POR HECHO VIAL" control={<Radio />} label="POR HECHO VIAL" />
                 <FormControlLabel value="CONTROL RUTINARIO" control={<Radio />} label="CONTROL RUTINARIO" />
@@ -447,6 +514,36 @@ export default function ActaForm() {
                 <FormControlLabel value="ALCOHOTEST" control={<Radio />} label="ALCOHOTEST" />
               </RadioGroup>
             </FormControl>
+            <FormControl component="fieldset">
+            <FormLabel component="legend">Adjunta lo siguiente</FormLabel>
+
+            <FormGroup sx={{ display: 'flex', alignItems: 'flex-start' }}>
+              {ADJUNTA.map((opcion) => (
+                <FormControlLabel
+                  key={opcion}
+                  control={
+                    <Checkbox
+                      checked={selected.includes(opcion)}
+                      onChange={() => handleToggle(opcion)}
+                      value={form.adjunta}
+                    />
+                  }
+                  label={opcion}
+                />
+              ))}
+            </FormGroup>
+            {selected.includes("Otro") && (
+              <TextField
+                label="Especifique otro motivo"
+                size="small"
+                fullWidth
+                sx={{ mt: 1 }}
+                value={otroTexto}
+                onChange={(e) => setOtroTexto(e.target.value)}
+              />
+            )}
+
+          </FormControl>
           <TextField
             label="Número de Acta"
             fullWidth
@@ -460,7 +557,7 @@ export default function ActaForm() {
           {/* Infractor */}
             <Typography variant="h6" sx={{ mt: 3 }}>Infractor</Typography>
             <TextField label="DNI" fullWidth margin="normal" value={form.infractor.dni} onChange={(e) => handleChange("infractor.dni", e.target.value)} error={!!errors["infractor.dni"]} helperText={errors["infractor.dni"]} />
-              <button type="button" onClick={fetchInfractorByDni}>Buscar</button>
+              <Button onClick={fetchInfractorByDni}>Buscar</Button>
             <TextField label="Apellido y Nombre" fullWidth margin="normal" value={form.infractor.nombre} onChange={(e) => handleChange("infractor.nombre", e.target.value)} error={!!errors["infractor.nombre"]} helperText={errors["infractor.nombre"]} />
             <FormControl fullWidth>
             <InputLabel>Pais</InputLabel>
@@ -570,6 +667,7 @@ export default function ActaForm() {
             key={articulo.idArt}
             control={<Checkbox checked={articulosSeleccionados.includes(articulo.idArt)} onChange={() => handleCheck(articulo.idArt)} />}
             label={`${articulo.nro}: ${articulo.detalle}`}
+            value={articulosSeleccionados}
             />
             ))}
             </FormGroup>

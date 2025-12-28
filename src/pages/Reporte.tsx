@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Box, Button, Typography } from "@mui/material";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -8,9 +8,13 @@ import type { ParamsDate } from "../models/ParamsDate";
 import ReporteInfracciones from "./ReporteInfracciones";
 import ReportePorGrupo from "./ReportePorGrupo";
 import BarChart from "./ReportePorGrupoYPuesto";
-import { obtenerActasPorGrupoPorPuesto, obtenerTipoDeActasPorPuesto } from "../services/ActaService";
+import { obtenerActasPorGrupoPorPuesto, obtenerActasPorJerarquia, obtenerActasPorMotivo, obtenerActasPorNacionalidad, obtenerActasPorProvincia, obtenerPorcentajeDeActasPorDia, obtenerTipoDeActasPorPuesto } from "../services/ActaService";
 import type { GrupoInforme } from "../models/GrupoInforme";
 import type { TipoInformeList } from "../models/TipoInformeList";
+import type { DiasCantidad } from "../models/DiasCantidad";
+import LineChart from "./LineChart";
+import type { ReporteActas } from "../models/Reporte";
+import { generarPDF } from "../utilities/GenerarPdf";
 
 const Reporte: React.FC = () => {
   const [fechaInicio, setFechaInicio] = useState<Dayjs | null>(dayjs());
@@ -19,6 +23,12 @@ const Reporte: React.FC = () => {
 
   const [grupoInforme, setGrupoInforme] = useState<GrupoInforme[]>([])
   const [tipoInforme, setTipoInforme] = useState<TipoInformeList[]>([])
+  const [porcentajeDiasInforme, setPorcentajeDiasInforme] = useState<DiasCantidad[]>([])
+  const [nacionalidad, setNacionalidad] = useState<ReporteActas[]>([])
+  const [jerarquia, setJerarquia] = useState<ReporteActas[]>([])
+  const [motivo, setMotivo] = useState<ReporteActas[]>([])
+  const [provincia, setProvincia] = useState<ReporteActas[]>([])
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const handleFilter = async () => {
     
@@ -35,6 +45,11 @@ const Reporte: React.FC = () => {
     console.log("Enviando fechas:", fi, ff);
     await fetchGruposPorPuesto(fi,ff);
     await fetchTiposDeActaPorPuesto(fi,ff);
+    await fetchPorcentajePorDia(fi,ff);
+    await fetchCantidadPorJerarquia(fi,ff);
+    await fetchCantidadPorObservacion(fi,ff);
+    await fetchCantidadPorProvincia(fi,ff);
+    await fetchCantidadPorNacionalidad(fi,ff);
     setParams({ fechaInicio: fi, fechaFin: ff });
   };
 
@@ -49,6 +64,37 @@ const Reporte: React.FC = () => {
     console.log('tipos ', data, 'fecha ', params)
     setTipoInforme(data);
   }
+
+  const fetchPorcentajePorDia = async (fechaInicio: string, fechaFin: string) => {
+    const data = await obtenerPorcentajeDeActasPorDia(fechaInicio,fechaFin);
+    console.log('porcentaje ', data, 'fecha ', params)
+    setPorcentajeDiasInforme(data);
+  }
+
+  const fetchCantidadPorJerarquia = async (fechaInicio: string, fechaFin: string) => {
+    const data = await obtenerActasPorJerarquia(fechaInicio,fechaFin);
+    console.log('jerarquia ', data, 'fecha ', params)
+    setJerarquia(data);
+  }
+
+  const fetchCantidadPorObservacion = async (fechaInicio: string, fechaFin: string) => {
+    const data = await obtenerActasPorMotivo(fechaInicio,fechaFin);
+    console.log('motivo ', data, 'fecha ', params)
+    setMotivo(data);
+  }
+
+  const fetchCantidadPorProvincia = async (fechaInicio: string, fechaFin: string) => {
+    const data = await obtenerActasPorProvincia(fechaInicio,fechaFin);
+    console.log('provincia ', data, 'fecha ', params)
+    setProvincia(data);
+  }
+
+  const fetchCantidadPorNacionalidad = async (fechaInicio: string, fechaFin: string) => {
+    const data = await obtenerActasPorNacionalidad(fechaInicio,fechaFin);
+    console.log('nacionalidad ', data, 'fecha ', params)
+    setNacionalidad(data);
+  }
+
   //grupos
   const labelsGrupoInformes = grupoInforme?.map(item => item.puesto);
   const gruposIds = grupoInforme[0]?.grupos.map(g => g.idGrupo);
@@ -71,6 +117,55 @@ const Reporte: React.FC = () => {
     })
   }));
 
+  //porcentaje de actas por dia
+  const labelsPorcentajes = porcentajeDiasInforme.map(d => d.dia);
+
+  const seriesPorcentajes = [
+    {
+      label: "Porcentaje por día",
+      data: porcentajeDiasInforme.map(d => d.cantidad)
+    }
+  ];
+
+  //actas por jerarquia
+  const labelsJerarquia = jerarquia.map(d => d.titulo);
+
+  const seriesJerarquia = [
+    {
+      label: "Jerarquia",
+      data: jerarquia.map(j => j.totalActas)
+    }
+  ];
+
+  //actas por observacion
+  const labelsObservacion = motivo.map(m => m.titulo);
+
+  const seriesObservacion= [
+    {
+      label: "Observacion",
+      data: motivo.map(m => m.totalActas)
+    }
+  ];
+
+  //actas por provincia
+  const labelsProvincia = provincia.map(p => p.titulo);
+
+  const seriesProvincia= [
+    {
+      label: "Provincia",
+      data: provincia.map(p => p.totalActas)
+    }
+  ];
+
+  //actas por nacionalidad
+  const labelsNacionalidad = nacionalidad.map(p => p.titulo);
+
+  const seriesNacionalidad= [
+    {
+      label: "Nacionalidad",
+      data: nacionalidad.map(p => p.totalActas)
+    }
+  ];
 
 
   return (
@@ -98,10 +193,11 @@ const Reporte: React.FC = () => {
           </Button>
         </Box>
       </LocalizationProvider>
-
+      {params && <Button onClick={()=> generarPDF(contentRef, params)}>Generar PDF</Button>}
       {/* Paso las fechas formateadas; si no hay params, paso strings vacíos */}
       {params ? (
         <>
+        <div ref={contentRef}>
         <ReportePorDia
           fechaInicio={params.fechaInicio}
           fechaFin={params.fechaFin}
@@ -114,8 +210,20 @@ const Reporte: React.FC = () => {
           fechaInicio={params.fechaInicio}
           fechaFin={params.fechaFin}
         />
-        <BarChart labels={labelsGrupoInformes} series={seriesGruposPorPuesto} height={400} />
-        <BarChart labels={labelsTipoInformes} series={seriesTiposPorPuesto} height={400} />
+        
+           <BarChart titulo={'PORCENTAJE DE ACTAS REALIZADAS EN LAS DIFERENTES GUARDIAS'}
+          labels={labelsGrupoInformes} series={seriesGruposPorPuesto} height={400} />
+          <BarChart titulo="CANTIDAD DE ACTAS SERIE B/PDA" labels={labelsTipoInformes} series={seriesTiposPorPuesto} height={400} />
+          <LineChart labels={labelsPorcentajes} series={seriesPorcentajes} />
+          <BarChart titulo="CANTIDAD DE ACTAS REALIZADAS POR JERARQUIA" labels={labelsJerarquia} series={seriesJerarquia} height={400} />
+          <BarChart titulo={'RESUMEN DE ACTAS POR CATEGORIA DE EVENTO'}
+          labels={labelsObservacion} series={seriesObservacion} height={400} />
+          <BarChart titulo={'CLASIFICACION DE INFRACTORES POR PROVINCIA'}
+          labels={labelsProvincia} series={seriesProvincia} height={400} />
+          <BarChart titulo={'CLASIFICACION DE INFRACTORES POR NACIONALIDAD'}
+          labels={labelsNacionalidad} series={seriesNacionalidad} height={400} />
+        </div>
+       
         </>
       ) : (
         <p>No se ha seleccionado ningun rango de fechas</p>

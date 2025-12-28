@@ -1,17 +1,15 @@
 import { useSelector } from "react-redux";
 import type { RootState } from "../redux/store/Store";
 import { useDispatch } from "react-redux";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { logout } from "../redux/slice/AuthSlice";
 import { isTokenExpired } from "../utilities/jwt";
-import type { JSX } from "react";
 
 type RequireAuthProps = {
-  children: JSX.Element;
   allowedRoles?: string[] | string;
 };
 
-export const RequireAuth: React.FC<RequireAuthProps> = ({ children, allowedRoles }) => {
+export const RequireAuth: React.FC<RequireAuthProps> = ({ allowedRoles }) => {
   const auth = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch();
   const location = useLocation();
@@ -19,18 +17,18 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({ children, allowedRoles
   const token = auth?.token ?? null;
   const userRole = auth?.rol ?? null;
 
+  // 1. Verificación de Autenticación
   if (!token) {
-    // no autenticado -> al login
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 
-  // token expirado -> limpiar redux/localStorage y al login
+  // 2. Verificación de Expiración
   if (isTokenExpired(token)) {
     dispatch(logout());
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 
-  // control por rol (si se pasa allowedRoles)
+  // 3. Control de Roles
   if (allowedRoles) {
     const rolesArr = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
     if (!userRole || !rolesArr.includes(userRole)) {
@@ -38,6 +36,6 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({ children, allowedRoles
     }
   }
 
-  // todo OK
-  return children;
+  // 4. TODO OK: Renderiza las rutas hijas
+  return <Outlet />;
 };

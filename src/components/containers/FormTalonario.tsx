@@ -1,8 +1,7 @@
 import { Button, FormControl, InputLabel, MenuItem, Select, TextField } from "@mui/material"
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Puesto } from "../../models/Puesto";
 import type { TalonarioRequest } from "../../models/TalonarioRequest";
-import { getPuestos } from "../../services/PuestoService";
 import { SnackbarUtilities } from "../../utilities/SnackbarUtilities";
 import { TalonarioService } from "../../services/TalonarioService";
 import ConfirmDialog from "../ui/dialog/ConfirmDialog";
@@ -15,7 +14,7 @@ interface FormTalonarioProps {
   puestos: Puesto[]
 }
 
-const FormTalonario: React.FC<FormTalonarioProps> = ({ talonarios, setTalonarios, puestos }) => {
+const FormTalonario: React.FC<FormTalonarioProps> = ({ setTalonarios, puestos }) => {
   const [nroInicial, setNroInicial] = useState<number>(0);
   const [puestoSeleccionado, setPuestoSeleccionado] = useState<Number>(0);
   const [open, setOpen] = useState(false);

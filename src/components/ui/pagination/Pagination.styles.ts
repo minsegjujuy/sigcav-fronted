@@ -9,7 +9,7 @@ export const PaginationContainer = styled(Box)(({ theme }) => ({
   marginTop: theme.spacing(2)
 }));
 
-export const PageInput = styled(TextField)(({ theme }) => ({
+export const PageInput = styled(TextField)(() => ({
   width: "80px",
   "& input": {
     textAlign: "center"

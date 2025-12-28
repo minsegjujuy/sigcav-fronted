@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, type SyntheticEvent } from "react";
 import { Autocomplete, TextField, CircularProgress } from "@mui/material";
 import type { UserFilter } from "../../models/UserFilter";
 import { findUsersByNombreOrDni } from "../../services/UserService";
@@ -6,7 +6,8 @@ import { findUsersByNombreOrDni } from "../../services/UserService";
 
 
 interface AutocompleteApiProps {
-  onSelect: (option: UserFilter | null) => void;
+  
+  onSelect: (e: SyntheticEvent<Element, Event>, option: UserFilter | null) => void;
 }
 
 const AutocompleteApi: React.FC<AutocompleteApiProps> = ({ onSelect }) => {
@@ -52,7 +53,7 @@ const AutocompleteApi: React.FC<AutocompleteApiProps> = ({ onSelect }) => {
       options={options}
       getOptionLabel={(option) => option.nombreCompleto}
       loading={loading}
-      onChange={(e, value) => onSelect(value)}
+      onChange={(e, value) => onSelect(e,value)}
       noOptionsText="No se encontraron resultados"
       renderOption={(props, option) => (
             <li {...props}>

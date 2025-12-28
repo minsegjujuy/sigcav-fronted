@@ -1,19 +1,24 @@
 import './App.css'
 import { Route, Routes } from 'react-router-dom'
-import Login from './pages/Login'
-import ActaForm from './pages/ActaForm'
-import ActaResumenTable from './pages/ActaResumenTabla'
 import { SnackbarProvider } from 'notistack'
 import { SnackbarUtilitiesConfigurator } from './utilities/SnackbarUtilities'
-import Dashboard from './pages/Dashboard'
 import { ArticuloProvider } from './context/ArticuloContext'
 import { RequireAuth } from './guards/RequireGuard'
 import Navbar from './components/Navbar'
-import Reporte from './pages/Reporte'
-import { useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { createTheme, CssBaseline, ThemeProvider } from '@mui/material'
-import Talonario from './pages/Talonario'
-import RegistroTalonario from './pages/RegistroTalonario'
+import { ActaProvider } from './context/ActaResumenContext'
+import ReloadPrompt from './components/ui/modal/ReloadPrompt'
+
+// 1. Carga diferida de componentes (Lazy Imports)
+const Login = lazy(() => import('./pages/Login'));
+const ForbiddenPage = lazy(() => import('./pages/Forbidden'));
+const ActaResumenTable = lazy(() => import('./pages/ActaResumenTabla'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Talonario = lazy(() => import('./pages/Talonario'));
+const RegistroTalonario = lazy(() => import('./pages/RegistroTalonario'));
+const Reporte = lazy(() => import('./pages/Reporte'));
+const ActaForm = lazy(() => import('./pages/ActaForm'));
 
 function App() {
   const [mode, setMode] = useState<"light" | "dark">("light");
@@ -27,12 +32,12 @@ function App() {
           ...(mode === "light"
             ? {
                 // 🎨 colores personalizados para modo claro
-                primary: { main: "#1976d2" },
+                primary: { main: "#FF5722" },
                 background: { default: "#f5f5f5", paper: "#fff" },
               }
             : {
                 // 🌙 colores personalizados para modo oscuro
-                primary: { main: "#90caf9" },
+                primary: { main: "#FF5722" },
                 background: { default: "#121212", paper: "#1e1e1e" },
               }),
         },
@@ -43,51 +48,50 @@ function App() {
   return (
     <>
       <ThemeProvider theme={theme}>
-        <SnackbarProvider>
-            <SnackbarUtilitiesConfigurator />
-            <ArticuloProvider>
-              <Navbar></Navbar>
-              {/* CssBaseline aplica estilos globales del tema */}
-              <CssBaseline />
+        <ReloadPrompt />
+      <SnackbarProvider>
+        <SnackbarUtilitiesConfigurator />
+        <ArticuloProvider>
+          <Navbar />
+          <CssBaseline />
 
-              <div style={{ padding: 20 }}>
-                <h2>Modo {mode === "light" ? "Claro ☀️" : "Oscuro 🌙"}</h2>
-                <button onClick={() => setMode(mode === "light" ? "dark" : "light")}>
-                  Cambiar modo
-                </button>
-              </div>
+          <div style={{ padding: 20 }}>
+            <h2>Modo {mode === "light" ? "Claro ☀️" : "Oscuro 🌙"}</h2>
+            <button onClick={() => setMode(mode === "light" ? "dark" : "light")}>
+              Cambiar modo
+            </button>
+          </div>
+
+          <ActaProvider>
+            {/* 2. Suspense envuelve las rutas que se cargan de forma perezosa */}
+            <Suspense fallback={<div style={{ padding: 20 }}>Cargando módulo...</div>}>
               <Routes>
                 <Route path="/" element={<Login />} />
-                <Route path="/dashboard/informes" element={<Reporte />} />
-                <Route path='/dashboard/nueva-acta' element={
-                  <RequireAuth allowedRoles={["ADMIN"]}>
-                    <ActaForm />
-                  </RequireAuth>
-                  } />
-                <Route path='/dashboard/mis-actas' element={
-                  <RequireAuth allowedRoles={["ADMIN", "PERSONAL"]}>
-                    <ActaResumenTable />
-                  </RequireAuth>
-                  } />
-                <Route path='/dashboard' element={
-                  <RequireAuth allowedRoles={["ADMIN", "PERSONAL"]}>
-                    <Dashboard />
-                  </RequireAuth>
-                  } />
-                <Route path='/dashboard/talonarios' element={
-                  <RequireAuth allowedRoles={["ADMIN"]}>
-                    <Talonario />
-                  </RequireAuth>
-                  } />
-                  <Route path='/dashboard/talonarios/registros' element={
-                  <RequireAuth allowedRoles={["ADMIN"]}>
-                    <RegistroTalonario />
-                  </RequireAuth>
-                  } />
+                <Route path="/forbidden" element={<ForbiddenPage />} />
+
+                {/* Todos */}
+                <Route element={<RequireAuth allowedRoles={["ADMIN", "REPAT", "SECRETARIO", "JEFE", "PERSONAL"]} />}>
+                  <Route path="/dashboard/mis-actas" element={<ActaResumenTable />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                </Route>
+
+                {/* Visualización */}
+                <Route element={<RequireAuth allowedRoles={["ADMIN", "REPAT", "SECRETARIO", "JEFE"]} />}>
+                  <Route path="/dashboard/talonarios" element={<Talonario />} />
+                  <Route path="/dashboard/talonarios/registros" element={<RegistroTalonario />} />
+                  <Route path="/dashboard/informes" element={<Reporte />} />
+                </Route>
+
+                {/* Alta y modificación */}
+                <Route element={<RequireAuth allowedRoles={["ADMIN", "SECRETARIO", "PERSONAL"]} />}>
+                  <Route path="/dashboard/nueva-acta" element={<ActaForm />} />
+                </Route>
               </Routes>
-            </ArticuloProvider>
-          </SnackbarProvider>
-      </ThemeProvider>
+            </Suspense>
+          </ActaProvider>
+        </ArticuloProvider>
+      </SnackbarProvider>
+    </ThemeProvider>
     </>
   )
 }
