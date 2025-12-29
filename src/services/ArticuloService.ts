@@ -8,3 +8,8 @@ export const getArticulosByLey = async (leyId: number): Promise<Articulo[]> => {
   const response = await axios.get<Articulo[]>(`${baseURL}/articulo/ley/${leyId}`, getAuthHeader());
   return response.data;
 };
+
+export const getArticulos = async (): Promise<Articulo[]> => {
+  const response = await axios.get<Articulo[]>(`${baseURL}/articulo/`, getAuthHeader());
+  return response.data;
+};

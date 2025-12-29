@@ -1,11 +1,12 @@
 import type { Propietario } from "./Propietario";
 
 export interface VehiculoSolicitud {
-  marca: string;
-  modelo: string;
-  año: number;
+  idVeh?:number | undefined | null;
+  marca?: string | undefined | null;
+  modelo?: string | undefined | null;
+  año?: number | undefined | null;
   dominio: string;
-  motor: string;
-  cuadro: string;
-  propietario: Propietario | null;
+  motor?: string | undefined | null;
+  cuadro?: string | undefined | null;
+  propietario?: Propietario | null;
 }
