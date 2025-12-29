@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { Box, Button, Typography } from "@mui/material";
+import { useRef, useState, useTransition } from "react";
+import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
@@ -29,6 +29,7 @@ const Reporte: React.FC = () => {
   const [motivo, setMotivo] = useState<ReporteActas[]>([])
   const [provincia, setProvincia] = useState<ReporteActas[]>([])
   const contentRef = useRef<HTMLDivElement>(null);
+  const [isPending, startTransition] = useTransition();
 
   const handleFilter = async () => {
     
@@ -167,6 +168,12 @@ const Reporte: React.FC = () => {
     }
   ];
 
+ const handleGenerarPdf = (params: ParamsDate) => {
+    startTransition(() => {
+      generarPDF(contentRef, params);
+    });
+  };
+
 
   return (
     <>
@@ -193,7 +200,8 @@ const Reporte: React.FC = () => {
           </Button>
         </Box>
       </LocalizationProvider>
-      {params && <Button onClick={()=> generarPDF(contentRef, params)}>Generar PDF</Button>}
+      {params && <Button onClick={()=> handleGenerarPdf(params)}>Generar PDF {isPending && <CircularProgress color="primary" size={20} thickness={10} />}</Button>}
+      
       {/* Paso las fechas formateadas; si no hay params, paso strings vacíos */}
       {params ? (
         <>

@@ -1,4 +1,4 @@
-import { useEffect, useState, type SyntheticEvent } from "react";
+import { useEffect, useState, useTransition, type SyntheticEvent } from "react";
 import { getResumenActas, getResumenActasPdf, getResumenActasPersonal } from "../services/ActaService";
 import { Box, Card, CardActions, CardContent, CircularProgress, FormControl, Grid, IconButton, InputLabel, MenuItem, Pagination, Paper, Select, Stack, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, Tabs, Typography } from "@mui/material";
 import type { ActaResumenDto } from "../models/ActaResumenDto";
@@ -21,6 +21,7 @@ import type { Puesto } from "../models/Puesto";
 import { getPuestos } from "../services/PuestoService";
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import type { SortDirection, SortItem } from "../models/Sortitem";
+import { TableSkeleton } from "../components/ui/skeletonTable/TableSkeleton";
 
 const ActaResumenTable: React.FC = () => {
   const [actas, setActas] = useState<ActaResumenDto[]>([]);
@@ -41,6 +42,7 @@ const ActaResumenTable: React.FC = () => {
   const { seleccionarActa, limpiarActa } = useActa();
   const [descargando, setDescargando] = useState(false);
   const [sorts, setSorts] = useState<SortItem[]>([]);
+  const [isPending, startTransition] = useTransition();
   
 
   const handleChange = (event: React.ChangeEvent<unknown>, value: number) => {
@@ -123,34 +125,36 @@ const ActaResumenTable: React.FC = () => {
     })
   }
 
-  const fetchData = async () => {
-    try {
-      let content: any[] = [];
-      let totalPages = 0;
-      let totalElements = 0;
-      if (rol === 'PERSONAL') {
-        console.log('rol personal seleccionado')
-        const data = await getResumenActasPersonal(filtersPersonal);
-        content = data.content;
-        totalPages = data.totalPages;
-        totalElements = data.totalElements;
-        setShowFilterUser(true)
-      } else {
-        
-        const data = await getResumenActas(filters);
-        content = data.content;
-        totalPages = data.totalPages;
-        totalElements = data.totalElements;
+  const fetchData = () => {
+    // 2. Envolvemos todo en startTransition
+    startTransition(async () => {
+      try {
+        let content: any[] = [];
+        let totalPagesResult = 0;
+        let totalElementsResult = 0;
+
+        if (rol === 'PERSONAL') {
+          const data = await getResumenActasPersonal(filtersPersonal);
+          content = data.content;
+          totalPagesResult = data.totalPages;
+          totalElementsResult = data.totalElements;
+          setShowFilterUser(true);
+        } else {
+          const data = await getResumenActas(filters);
+          content = data.content;
+          totalPagesResult = data.totalPages;
+          totalElementsResult = data.totalElements;
+        }
+
+        // 3. Estas actualizaciones de estado se marcan como "transición"
+        setTotalElements(totalElementsResult);
+        setTotalPages(totalPagesResult);
+        setActas(content);
+
+      } catch (error) {
+        console.error('Error al obtener resumen de actas', error);
       }
-
-      setTotalElements(totalElements);
-      setTotalPages(totalPages);
-      setActas(content);
-
-      console.log('actas', content);
-    } catch (error) {
-      console.error('Error al obtener resumen de actas', error);
-    }
+    });
   };
 
   const getSortDirection = (
@@ -437,79 +441,86 @@ const ActaResumenTable: React.FC = () => {
       )}
       {/*Table*/}
       {view === 1 && (
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Nº Acta</TableCell>
-              <TableCell>
-                <TableSortLabel
-                  active={!!getSortDirection('id_grupo')}
-                  direction={getSortDirection('id_grupo') ?? 'asc'}
-                  onClick={() => toggleSort('id_grupo')}
-                >
-                  Grupo
-                </TableSortLabel>
-              </TableCell>
-              <TableCell>Fecha</TableCell>
-              <TableCell>Retencion</TableCell>
-              <TableCell>
-                <TableSortLabel
-                  active={!!getSortDirection('motivo')}
-                  direction={getSortDirection('motivo') ?? 'asc'}
-                  onClick={() => toggleSort('motivo')}
-                >
-                  Observacion
-                </TableSortLabel>
-              </TableCell>
-              <TableCell>Adjunta lo siguiente</TableCell>
-              <TableCell>Articulado</TableCell>
-              <TableCell>Apellido y Nombre del infractor</TableCell>
-              <TableCell>Dni del infractor</TableCell>
-              <TableCell>Dominio</TableCell>
-              <TableCell>Legajo policial</TableCell>
-              <TableCell>Personal policial</TableCell>
-              <TableCell align="center">Acciones</TableCell>
-            </TableRow>
-          </TableHead>
+        <>
+          {isPending ? (
+            <TableSkeleton rows={10} columns={6} />
+          ) : (
+            <TableContainer component={Paper}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Nº Acta</TableCell>
+                    <TableCell>
+                      <TableSortLabel
+                        active={!!getSortDirection('id_grupo')}
+                        direction={getSortDirection('id_grupo') ?? 'asc'}
+                        onClick={() => toggleSort('id_grupo')}
+                      >
+                        Grupo
+                      </TableSortLabel>
+                    </TableCell>
+                    <TableCell>Fecha</TableCell>
+                    <TableCell>Retencion</TableCell>
+                    <TableCell>
+                      <TableSortLabel
+                        active={!!getSortDirection('motivo')}
+                        direction={getSortDirection('motivo') ?? 'asc'}
+                        onClick={() => toggleSort('motivo')}
+                      >
+                        Observacion
+                      </TableSortLabel>
+                    </TableCell>
+                    <TableCell>Adjunta lo siguiente</TableCell>
+                    <TableCell>Articulado</TableCell>
+                    <TableCell>Apellido y Nombre del infractor</TableCell>
+                    <TableCell>Dni del infractor</TableCell>
+                    <TableCell>Dominio</TableCell>
+                    <TableCell>Legajo policial</TableCell>
+                    <TableCell>Personal policial</TableCell>
+                    <TableCell align="center">Acciones</TableCell>
+                  </TableRow>
+                </TableHead>
 
-          <TableBody>
-            {actas.map((acta) => (
-              <TableRow key={acta.idActa}>
-                <TableCell>{acta.nro}</TableCell>
-                <TableCell>{acta.idGrupo}</TableCell>
-                <TableCell>
-                  {new Date(acta.fecha).toLocaleString()}
-                </TableCell>
-                <TableCell>{acta.retencion}</TableCell>
-                <TableCell>{acta.motivo}</TableCell>
-                <TableCell>{acta.adjunta}</TableCell>
-                <TableCell>
-                  {acta.articulos.map(a => a.nro).join(", ")}
-                </TableCell>
-                <TableCell>{acta.infractor.nombre}</TableCell>
-                <TableCell>{acta.infractor.dni}</TableCell>
-                <TableCell>{acta.vehiculo.dominio}</TableCell>
-                <TableCell>{acta.legajo}</TableCell>
-                <TableCell>{acta.nombre}</TableCell>
-                <TableCell align="center">
-                  <IconButton
-                    onClick={() => handleEdit(acta)}
-                    disabled={!canEdit(acta.fecha)}
-                    title={
-                      !canEdit(acta.fecha)
-                        ? "El acta ya no puede modificarse"
-                        : "Editar acta"
-                    }
-                  >
-                    <EditIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                <TableBody>
+                  {actas.map((acta) => (
+                    <TableRow key={acta.idActa}>
+                      <TableCell>{acta.nro}</TableCell>
+                      <TableCell>{acta.idGrupo}</TableCell>
+                      <TableCell>
+                        {new Date(acta.fecha).toLocaleString()}
+                      </TableCell>
+                      <TableCell>{acta.retencion}</TableCell>
+                      <TableCell>{acta.motivo}</TableCell>
+                      <TableCell>{acta.adjunta}</TableCell>
+                      <TableCell>
+                        {acta.articulos.map(a => a.nro).join(", ")}
+                      </TableCell>
+                      <TableCell>{acta.infractor.nombre}</TableCell>
+                      <TableCell>{acta.infractor.dni}</TableCell>
+                      <TableCell>{acta.vehiculo.dominio}</TableCell>
+                      <TableCell>{acta.legajo}</TableCell>
+                      <TableCell>{acta.nombre}</TableCell>
+                      <TableCell align="center">
+                        <IconButton
+                          onClick={() => handleEdit(acta)}
+                          disabled={!canEdit(acta.fecha)}
+                          title={
+                            !canEdit(acta.fecha)
+                              ? "El acta ya no puede modificarse"
+                              : "Editar acta"
+                          }
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+      )}
+        </>
+      
     )}
       <Grid container spacing={2}>
     

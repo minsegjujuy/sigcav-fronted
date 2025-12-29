@@ -32,13 +32,13 @@ function App() {
           ...(mode === "light"
             ? {
                 // 🎨 colores personalizados para modo claro
-                primary: { main: "#FF5722" },
+                primary: { main: "#66682E" },
                 background: { default: "#f5f5f5", paper: "#fff" },
               }
             : {
                 // 🌙 colores personalizados para modo oscuro
-                primary: { main: "#FF5722" },
-                background: { default: "#121212", paper: "#1e1e1e" },
+                primary: { main: "#8D926A" },
+                background: { default: "#0B0A06", paper: "#1e1e1e" },
               }),
         },
       }),

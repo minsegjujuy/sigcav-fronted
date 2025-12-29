@@ -32,6 +32,7 @@ const initialState: ActaRequest = {
   motivo: "",
   nro: "",
   adjunta:"",
+  retencion:"",
   articulos: [],
   infractor: {
     idInfrac: null,
@@ -272,6 +273,7 @@ export default function ActaForm() {
       // selects
       if (!selectedTipoActa) e.tipoActa = "El tipo de acta es obligatorio";
       if (!selectedGrupo) e.grupo = "El grupo es obligatorio";
+      if (!selectedPuesto) e.puesto = "El puesto es obligatorio";
 
 
       // campos generales
@@ -433,12 +435,13 @@ export default function ActaForm() {
         <Typography variant="h5" gutterBottom>
           Formulario de actas
         </Typography>
+        <Typography variant="h6" sx={{ mt: 3 }}>Los campos con (*) son obligatorios</Typography>
 
         <Box component="form" onSubmit={handleSubmit}>
 
           {/* Tipo de Acta */}
           <FormControl fullWidth margin="normal" error={!!errors.tipoActa}>
-            <InputLabel id="tipo-acta-label">Tipo de Acta</InputLabel>
+            <InputLabel id="tipo-acta-label">Tipo de Acta *</InputLabel>
             <Select
             labelId="tipo-acta-label"
             id="tipo-acta"
@@ -458,13 +461,13 @@ export default function ActaForm() {
           
           {/* Puesto */}
           <FormControl fullWidth margin="normal" error={!!errors.puesto}>
-            <InputLabel id="puesto-label">Puesto</InputLabel>
+            <InputLabel id="puesto-label">Puesto *</InputLabel>
             <Select
             labelId="puesto-label"
             id="puesto"
             value={selectedPuesto}
             label="Puesto"
-            onChange={(e) => setSelectedPuesto(e.target.value as any)}
+            onChange={(e) => {setSelectedPuesto(e.target.value as any); setErrors((er) => { const c = { ...er }; delete c.puesto; return c; }); }}
             >
             {puestos.map((puesto) => (
             <MenuItem key={puesto.idPuesto} value={puesto.idPuesto}>
@@ -478,7 +481,7 @@ export default function ActaForm() {
 
           {/* Grupo */}
           <FormControl fullWidth margin="normal" error={!!errors.grupo}>
-          <InputLabel id="grupo-label">Grupo</InputLabel>
+          <InputLabel id="grupo-label">Grupo *</InputLabel>
           <Select
           labelId="grupo-label"
           id="grupo"
@@ -499,7 +502,7 @@ export default function ActaForm() {
 
           {/* Datos generales */}
             <FormControl sx={{ display: 'flex', alignItems: 'flex-start' }}>
-              <FormLabel id="demo-radio-buttons-group-label">Observacion</FormLabel>
+              <FormLabel id="demo-radio-buttons-group-label">Observacion *</FormLabel>
               <RadioGroup
                 aria-labelledby="demo-radio-buttons-group-label"
                 defaultValue="ALCOHOTEST"
@@ -545,7 +548,7 @@ export default function ActaForm() {
 
           </FormControl>
           <TextField
-            label="Número de Acta"
+            label="Número de Acta *"
             fullWidth
             margin="normal"
             value={form.nro}
@@ -554,13 +557,21 @@ export default function ActaForm() {
             helperText={errors.nro}
             />
 
+            <TextField
+            label="Número de Acta de retencion"
+            fullWidth
+            margin="normal"
+            value={form.retencion}
+            onChange={(e) => handleChange("retencion", e.target.value)}
+            />
+
           {/* Infractor */}
             <Typography variant="h6" sx={{ mt: 3 }}>Infractor</Typography>
-            <TextField label="DNI" fullWidth margin="normal" value={form.infractor.dni} onChange={(e) => handleChange("infractor.dni", e.target.value)} error={!!errors["infractor.dni"]} helperText={errors["infractor.dni"]} />
+            <TextField label="DNI *" fullWidth margin="normal" value={form.infractor.dni} onChange={(e) => handleChange("infractor.dni", e.target.value)} error={!!errors["infractor.dni"]} helperText={errors["infractor.dni"]} />
               <Button onClick={fetchInfractorByDni}>Buscar</Button>
-            <TextField label="Apellido y Nombre" fullWidth margin="normal" value={form.infractor.nombre} onChange={(e) => handleChange("infractor.nombre", e.target.value)} error={!!errors["infractor.nombre"]} helperText={errors["infractor.nombre"]} />
+            <TextField label="Apellido y Nombre *" fullWidth margin="normal" value={form.infractor.nombre} onChange={(e) => handleChange("infractor.nombre", e.target.value)} error={!!errors["infractor.nombre"]} helperText={errors["infractor.nombre"]} />
             <FormControl fullWidth>
-            <InputLabel>Pais</InputLabel>
+            <InputLabel>Pais *</InputLabel>
             <Select
               value={form.infractor.nacionalidad}
               label="Pais"
@@ -599,7 +610,7 @@ export default function ActaForm() {
           {vehiculos && (
             <FormControl component="fieldset" fullWidth>
               <FormLabel component="legend" sx={{ mb: 2 }}>
-                Selecciona un vehículo
+                Selecciona un vehículo *
               </FormLabel>
 
               <RadioGroup
@@ -626,7 +637,7 @@ export default function ActaForm() {
             <TextField label="Marca" fullWidth margin="normal" value={form.vehiculo.marca} onChange={(e) => handleChange("vehiculo.marca", e.target.value)} error={!!errors["vehiculo.marca"]} helperText={errors["vehiculo.marca"]} />
             <TextField label="Modelo" fullWidth margin="normal" value={form.vehiculo.modelo} onChange={(e) => handleChange("vehiculo.modelo", e.target.value)} error={!!errors["vehiculo.modelo"]} helperText={errors["vehiculo.modelo"]} />
             <TextField label="Año" type="number" fullWidth margin="normal" value={form.vehiculo.año as any} onChange={(e) => handleChange("vehiculo.año", e.target.value ? Number(e.target.value) : "")} error={!!errors["vehiculo.año"]} helperText={errors["vehiculo.año"]} />
-            <TextField label="Dominio" fullWidth margin="normal" value={form.vehiculo.dominio} onChange={(e) => handleChange("vehiculo.dominio", e.target.value)} error={!!errors["vehiculo.dominio"]} helperText={errors["vehiculo.dominio"]} />
+            <TextField label="Dominio *" fullWidth margin="normal" value={form.vehiculo.dominio} onChange={(e) => handleChange("vehiculo.dominio", e.target.value)} error={!!errors["vehiculo.dominio"]} helperText={errors["vehiculo.dominio"]} />
             <TextField label="Motor" fullWidth margin="normal" value={form.vehiculo.motor} onChange={(e) => handleChange("vehiculo.motor", e.target.value)} error={!!errors["vehiculo.motor"]} helperText={errors["vehiculo.motor"]} />
             <TextField label="Cuadro" fullWidth margin="normal" value={form.vehiculo.cuadro} onChange={(e) => handleChange("vehiculo.cuadro", e.target.value)} error={!!errors["vehiculo.cuadro"]} helperText={errors["vehiculo.cuadro"]} />
           
@@ -635,16 +646,16 @@ export default function ActaForm() {
             {!propietario && (
             <Box>
             <Typography variant="h6" sx={{ mt: 3 }}>Propietario</Typography>
-            <TextField label="DNI" fullWidth margin="normal" value={form.vehiculo.propietario?.dni} onChange={(e) => handleChange("vehiculo.propietario.dni", e.target.value)} error={!!errors["vehiculo.propietario.dni"]} helperText={errors["vehiculo.propietario.dni"]} />
-            <TextField label="Nombre" fullWidth margin="normal" value={form.vehiculo.propietario?.nombre} onChange={(e) => handleChange("vehiculo.propietario.nombre", e.target.value)} error={!!errors["vehiculo.propietario.nombre"]} helperText={errors["vehiculo.propietario.nombre"]} />
-            <TextField label="Apellido" fullWidth margin="normal" value={form.vehiculo.propietario?.apellido} onChange={(e) => handleChange("vehiculo.propietario.apellido", e.target.value)} error={!!errors["vehiculo.propietario.apellido"]} helperText={errors["vehiculo.propietario.apellido"]} />
-            <TextField label="Dirección" fullWidth margin="normal" value={form.vehiculo.propietario?.direccion} onChange={(e) => handleChange("vehiculo.propietario.direccion", e.target.value)} error={!!errors["vehiculo.propietario.direccion"]} helperText={errors["vehiculo.propietario.direccion"]} />
+            <TextField label="DNI *" fullWidth margin="normal" value={form.vehiculo.propietario?.dni} onChange={(e) => handleChange("vehiculo.propietario.dni", e.target.value)} error={!!errors["vehiculo.propietario.dni"]} helperText={errors["vehiculo.propietario.dni"]} />
+            <TextField label="Nombre *" fullWidth margin="normal" value={form.vehiculo.propietario?.nombre} onChange={(e) => handleChange("vehiculo.propietario.nombre", e.target.value)} error={!!errors["vehiculo.propietario.nombre"]} helperText={errors["vehiculo.propietario.nombre"]} />
+            <TextField label="Apellido *" fullWidth margin="normal" value={form.vehiculo.propietario?.apellido} onChange={(e) => handleChange("vehiculo.propietario.apellido", e.target.value)} error={!!errors["vehiculo.propietario.apellido"]} helperText={errors["vehiculo.propietario.apellido"]} />
+            <TextField label="Dirección *" fullWidth margin="normal" value={form.vehiculo.propietario?.direccion} onChange={(e) => handleChange("vehiculo.propietario.direccion", e.target.value)} error={!!errors["vehiculo.propietario.direccion"]} helperText={errors["vehiculo.propietario.direccion"]} />
             </Box>
             )}
 
           {/* Ley */}
             <FormControl fullWidth margin="normal" error={!!errors.ley}>
-            <InputLabel id="ley-select-label">Seleccione una Ley</InputLabel>
+            <InputLabel id="ley-select-label">Seleccione una Ley *</InputLabel>
             <Select labelId="ley-select-label" id="ley-select" value={selectedLey.toString()} label="Seleccione una Ley" onChange={(e) => handleLeyChange(e as any)}>
             <MenuItem value="">Seleccione una opción</MenuItem>
             {leyes.map((ley) => (

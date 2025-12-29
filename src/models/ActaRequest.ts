@@ -12,5 +12,6 @@ export interface ActaRequest {
   articulos: number[];
   infractor: InfractorSolicitud;
   vehiculo: VehiculoSolicitud;
-  adjunta: string
+  adjunta: string,
+  retencion: string
 }

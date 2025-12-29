@@ -40,7 +40,7 @@ export default function Login() {
     <Container maxWidth="sm">
       <Paper elevation={3} sx={{ p: 4, mt: 8 }}>
         <Typography variant="h5" align="center" gutterBottom>
-          Login
+          Iniciar sesión
         </Typography>
         <Box component="form" onSubmit={handleLogin}>
          <TextField

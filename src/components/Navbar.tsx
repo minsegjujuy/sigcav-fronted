@@ -13,7 +13,10 @@ import {
   ListItemText,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "../redux/store/Store";
+import { logout } from "../redux/slice/AuthSlice";
 
 const menuItems = [
   { label: "INICIO", to: "/dashboard" },
@@ -23,6 +26,13 @@ const menuItems = [
 
 const Navbar: React.FC = () => {
   const [openDrawer, setOpenDrawer] = useState(false);
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/");
+  }
 
   const toggleDrawer = (open: boolean) => () => {
     setOpenDrawer(open);
@@ -80,6 +90,7 @@ const Navbar: React.FC = () => {
               </Button>
             ))}
           </Box>
+          <Button onClick={handleLogout} variant="contained">Cerrar sesión</Button>
         </Toolbar>
       </AppBar>
 
