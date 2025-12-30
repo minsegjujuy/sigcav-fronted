@@ -13,6 +13,7 @@ export const actaResumenToActaRequest = (
     articulos: acta.articulos.map(a => a.idArt),
     infractor: acta.infractor,
     vehiculo: acta.vehiculo,
-    adjunta: acta.adjunta
+    adjunta: acta.adjunta,
+    retencion: acta.retencion
   };
 };

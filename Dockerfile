@@ -1,25 +1,27 @@
-# Etapa de build
 # Etapa 1: Build de la aplicación React
 FROM node:18-alpine as build
 
-WORKDIR /
+# Es mejor usar /app para evitar conflictos en la raíz
+WORKDIR /app
 
 COPY package*.json ./
 RUN npm install
 
+# DECLARA EL ARGUMENTO AQUÍ
+ARG VITE_API_BASE_URL
+# ESTABLECE LA VARIABLE PARA EL PROCESO DE VITE
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 COPY . .
-RUN npm run build
+RUN npm run build -- --mode production
 
-# Etapa 2: Servir con Nginx configurado para SPA
+# Etapa 2: Servir con Nginx
 FROM nginx:alpine
+# Copiamos los archivos de Vite (dist)
+COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copiamos los archivos generados por React
-# COPY --from=build /app/build /usr/share/nginx/html
+# Copiamos TU configuración de Nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Reemplazamos la configuración por una personalizada para SPA
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Exponemos el puerto 80 por si lo usás manualmente
 EXPOSE 80
-
-# CMD ["nginx", "-g", "daemon off;"]
+CMD ["nginx", "-g", "daemon off;"]
