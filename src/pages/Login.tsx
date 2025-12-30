@@ -25,8 +25,7 @@ export default function Login() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const baseUrl = import.meta.env.VITE_API_BASE_URL;
-    console.log("Mi API URL es:", baseUrl);
+    console.log('cambio')
     try{
         const authResponse = await login(data!);
         dispatch(loginAction(authResponse.jwt));
