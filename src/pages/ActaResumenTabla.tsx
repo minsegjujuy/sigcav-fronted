@@ -226,7 +226,11 @@ const ActaResumenTable: React.FC = () => {
     const now = new Date();
 
     const limite = new Date(createdAt);
-    limite.setDate(limite.getDate() + 1); // +24 hs
+    if(rol === 'SECRETARIO' || 'ADMIN'){
+      limite.setDate(limite.getDate() + 7); // +168 hs
+    }else if (rol === 'PERSONAL'){
+      limite.setDate(limite.getDate() + 1); // +24 hs
+    }
 
     return now < limite;
   };
