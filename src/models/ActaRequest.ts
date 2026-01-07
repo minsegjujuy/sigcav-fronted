@@ -1,4 +1,5 @@
 import type { InfractorSolicitud } from "./InfractorSolicitud";
+import type { UbicacionRequest } from "./UbicacionRequest";
 import type { VehiculoSolicitud } from "./VehiculoSolicitud";
 
 export interface ActaRequest {
@@ -13,5 +14,6 @@ export interface ActaRequest {
   infractor: InfractorSolicitud;
   vehiculo: VehiculoSolicitud;
   adjunta: string,
-  retencion: string
+  retencion: string,
+  ubicacionRequest: UbicacionRequest
 }

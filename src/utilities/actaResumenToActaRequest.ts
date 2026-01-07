@@ -14,6 +14,8 @@ export const actaResumenToActaRequest = (
     infractor: acta.infractor,
     vehiculo: acta.vehiculo,
     adjunta: acta.adjunta,
-    retencion: acta.retencion
+    retencion: acta.retencion,
+    ubicacionRequest: {departamento: acta.ubicacionResponse.departamento, lat: acta.ubicacionResponse.lat, 
+      lng: acta.ubicacionResponse.lng}
   };
 };

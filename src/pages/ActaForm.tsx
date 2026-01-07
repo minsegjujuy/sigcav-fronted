@@ -23,6 +23,10 @@ import { actaResumenToActaRequest } from "../utilities/actaResumenToActaRequest"
 import { useActa } from "../context/ActaResumenContext";
 import { useNavigate } from "react-router-dom";
 import { ADJUNTA } from "../utilities/adjunta";
+import MapaJujuy from "../components/containers/MapaJujuy";
+import type { UbicacionRequest } from "../models/UbicacionRequest";
+import { obtenerUnidadesRegionalesPorDepartamento } from "../services/UnidadRegionalService";
+import type { UnidadRegional } from "../models/UnidadRegional";
 //Quitar estado inicial
 const initialState: ActaRequest = {
   idGrupo: 1,
@@ -33,6 +37,7 @@ const initialState: ActaRequest = {
   nro: "",
   adjunta:"",
   retencion:"",
+  ubicacionRequest: {lat:0,lng:0,departamento:'', unidadRegional:0},
   articulos: [],
   infractor: {
     idInfrac: null,
@@ -75,6 +80,7 @@ export default function ActaForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehiculo | null>(null);
+  const [unidadesRegionales, setUnidadesRegionales] = useState<UnidadRegional[]>();
   const { actaSeleccionada, limpiarActa } = useActa();
   const [selected, setSelected] = useState<string[]>([]);
   const [otroTexto, setOtroTexto] = useState("");
@@ -217,6 +223,12 @@ export default function ActaForm() {
     });
   };
 
+  const fetchUnidadesRegionales = async (departamento: string) => {
+    const data = await obtenerUnidadesRegionalesPorDepartamento(departamento);
+    console.log('unidades regionales ', data);
+    setUnidadesRegionales(data);
+  }
+
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       if(validate()){
@@ -266,6 +278,17 @@ export default function ActaForm() {
           setPropietario(!vehiculo.propietario); 
         }
     };
+
+    const handleUnidadRegionalChange = (id: number) => {
+      setForm(prevForm => ({
+        ...prevForm,
+        ubicacionRequest: {
+          ...prevForm.ubicacionRequest,
+          unidadRegional: id
+        }
+      }));
+
+    }
   
     const validate = () => {
       const e: Record<string, string> = {};
@@ -307,7 +330,7 @@ export default function ActaForm() {
       if (!p.direccion || p.direccion.trim() === "") e["vehiculo.propietario.direccion"] = "Dirección del propietario obligatoria";
       }
 
-
+      if (!form.ubicacionRequest.unidadRegional) e.ubicacionRequest = "Debe seleccionar una unidad regional";
       // ley
       if (!selectedLey) e.ley = "Debe seleccionar una ley";
 
@@ -352,6 +375,13 @@ export default function ActaForm() {
       console.error('Error al obtener puestos', error);
     }
   };
+
+  const handleMapSelect = async (point: UbicacionRequest) => {
+    console.log('ubicacion ', point);
+    await fetchUnidadesRegionales(point.departamento);
+    //const ubicacion : UbicacionRequest = {...point, unidadRegional: 1};
+    setForm((prevData) => ({...prevData, ubicacionRequest: point}));
+  }
 
   const fetchInfractorByDni = async () => {
     const dni = form.infractor.dni;
@@ -412,6 +442,13 @@ export default function ActaForm() {
       setArticulosSeleccionados(articulos);
       setSelectedLey(1);
       fetchArticulosPorLey(1);
+      const ubicacion : UbicacionRequest = {
+        departamento: actaSeleccionada.ubicacionResponse.departamento,
+        lat: actaSeleccionada.ubicacionResponse.lat,
+        lng: actaSeleccionada.ubicacionResponse.lng,
+        //unidadRegional: actaSeleccionada.ubicacionResponse.unidadRegional
+      }
+      handleMapSelect(ubicacion);
       if(actaSeleccionada.adjunta){
         let partes = actaSeleccionada.adjunta?.split(',').map(item => item.trim());
         console.log('partes ', partes);
@@ -501,13 +538,13 @@ export default function ActaForm() {
 
 
           {/* Datos generales */}
-            <FormControl sx={{ display: 'flex', alignItems: 'flex-start' }}>
+            <FormControl sx={{ display: 'flex', alignItems: 'flex-start' }} error={!!errors.motivo}>
               <FormLabel id="demo-radio-buttons-group-label">Observacion *</FormLabel>
               <RadioGroup
                 aria-labelledby="demo-radio-buttons-group-label"
                 defaultValue="ALCOHOTEST"
                 name="radio-buttons-group"
-                onChange={(e) => handleChange("motivo", e.target.value)}
+                onChange={(e) => {handleChange("motivo", e.target.value); setErrors((er) => { const c = { ...er }; delete c.motivo; return c; }); }}
                 value={form.motivo}
               >
                 <FormControlLabel value="POR HECHO VIAL" control={<Radio />} label="POR HECHO VIAL" />
@@ -516,6 +553,7 @@ export default function ActaForm() {
                 <FormControlLabel value="CONTROL DE VELOCIDAD" control={<Radio />} label="CONTROL DE VELOCIDAD" />
                 <FormControlLabel value="ALCOHOTEST" control={<Radio />} label="ALCOHOTEST" />
               </RadioGroup>
+              {!!errors.motivo && <FormHelperText>{errors.motivo}</FormHelperText>}
             </FormControl>
             <FormControl component="fieldset">
             <FormLabel component="legend">Adjunta lo siguiente</FormLabel>
@@ -651,6 +689,34 @@ export default function ActaForm() {
             <TextField label="Apellido *" fullWidth margin="normal" value={form.vehiculo.propietario?.apellido} onChange={(e) => handleChange("vehiculo.propietario.apellido", e.target.value)} error={!!errors["vehiculo.propietario.apellido"]} helperText={errors["vehiculo.propietario.apellido"]} />
             <TextField label="Dirección *" fullWidth margin="normal" value={form.vehiculo.propietario?.direccion} onChange={(e) => handleChange("vehiculo.propietario.direccion", e.target.value)} error={!!errors["vehiculo.propietario.direccion"]} helperText={errors["vehiculo.propietario.direccion"]} />
             </Box>
+            )}
+            {/*Seleccionar ubicacion */}
+            <MapaJujuy onSelect={handleMapSelect} />
+            {unidadesRegionales ? (
+              <>
+                <FormControl error={!!errors.ubicacionRequest}>
+                  <FormLabel component="legend" sx={{ mb: 2 }}>
+                    Selecciona una unidad regional *
+                  </FormLabel>
+                  <RadioGroup
+                    value={form.ubicacionRequest.unidadRegional}
+                    onChange={(e) => {handleUnidadRegionalChange(Number(e.target.value)); setErrors((er) => { const c = { ...er }; delete c.ubicacionRequest; return c; }); }}
+                  >
+                    {unidadesRegionales.map((unidad) => (
+                      <FormControlLabel
+                        key={unidad.idUr}
+                        value={unidad.idUr}
+                        control={<Radio />}
+                        label={unidad.nombre}
+                      />
+                    ))}
+                  </RadioGroup>
+                  {!!errors.ubicacionRequest && <FormHelperText>{errors.ubicacionRequest}</FormHelperText>}
+                </FormControl>
+                
+              </>
+            ) : (
+              <Typography variant="h6">No se ha seleccionado ninguna ubicación</Typography>
             )}
 
           {/* Ley */}

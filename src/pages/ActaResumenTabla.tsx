@@ -1,6 +1,6 @@
 import { useEffect, useState, useTransition, type SyntheticEvent } from "react";
 import { getResumenActas, getResumenActasPdf, getResumenActasPersonal } from "../services/ActaService";
-import { Box, Card, CardActions, CardContent, CircularProgress, FormControl, Grid, IconButton, InputLabel, MenuItem, Pagination, Paper, Select, Stack, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, Tabs, Typography } from "@mui/material";
+import { Box, Card, CardActions, CardContent, CircularProgress, FormControl, Grid, IconButton, InputLabel, MenuItem, Pagination, Paper, Select, Stack, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, Tabs, Tooltip, Typography } from "@mui/material";
 import type { ActaResumenDto } from "../models/ActaResumenDto";
 import { useSelector } from "react-redux";
 import type { RootState } from "../redux/store/Store";
@@ -22,6 +22,7 @@ import { getPuestos } from "../services/PuestoService";
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import type { SortDirection, SortItem } from "../models/Sortitem";
 import { TableSkeleton } from "../components/ui/skeletonTable/TableSkeleton";
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 
 const ActaResumenTable: React.FC = () => {
   const [actas, setActas] = useState<ActaResumenDto[]>([]);
@@ -265,6 +266,12 @@ const ActaResumenTable: React.FC = () => {
     }));
   };
 
+  const openGoogleMaps = (lat: number, lng: number) => {
+    const url = `https://www.google.com/maps?q=${lat},${lng}`;
+    window.open(url, "_blank");
+  };
+
+
 
   useEffect(() => {
     fetchData();
@@ -481,6 +488,8 @@ const ActaResumenTable: React.FC = () => {
                     <TableCell>Dominio</TableCell>
                     <TableCell>Legajo policial</TableCell>
                     <TableCell>Personal policial</TableCell>
+                    <TableCell>Unidad regional</TableCell>
+                    <TableCell>Departamento</TableCell>
                     <TableCell align="center">Acciones</TableCell>
                   </TableRow>
                 </TableHead>
@@ -504,6 +513,8 @@ const ActaResumenTable: React.FC = () => {
                       <TableCell>{acta.vehiculo.dominio}</TableCell>
                       <TableCell>{acta.legajo}</TableCell>
                       <TableCell>{acta.nombre}</TableCell>
+                      <TableCell>{!acta.ubicacionResponse.unidadRegional ? 'N/A' : acta.ubicacionResponse.unidadRegional}</TableCell>
+                      <TableCell>{!acta.ubicacionResponse.departamento ? 'N/A' : acta.ubicacionResponse.departamento}</TableCell>
                       <TableCell align="center">
                         <IconButton
                           onClick={() => handleEdit(acta)}
@@ -516,6 +527,11 @@ const ActaResumenTable: React.FC = () => {
                         >
                           <EditIcon />
                         </IconButton>
+                        {acta.ubicacionResponse && <Tooltip title="Ver ubicación en Google Maps">
+                          <IconButton onClick={() => openGoogleMaps(acta.ubicacionResponse.lat, acta.ubicacionResponse.lng)}>
+                            <LocationOnIcon />
+                          </IconButton>
+                        </Tooltip>}
                       </TableCell>
                     </TableRow>
                   ))}

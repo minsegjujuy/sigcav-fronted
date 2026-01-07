@@ -1,5 +1,6 @@
 import type { ArticuloDto } from "./ArticuloDto";
 import type { InfractorSolicitud } from "./InfractorSolicitud";
+import type { UbicacionRsponse } from "./UbicacionResponse";
 import type { VehiculoSolicitud } from "./VehiculoSolicitud";
 
 export interface ActaResumenDto {
@@ -15,5 +16,6 @@ export interface ActaResumenDto {
   articulos: ArticuloDto[];
   legajo: string;
   nombre:string;
-  adjunta:string
+  adjunta:string;
+  ubicacionResponse: UbicacionRsponse
 }
