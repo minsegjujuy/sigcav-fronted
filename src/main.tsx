@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import "leaflet/dist/leaflet.css";
 import './index.css'
 import App from './App.tsx'
 import { BrowserRouter } from 'react-router-dom'
@@ -8,7 +9,6 @@ import { persistor, store } from './redux/store/Store.ts'
 import { PersistGate } from 'redux-persist/integration/react'
 // En main.jsx
 import { registerSW } from 'virtual:pwa-register'
-import "leaflet/dist/leaflet.css";
 
 if (import.meta.env.PROD) {
   registerSW({
