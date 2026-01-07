@@ -73,6 +73,7 @@ function App() {
                 <Route element={<RequireAuth allowedRoles={["ADMIN", "REPAT", "SECRETARIO", "JEFE", "PERSONAL"]} />}>
                   <Route path="/dashboard/mis-actas" element={<ActaResumenTable />} />
                   <Route path="/dashboard" element={<Dashboard />} />
+                  {/*<Route path="/zonas" element={<MapaZonas />} />*/}
                 </Route>
 
                 {/* Visualización */}

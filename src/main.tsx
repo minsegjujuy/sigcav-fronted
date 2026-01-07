@@ -8,6 +8,7 @@ import { persistor, store } from './redux/store/Store.ts'
 import { PersistGate } from 'redux-persist/integration/react'
 // En main.jsx
 import { registerSW } from 'virtual:pwa-register'
+import "leaflet/dist/leaflet.css";
 
 // Registra el service worker
 export const updateSW = registerSW({
