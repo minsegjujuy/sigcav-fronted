@@ -21,8 +21,6 @@ async function loadDepartamentos() {
   return res.json();
 }
 
-
-
 function ClickHandler({
   onValidClick,
 }: {

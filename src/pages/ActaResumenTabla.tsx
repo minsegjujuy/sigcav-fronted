@@ -513,8 +513,8 @@ const ActaResumenTable: React.FC = () => {
                       <TableCell>{acta.vehiculo.dominio}</TableCell>
                       <TableCell>{acta.legajo}</TableCell>
                       <TableCell>{acta.nombre}</TableCell>
-                      <TableCell>{!acta.ubicacionResponse.unidadRegional ? 'N/A' : acta.ubicacionResponse.unidadRegional}</TableCell>
-                      <TableCell>{!acta.ubicacionResponse.departamento ? 'N/A' : acta.ubicacionResponse.departamento}</TableCell>
+                      <TableCell>{!acta.ubicacionResponse ? 'N/A' : acta.ubicacionResponse.unidadRegional}</TableCell>
+                      <TableCell>{!acta.ubicacionResponse ? 'N/A' : acta.ubicacionResponse.departamento}</TableCell>
                       <TableCell align="center">
                         <IconButton
                           onClick={() => handleEdit(acta)}
