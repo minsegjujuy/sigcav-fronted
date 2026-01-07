@@ -5,10 +5,9 @@ import {
   GeoJSON,
   useMapEvents,
 } from "react-leaflet";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import jujuyGeoJson from "../../assets/geo/JUJUY.json";
 import { findDepartamento } from "./findDepartamento";
-import departamentosGeoJson from "../../assets/geo/DEPARTAMENTOS-JUJUY.json";
 import type { UbicacionRequest } from "../../models/UbicacionRequest";
 
 export interface PointWithDepartamento {
@@ -17,18 +16,30 @@ export interface PointWithDepartamento {
   departamento: string;
 }
 
+async function loadDepartamentos() {
+  const res = await fetch("/geo/DEPARTAMENTOS-JUJUY.json");
+  return res.json();
+}
+
+
 
 function ClickHandler({
   onValidClick,
 }: {
   onValidClick: (data: PointWithDepartamento) => void;
 }) {
+    const [departamentos, setDepartamentos] = useState<any>(null);
+
+    useEffect(() => {
+    loadDepartamentos().then(setDepartamentos);
+    }, []);
+
   useMapEvents({
     click(e) {
       const departamento = findDepartamento(
         e.latlng.lat,
         e.latlng.lng,
-        departamentosGeoJson
+        departamentos
       );
 
       if (!departamento) return;
@@ -47,6 +58,8 @@ function ClickHandler({
 
 export default function MapaJujuy({onSelect,}: {onSelect: (point: UbicacionRequest) => void;}) {
   const [point, setPoint] = useState<UbicacionRequest | null>(null);
+
+  
 
   return (
     <>
