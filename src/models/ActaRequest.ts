@@ -8,6 +8,7 @@ export interface ActaRequest {
   idTipo: number;
   idUser?: number;
   idPuesto?: number;
+  fecha: string;
   motivo: string;
   nro: string;
   articulos: number[];
