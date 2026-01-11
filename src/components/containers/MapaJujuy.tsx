@@ -9,6 +9,15 @@ import { useEffect, useState } from "react";
 import jujuyGeoJson from "../../assets/geo/JUJUY.json";
 import { findDepartamento } from "./findDepartamento";
 import type { UbicacionRequest } from "../../models/UbicacionRequest";
+import customMarkerIcon from '../../assets/marcador.svg';
+import L from 'leaflet';
+
+const myIcon = L.icon({
+  iconUrl: customMarkerIcon,
+  iconSize: [38, 38], // tamaño del icono
+  iconAnchor: [19, 38], // punto del icono que corresponderá a la ubicación del marcador
+  popupAnchor: [0, -38] // punto desde donde se abrirá el popup
+});
 
 export interface PointWithDepartamento {
   lat: number;
@@ -88,7 +97,7 @@ export default function MapaJujuy({onSelect,}: {onSelect: (point: UbicacionReque
             }}
         />
 
-        {point && <Marker position={point} />}
+        {point && <Marker position={point} icon={myIcon} />}
       </MapContainer>
 
       <div style={{ marginTop: 10 }}>
