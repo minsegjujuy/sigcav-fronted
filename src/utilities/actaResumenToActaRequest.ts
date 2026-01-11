@@ -16,6 +16,7 @@ export const actaResumenToActaRequest = (
     adjunta: acta.adjunta,
     retencion: acta.retencion,
     ubicacionRequest: {departamento: acta.ubicacionResponse.departamento, lat: acta.ubicacionResponse.lat, 
-      lng: acta.ubicacionResponse.lng}
+      lng: acta.ubicacionResponse.lng},
+    fecha: acta.fecha
   };
 };
