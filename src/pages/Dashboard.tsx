@@ -20,6 +20,7 @@ const data: DashboardItem[] = [
   { id: 2, value: 'Nueva acta', icon: <AddDocumentIcon fontSize="large" />, color: '#2e7d32', path: '/dashboard/nueva-acta' },
   { id: 3, value: 'Informes', icon: <AssessmentIcon fontSize="large" />, color: '#ed6c02', path: '/dashboard/informes' },
   { id: 4, value: 'Talonarios', icon: <MenuBookIcon fontSize="large" />, color: '#9c27b0', path: '/dashboard/talonarios' },
+  { id: 4, value: 'Hechos viales', icon: <MenuBookIcon fontSize="large" />, color: '#3b2e3d', path: '/dashboard/hechos-viales' },
 ];
 
 const Dashboard = () => {

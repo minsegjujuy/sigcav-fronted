@@ -16,6 +16,7 @@ import { listarHechosViales } from "../services/HechoVialService";
 import type { HechoVialListDto } from "../models/HechoVialListDto";
 import ReusableModal from "../components/ui/modal/ReusableModal";
 import { HechoVialDetalle } from "./HechoVialInforme";
+import { useNavigate } from "react-router-dom";
 
 export default function HechosVialesTable() {
   const [data, setData] = useState<HechoVialListDto[]>([]);
@@ -26,6 +27,7 @@ export default function HechosVialesTable() {
   const [selectedItem, setSelectedItem] = useState<HechoVialListDto>();
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
+  const navigate = useNavigate();
 
   const fetchData = async () => {
     const response = await listarHechosViales({
@@ -51,6 +53,7 @@ export default function HechosVialesTable() {
 
   return (
     <Paper sx={{ p: 2 }}>
+      <Button onClick={() => navigate('/dashboard/hechos-viales/nuevo')}>Nuevo hecho vial</Button>
       {/* 🔍 Filtros */}
       <Stack direction="row" spacing={2} mb={2}>
         <TextField
