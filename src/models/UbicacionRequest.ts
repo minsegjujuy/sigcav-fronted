@@ -3,4 +3,5 @@ export interface UbicacionRequest {
   lng: number;
   departamento: string;
   unidadRegional?: number;
+  localidad?: number;
 }

@@ -19,6 +19,8 @@ const Talonario = lazy(() => import('./pages/Talonario'));
 const RegistroTalonario = lazy(() => import('./pages/RegistroTalonario'));
 const Reporte = lazy(() => import('./pages/Reporte'));
 const ActaForm = lazy(() => import('./pages/ActaForm'));
+const FormularioHechoVial = lazy(() => import('./pages/HechoVialForm'));
+const HechosVialesTable = lazy(() => import('./pages/HechosVialesTable'));
 
 function App() {
   const [mode, setMode] = useState<"light" | "dark">("light");
@@ -74,6 +76,8 @@ function App() {
                   <Route path="/dashboard/mis-actas" element={<ActaResumenTable />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   {/*<Route path="/zonas" element={<MapaZonas />} />*/}
+                  <Route path='/dashboard/hechos-viales/nuevo' element={<FormularioHechoVial />} />
+                  <Route path='/dashboard/hechos-viales' element={<HechosVialesTable />} />
                 </Route>
 
                 {/* Visualización */}
