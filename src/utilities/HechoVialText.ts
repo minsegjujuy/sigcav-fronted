@@ -1,13 +1,20 @@
 import type { HechoVialListDto } from "../models/HechoVialListDto";
 
+const siNo = (valor?: boolean): string =>
+  valor === true ? 'SI' : valor === false ? 'NO' : 'SD';
+
 export const generarTextoHechoVial = (hecho: HechoVialListDto): string => {
   let texto = `
-DESTACAMENTO: ${hecho.dependencia}
+DESTACAMENTO: ${hecho.puesto}
 
 INFORME DE HECHO VIAL
 
 FECHA Y HORA: ${hecho.fecha}
 RUTA / UBICACIÓN: ${hecho.ruta}
+COORDENADAS: ${hecho.ubicacionReq.lat} , ${hecho.ubicacionReq.lng}
+UNIDAD REGIONAL: ${hecho.ubicacionReq.unidadRegional}
+DEPARTAMENTO: ${hecho.ubicacionReq.departamento}
+CIUDAD: ${hecho.ubicacionReq.localidad}
 ZONA: ${hecho.zona}
 TIPO DE VÍA: ${hecho.tipoVia} ${hecho.tipoViaOtro ?? ''}
 
@@ -44,11 +51,12 @@ ${index + 1}º PROTAGONISTA – ${p.tipoRodado}
 DOMINIO: ${p.dominio}
 MARCA / MODELO: ${p.marca} ${p.modelo}
 COLOR: ${p.color}
-ASEGURADO: ${p.asegurado}
-RTO: ${p.rto}
-CÉDULA: ${p.cedula}
-AIRBAG: ${p.airbagActivado}
-USO SEGURIDAD: ${p.usoSeguridad}
+ASEGURADO: ${siNo(p.asegurado)}
+RTO: ${siNo(p.rto)}
+CÉDULA: ${siNo(p.cedula)}
+AIRBAG: ${siNo(p.airbagActivado)}
+USO SEGURIDAD: ${siNo(p.usoSeguridad)}
+
 
 CONDUCTOR:
 Nombre: ${p.conductorNombre}
@@ -60,7 +68,10 @@ Licencia: ${p.licenciaNro} (${p.licenciaClase}) - ${p.licenciaEstado}
 
 Traslado: ${p.trasladoConductor}
 Alcohol: ${p.graduacionAlcoholica}
-Acta: ${p.actaComprobacionNro}
+${p.actaRef && p.articuladoRef 
+  ? `SE LABRÓ ACTA DE COMPROBACIÓN NRO ${p.actaRef} POR ARTICULADO ${p.articuladoRef}` 
+  : ''}
+
 `;
 
     if (p.acompanantes?.length) {
@@ -71,9 +82,8 @@ ${i + 1}º Acompañante
 Nombre: ${a.nombre}
 Documento: ${a.tipo} ${a.numeroDocumento}
 Edad: ${a.edad}
-Cinturón/Casco: ${a.usoCinturonCasco}
+Cinturón/Casco: ${siNo(a.usoCinturonCasco)}
 Traslado: ${a.trasladado}
-Estado Salud: ${a.estadoSalud}
 `;
       });
     }

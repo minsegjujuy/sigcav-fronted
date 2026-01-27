@@ -10,7 +10,6 @@ export const SeccionProtagonistas = ({ control, register, watch }: { control: an
     name: "protagonistas"
   });
 
-
   return (
     <Box sx={{ mt: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -166,12 +165,26 @@ export const SeccionProtagonistas = ({ control, register, watch }: { control: an
                     fullWidth
                     label="Genero"
                     defaultValue=""
-                    {...register(`protagonistas.${index}.genero`)}
+                    {...register(`protagonistas.${index}.conductorGenero`)}
                 >
                     <MenuItem value="M">M</MenuItem>
                     <MenuItem value="F">F</MenuItem>
                     <MenuItem value="OTRO">OTRO</MenuItem>
                 </TextField>
+            </Grid>
+            {/* Fecha y Edad */}
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField 
+                fullWidth 
+                size="small" 
+                type="date" 
+                label="Fecha de Nacimiento" 
+                InputLabelProps={{ shrink: true }} 
+                {...register(`protagonistas.${index}.conductorFechaNacimiento`)}
+              />
+            </Grid>
+            <Grid size={{ xs: 6, md: 2 }}>
+              <TextField fullWidth size="small" label="Edad" {...register(`protagonistas.${index}.conductorEdad`)} />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField fullWidth label="Alcoholemia (G/L)" {...register(`protagonistas.${index}.graduacionAlcoholica`)} />
@@ -230,6 +243,13 @@ export const SeccionProtagonistas = ({ control, register, watch }: { control: an
                     )}
                 />
                 </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField fullWidth label="Ref Nro Acta" {...register(`protagonistas.${index}.actaRef`)} />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField fullWidth label="Articulado, EJ. ART 40 INC B, ART 40 INC A, ETC" 
+              {...register(`protagonistas.${index}.articuladoRef`)} />
             </Grid>
             {esFuerza && (
               <>
