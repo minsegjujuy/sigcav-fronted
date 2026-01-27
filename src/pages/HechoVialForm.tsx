@@ -23,6 +23,7 @@ import { obtenerUnidadesRegionalesPorDepartamento } from '../services/UnidadRegi
 import type { Localidad } from '../models/Localidad';
 import type { UnidadRegional } from '../models/UnidadRegional';
 import { guardarhechoVial } from '../services/HechoVialService';
+import { SnackbarUtilities } from '../utilities/SnackbarUtilities';
 
 const FormularioHechoVial = () => {
   const { register, handleSubmit, control, watch } = useForm<HechoVialForm>();
@@ -63,7 +64,7 @@ const FormularioHechoVial = () => {
     };
     console.log("Datos capturados:", payload);
     await guardarhechoVial(payload);
-   
+    SnackbarUtilities.success('Se guardó correctamente el hecho vial')
   };
 
    const handleMapSelect = async (point: UbicacionRequest) => {

@@ -6,6 +6,7 @@ import AssignmentIcon from '@mui/icons-material/Assignment'; // Mis Actas
 import AddDocumentIcon from '@mui/icons-material/NoteAdd';    // Nueva Acta
 import AssessmentIcon from '@mui/icons-material/Assessment';  // Informes
 import MenuBookIcon from '@mui/icons-material/MenuBook';      // Talonarios
+import CarCrashIcon from '@mui/icons-material/CarCrash';
 
 interface DashboardItem {
   id: number;
@@ -20,7 +21,7 @@ const data: DashboardItem[] = [
   { id: 2, value: 'Nueva acta', icon: <AddDocumentIcon fontSize="large" />, color: '#2e7d32', path: '/dashboard/nueva-acta' },
   { id: 3, value: 'Informes', icon: <AssessmentIcon fontSize="large" />, color: '#ed6c02', path: '/dashboard/informes' },
   { id: 4, value: 'Talonarios', icon: <MenuBookIcon fontSize="large" />, color: '#9c27b0', path: '/dashboard/talonarios' },
-  { id: 4, value: 'Hechos viales', icon: <MenuBookIcon fontSize="large" />, color: '#3b2e3d', path: '/dashboard/hechos-viales' },
+  { id: 4, value: 'Hechos viales', icon: <CarCrashIcon fontSize="large" />, color: '#3b2e3d', path: '/dashboard/hechos-viales' },
 ];
 
 const Dashboard = () => {

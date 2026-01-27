@@ -17,6 +17,7 @@ import type { HechoVialListDto } from "../models/HechoVialListDto";
 import ReusableModal from "../components/ui/modal/ReusableModal";
 import { HechoVialDetalle } from "./HechoVialInforme";
 import { useNavigate } from "react-router-dom";
+import AddIcon from '@mui/icons-material/Add';
 
 export default function HechosVialesTable() {
   const [data, setData] = useState<HechoVialListDto[]>([]);
@@ -53,7 +54,7 @@ export default function HechosVialesTable() {
 
   return (
     <Paper sx={{ p: 2 }}>
-      <Button onClick={() => navigate('/dashboard/hechos-viales/nuevo')}>Nuevo hecho vial</Button>
+      <Button variant="contained" onClick={() => navigate('/dashboard/hechos-viales/nuevo')}>Cargar hecho vial <AddIcon /></Button>
       {/* 🔍 Filtros */}
       <Stack direction="row" spacing={2} mb={2}>
         <TextField

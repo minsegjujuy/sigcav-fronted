@@ -67,6 +67,7 @@ export interface Protagonista {
   conductorDni: string;
   conductorNacionalidad: string;
   conductorEdad: string;
+  conductorFechaNacimiento: string;
   licenciaNro: string;
   licenciaClase: string;
   licenciaEstado: 'VIGENTE' | 'VENCIDA' | 'NO POSEE' | 'SD';
@@ -77,7 +78,8 @@ export interface Protagonista {
   // Salud y Alcohol
   trasladoConductor: string;
   graduacionAlcoholica: string;
-  actaComprobacionNro: string;
+  actaRef: string;
+  articuladoRef: string;
   // Lista anidada
   acompanantes: Acompanante[];
 }
