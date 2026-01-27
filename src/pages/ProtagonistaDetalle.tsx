@@ -48,7 +48,8 @@ export const ProtagonistaDetalle = ({ protagonista, nro }: ProtagonistaProps) =>
       <Grid container spacing={2}>
         <Grid size={6}><strong>Traslado:</strong> {protagonista.trasladoConductor}</Grid>
         <Grid size={6}><strong>Alcohol:</strong> {protagonista.graduacionAlcoholica}</Grid>
-        <Grid size={6}><strong>Acta:</strong> {protagonista.actaComprobacionNro}</Grid>
+        <Grid size={6}><strong>Acta:</strong> {protagonista.actaRef}</Grid>
+        <Grid size={6}><strong>Articulado:</strong> {protagonista.articuladoRef}</Grid>
       </Grid>
 
       {protagonista.acompanantes?.length > 0 && (
