@@ -28,69 +28,102 @@ export const SeccionAcompanantes = ({ pIndex, control, register }: AcompanantesP
             <TextField fullWidth size="small" label="Apellido y Nombre" {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.nombre`)} />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
-            <TextField select fullWidth size="small" label="Tipo Documento" defaultValue="" {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.tipo`)}>
-              <MenuItem value="DNI">DNI</MenuItem>
-              <MenuItem value="LE">LE</MenuItem>
-              <MenuItem value="LC">LC</MenuItem>
-              <MenuItem value="CI">CI</MenuItem>
-            </TextField>
+            <Controller
+              name={`protagonistas.${pIndex}.acompanantes.${aIndex}.tipo`}
+              control={control}
+              render={({ field, fieldState }) => (
+                <TextField
+                  {...field}
+                  select
+                  fullWidth
+                  size="small"
+                  label="Tipo Documento"
+                  error={!!fieldState.error}
+                  helperText={fieldState.error?.message}
+                >
+                  <MenuItem value="DNI">DNI</MenuItem>
+                  <MenuItem value="LE">LE</MenuItem>
+                  <MenuItem value="LC">LC</MenuItem>
+                  <MenuItem value="CI">CI</MenuItem>
+                </TextField>
+              )}
+            />
           </Grid>
           <Grid size={{ xs: 6, md: 3 }}>
-            <TextField fullWidth size="small" label="Otro (Doc)" {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.numeroDocumento`)} />
+            <TextField fullWidth size="small" label="Nro" {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.numeroDocumento`)} />
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
+            <Controller
+              name={`protagonistas.${pIndex}.acompanantes.${aIndex}.nacionalidad`}
+              control={control}
+              defaultValue=""
+              render={({ field, fieldState }) => (
                 <TextField
-                    select
-                    fullWidth
-                    label="Nacionalidad"
-                    defaultValue=""
-                    {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.nacionalidad`)}
+                  {...field}
+                  select
+                  fullWidth
+                  size="small"
+                  label="Nacionalidad"
+                  error={!!fieldState.error}
+                  helperText={fieldState.error?.message}
                 >
-                    <MenuItem value="ARGENTINA">ARGENTINA</MenuItem>
-                    <MenuItem value="CHILENA">CHILENA</MenuItem>
-                    <MenuItem value="BOLIVIANA">BOLIVIANA</MenuItem>
-                    <MenuItem value="PARAGUAYA">PARAGUAYA</MenuItem>
-                    <MenuItem value="BRASILERA">BRASILERA</MenuItem>
-                    <MenuItem value="PERUANA">PERUANA</MenuItem>
-                    <MenuItem value="VENEZOLANA">VENEZOLANA</MenuItem>
+                  <MenuItem value="ARGENTINA">ARGENTINA</MenuItem>
+                  <MenuItem value="CHILENA">CHILENA</MenuItem>
+                  <MenuItem value="BOLIVIANA">BOLIVIANA</MenuItem>
+                  <MenuItem value="PARAGUAYA">PARAGUAYA</MenuItem>
+                  <MenuItem value="BRASILERA">BRASILERA</MenuItem>
+                  <MenuItem value="PERUANA">PERUANA</MenuItem>
+                  <MenuItem value="VENEZOLANA">VENEZOLANA</MenuItem>
                 </TextField>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-                select
-                fullWidth
-                label="Provincia"
-                defaultValue=""
-                {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.provincia`)}
-            >
-                <MenuItem value="BUENOS_AIRES">Buenos Aires</MenuItem>
-                <MenuItem value="CIUDAD_AUTONOMA_DE_BUENOS_AIRES">Ciudad Autónoma de Buenos Aires</MenuItem>
-                <MenuItem value="CATAMARCA">Catamarca</MenuItem>
-                <MenuItem value="CHACO">Chaco</MenuItem>
-                <MenuItem value="CHUBUT">Chubut</MenuItem>
-                <MenuItem value="CORDOBA">Córdoba</MenuItem>
-                <MenuItem value="CORRIENTES">Corrientes</MenuItem>
-                <MenuItem value="ENTRE_RIOS">Entre Ríos</MenuItem>
-                <MenuItem value="FORMOSA">Formosa</MenuItem>
-                <MenuItem value="JUJUY">Jujuy</MenuItem>
-                <MenuItem value="LA_PAMPA">La Pampa</MenuItem>
-                <MenuItem value="LA_RIOJA">La Rioja</MenuItem>
-                <MenuItem value="MENDOZA">Mendoza</MenuItem>
-                <MenuItem value="MISIONES">Misiones</MenuItem>
-                <MenuItem value="NEUQUEN">Neuquén</MenuItem>
-                <MenuItem value="RIO_NEGRO">Río Negro</MenuItem>
-                <MenuItem value="SALTA">Salta</MenuItem>
-                <MenuItem value="SAN_JUAN">San Juan</MenuItem>
-                <MenuItem value="SAN_LUIS">San Luis</MenuItem>
-                <MenuItem value="SANTA_CRUZ">Santa Cruz</MenuItem>
-                <MenuItem value="SANTA_FE">Santa Fe</MenuItem>
-                <MenuItem value="SANTIAGO_DEL_ESTERO">Santiago del Estero</MenuItem>
-                <MenuItem value="TIERRA_DEL_FUEGO">Tierra del Fuego</MenuItem>
-                <MenuItem value="TUCUMAN">Tucumán</MenuItem>
-                <MenuItem value="N/A">N/A</MenuItem>
-            </TextField>
-            </Grid>
-
+              )}
+            />
+          </Grid>
+           <Grid size={{ xs: 12, md: 6 }}>
+            <Controller
+              name={`protagonistas.${pIndex}.acompanantes.${aIndex}.provincia`}
+              control={control}
+              defaultValue=""
+              render={({ field, fieldState }) => (
+                <TextField
+                  {...field}
+                  select
+                  fullWidth
+                  size="small"
+                  label="Provincia"
+                  error={!!fieldState.error}
+                  helperText={fieldState.error?.message}
+                >
+                  <MenuItem value="BUENOS_AIRES">Buenos Aires</MenuItem>
+                  <MenuItem value="CIUDAD_AUTONOMA_DE_BUENOS_AIRES">
+                    Ciudad Autónoma de Buenos Aires
+                  </MenuItem>
+                  <MenuItem value="CATAMARCA">Catamarca</MenuItem>
+                  <MenuItem value="CHACO">Chaco</MenuItem>
+                  <MenuItem value="CHUBUT">Chubut</MenuItem>
+                  <MenuItem value="CORDOBA">Córdoba</MenuItem>
+                  <MenuItem value="CORRIENTES">Corrientes</MenuItem>
+                  <MenuItem value="ENTRE_RIOS">Entre Ríos</MenuItem>
+                  <MenuItem value="FORMOSA">Formosa</MenuItem>
+                  <MenuItem value="JUJUY">Jujuy</MenuItem>
+                  <MenuItem value="LA_PAMPA">La Pampa</MenuItem>
+                  <MenuItem value="LA_RIOJA">La Rioja</MenuItem>
+                  <MenuItem value="MENDOZA">Mendoza</MenuItem>
+                  <MenuItem value="MISIONES">Misiones</MenuItem>
+                  <MenuItem value="NEUQUEN">Neuquén</MenuItem>
+                  <MenuItem value="RIO_NEGRO">Río Negro</MenuItem>
+                  <MenuItem value="SALTA">Salta</MenuItem>
+                  <MenuItem value="SAN_JUAN">San Juan</MenuItem>
+                  <MenuItem value="SAN_LUIS">San Luis</MenuItem>
+                  <MenuItem value="SANTA_CRUZ">Santa Cruz</MenuItem>
+                  <MenuItem value="SANTA_FE">Santa Fe</MenuItem>
+                  <MenuItem value="SANTIAGO_DEL_ESTERO">Santiago del Estero</MenuItem>
+                  <MenuItem value="TIERRA_DEL_FUEGO">Tierra del Fuego</MenuItem>
+                  <MenuItem value="TUCUMAN">Tucumán</MenuItem>
+                  <MenuItem value="N/A">N/A</MenuItem>
+                </TextField>
+              )}
+            />
+          </Grid>
           {/* Fecha y Edad */}
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField 
@@ -139,18 +172,26 @@ export const SeccionAcompanantes = ({ pIndex, control, register }: AcompanantesP
                 />
                 </FormControl>
             </Grid>
-          <Grid size={{ xs: 12, md: 3 }}>
-              <TextField
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Controller
+              name={`protagonistas.${pIndex}.acompanantes.${aIndex}.genero`}
+              control={control}
+              defaultValue=""
+              render={({ field, fieldState }) => (
+                <TextField
+                  {...field}
                   select
-                  fullWidth size="small"
-                  label="Genero"
-                  defaultValue=""
-                  {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.genero`)}
-              >
+                  fullWidth
+                  label="Género"
+                  error={!!fieldState.error}
+                  helperText={fieldState.error?.message}
+                >
                   <MenuItem value="M">M</MenuItem>
                   <MenuItem value="F">F</MenuItem>
                   <MenuItem value="OTRO">OTRO</MenuItem>
-              </TextField>
+                </TextField>
+              )}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 12 }}>
             <TextField
@@ -161,7 +202,29 @@ export const SeccionAcompanantes = ({ pIndex, control, register }: AcompanantesP
                 minRows={3}
                 {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.trasladado`)}
             />
-            </Grid>
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <Controller
+              name={`protagonistas.${pIndex}.acompanantes.${aIndex}.estadoSalud`}
+              control={control}
+              defaultValue=""
+              render={({ field, fieldState }) => (
+                <TextField
+                  {...field}
+                  select
+                  fullWidth
+                  label="Estado de salud"
+                  error={!!fieldState.error}
+                  helperText={fieldState.error?.message}
+                >
+                  <MenuItem value="SIN LESIONES">SIN LESIONES</MenuItem>
+                  <MenuItem value="HERIDO LEVE">HERIDO LEVE</MenuItem>
+                  <MenuItem value="HERIDO GRAVE">HERIDO GRAVE</MenuItem>
+                  <MenuItem value="FALLECIDO">FALLECIDO</MenuItem>
+                </TextField>
+              )}
+            />
+          </Grid>
 
           <Grid size={{ xs: 2, md: 1 }}>
             <IconButton color="error" onClick={() => remove(aIndex)}><DeleteIcon /></IconButton>

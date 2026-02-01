@@ -4,6 +4,11 @@ import type { PageResponse } from "../models/PageResponse";
 import { getAuthHeader } from "../utilities/getAuthHeader";
 import type { HechoVialForm } from "../models/HechoVialForm";
 import api from "../interceptors/axios.interceptors";
+import type { UbicacionPunto } from "../models/UbicacionPunto";
+import type { MetricasSiniestralidad } from "../models/Metricas";
+import type { PorcentajeAlcoholizados } from "../models/PorcentajeAlcoholizados";
+import type { TurnoData } from "../models/TurnoData";
+import type { DiasCantidad } from "../models/DiasCantidad";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 
@@ -12,6 +17,10 @@ export const listarHechosViales = async (params: {
   size: number;
   fechaInicio?: string;
   fechaFin?: string;
+  grupoId?:string;
+  danosMateriales?:string,
+  victimaFatal?:string,
+  soloLesionados?:boolean
 }) => {
   const { data } = await axios.get<PageResponse<HechoVialListDto>>(
     `${baseURL}/hechos-viales`,
@@ -20,9 +29,73 @@ export const listarHechosViales = async (params: {
   return data;
 };
 
+export const listarHechosVialesUbicaciones = async (params: {
+  fechaInicio: string;
+  fechaFin: string;
+  danosMateriales?:string,
+  victimaFatal?:string,
+  soloLesionados?:boolean
+}) => {
+  const { data } = await axios.get<UbicacionPunto[]>(
+    `${baseURL}/hechos-viales/ubicaciones`,
+    {params, ...getAuthHeader()}
+  );
+  return data;
+};
+
+export const listarHechosVialesMetricas= async (params: {
+  fechaInicio: string;
+  fechaFin: string
+}) => {
+  const { data } = await axios.get<MetricasSiniestralidad>(
+    `${baseURL}/hechos-viales/metricas`,
+    {params, ...getAuthHeader()}
+  );
+  return data;
+};
+
+export const listarHechosVialesAlcoholizados= async (params: {
+  fechaInicio: string;
+  fechaFin: string
+}) => {
+  const { data } = await axios.get<PorcentajeAlcoholizados>(
+    `${baseURL}/hechos-viales/alcoholizados`,
+    {params, ...getAuthHeader()}
+  );
+  return data;
+};
+
+export const listarHechosVialesPorTurnos= async (params: {
+  fechaInicio: string;
+  fechaFin: string
+}) => {
+  const { data } = await axios.get<TurnoData[]>(
+    `${baseURL}/hechos-viales/turnos`,
+    {params, ...getAuthHeader()}
+  );
+  return data;
+};
+
+export const listarHechosVialesPorDia= async (params: {
+  fechaInicio: string;
+  fechaFin: string
+}) => {
+  const { data } = await axios.get<DiasCantidad[]>(
+    `${baseURL}/hechos-viales/dias`,
+    {params, ...getAuthHeader()}
+  );
+  return data;
+};
+
+
 export const guardarhechoVial = async (hv: HechoVialForm) => {
   const { data } = await api.post<PageResponse<HechoVialListDto>>(
     `${baseURL}/hechos-viales`, hv, getAuthHeader()
   );
   return data;
+};
+
+export const deleteHechoVial = async (id: number): Promise<void> => {
+    await axios.patch(`${baseURL}/hechos-viales/${id}/status`, null, getAuthHeader()
+    );
 };

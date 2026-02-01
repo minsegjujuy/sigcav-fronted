@@ -1,14 +1,28 @@
-import { Box, Button, Divider, FormControl, FormControlLabel, FormLabel, Grid, MenuItem, Paper, Radio, RadioGroup, TextField, Typography } from "@mui/material";
+import { Box, Button, Checkbox, Divider, FormControl, FormControlLabel, FormLabel, Grid, InputLabel, ListItemText, MenuItem, OutlinedInput, Paper, Radio, RadioGroup, Select, TextField, Typography } from "@mui/material";
 import { SeccionAcompanantes } from "./SeccionAcompanantes";
 import { Controller, useFieldArray } from "react-hook-form";
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import type { Articulo } from "../models/Articulo";
+import { useEffect, useState } from "react";
+import { getArticulos } from "../services/ArticuloService";
 
 export const SeccionProtagonistas = ({ control, register, watch }: { control: any, register: any, watch: any }) => {
   const { fields, append, remove } = useFieldArray({
     control,
     name: "protagonistas"
   });
+  const [articulos, setArticulos] = useState<Articulo[]>([]);
+
+  const fetchArticulos = async () => {
+    const data = await getArticulos();
+    setArticulos(data);
+    console.log('data articulos ', data)
+  }
+
+  useEffect(()=> {
+    fetchArticulos();
+  }, [])
 
   return (
     <Box sx={{ mt: 4 }}>
@@ -32,18 +46,34 @@ export const SeccionProtagonistas = ({ control, register, watch }: { control: an
 
             {/* Datos Rodado */}
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField select fullWidth label="Tipo de Rodado" {...register(`protagonistas.${index}.tipoRodado`)}>
-                <MenuItem value="AUTOMOVIL">AUTOMÓVIL</MenuItem>
-                <MenuItem value="CAMIONETA">CAMIONETA</MenuItem>
-                <MenuItem value="MOTOCICLETA">MOTOCICLETA</MenuItem>
-                <MenuItem value="CAMION">CAMION</MenuItem>
-                <MenuItem value="CAMION CON ACOPLADO">CAMION CON ACOPLADO</MenuItem>
-                <MenuItem value="CARGA TRACTOR">CAMION TRACTOR</MenuItem>
-                <MenuItem value="OMNIBUS">OMNIBUS</MenuItem>
-                <MenuItem value="OMNIBUS URBANO">OMNIBUS URBANO</MenuItem>
-                <MenuItem value="OMNIBUS A LARGA DISTANCIA / ARTICULADO">OMNIBUS A LARGA DISTANCIA / ARTICULADO</MenuItem>
-                <MenuItem value="MAQUINARIA">MAQUINARIA</MenuItem>
-              </TextField>
+              <Controller
+                name={`protagonistas.${index}.tipoRodado`}
+                control={control}
+                defaultValue=""
+                render={({ field, fieldState }) => (
+                  <TextField
+                    {...field}
+                    select
+                    fullWidth
+                    label="Tipo de Rodado"
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                  >
+                    <MenuItem value="AUTOMOVIL">AUTOMÓVIL</MenuItem>
+                    <MenuItem value="CAMIONETA">CAMIONETA</MenuItem>
+                    <MenuItem value="MOTOCICLETA">MOTOCICLETA</MenuItem>
+                    <MenuItem value="CAMION">CAMIÓN</MenuItem>
+                    <MenuItem value="CAMION CON ACOPLADO">CAMIÓN CON ACOPLADO</MenuItem>
+                    <MenuItem value="CARGA TRACTOR">CAMIÓN TRACTOR</MenuItem>
+                    <MenuItem value="OMNIBUS">ÓMNIBUS</MenuItem>
+                    <MenuItem value="OMNIBUS URBANO">ÓMNIBUS URBANO</MenuItem>
+                    <MenuItem value="OMNIBUS A LARGA DISTANCIA / ARTICULADO">
+                      ÓMNIBUS A LARGA DISTANCIA / ARTICULADO
+                    </MenuItem>
+                    <MenuItem value="MAQUINARIA">MAQUINARIA</MenuItem>
+                  </TextField>
+                            )}
+                          />
             </Grid>
             <Grid size={{ xs: 12, md: 2 }}>
               <TextField fullWidth label="Dominio" {...register(`protagonistas.${index}.dominio`)} />
@@ -55,16 +85,31 @@ export const SeccionProtagonistas = ({ control, register, watch }: { control: an
               <TextField fullWidth label="Modelo" {...register(`protagonistas.${index}.modelo`)} />
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
-              <TextField select fullWidth label="Color" {...register(`protagonistas.${index}.color`)}>
-                <MenuItem value="ROJO">ROJO</MenuItem>
-                <MenuItem value="AZUL">AZUL</MenuItem>
-                <MenuItem value="BLANCO">BLANCO</MenuItem>
-                <MenuItem value="NEGRO">NEGRO</MenuItem>
-                <MenuItem value="AMARILLO">AMARILLO</MenuItem>
-                <MenuItem value="GRIS">GRIS</MenuItem>
-                <MenuItem value="OTRO">OTRO</MenuItem>
-              </TextField>
+              <Controller
+                name={`protagonistas.${index}.color`}
+                control={control}
+                defaultValue=""
+                render={({ field, fieldState }) => (
+                  <TextField
+                    {...field}
+                    select
+                    fullWidth
+                    label="Color"
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                  >
+                    <MenuItem value="ROJO">ROJO</MenuItem>
+                    <MenuItem value="AZUL">AZUL</MenuItem>
+                    <MenuItem value="BLANCO">BLANCO</MenuItem>
+                    <MenuItem value="NEGRO">NEGRO</MenuItem>
+                    <MenuItem value="AMARILLO">AMARILLO</MenuItem>
+                    <MenuItem value="GRIS">GRIS</MenuItem>
+                    <MenuItem value="OTRO">OTRO</MenuItem>
+                  </TextField>
+                )}
+              />
             </Grid>
+
             <Grid size={{ xs: 12, md: 4 }}>
                 <FormControl component="fieldset">
                 <FormLabel component="legend">¿Asegurado?</FormLabel>
@@ -160,23 +205,30 @@ export const SeccionProtagonistas = ({ control, register, watch }: { control: an
               <TextField fullWidth label="DNI" {...register(`protagonistas.${index}.conductorDni`)} />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
+              <Controller
+                name={`protagonistas.${index}.conductorGenero`}
+                control={control}
+                defaultValue=""
+                render={({ field, fieldState }) => (
+                  <TextField
+                    {...field}
                     select
                     fullWidth
-                    label="Genero"
-                    defaultValue=""
-                    {...register(`protagonistas.${index}.conductorGenero`)}
-                >
+                    label="Género"
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                  >
                     <MenuItem value="M">M</MenuItem>
                     <MenuItem value="F">F</MenuItem>
                     <MenuItem value="OTRO">OTRO</MenuItem>
-                </TextField>
+                  </TextField>
+                )}
+              />
             </Grid>
             {/* Fecha y Edad */}
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField 
-                fullWidth 
-                size="small" 
+                fullWidth
                 type="date" 
                 label="Fecha de Nacimiento" 
                 InputLabelProps={{ shrink: true }} 
@@ -184,39 +236,106 @@ export const SeccionProtagonistas = ({ control, register, watch }: { control: an
               />
             </Grid>
             <Grid size={{ xs: 6, md: 2 }}>
-              <TextField fullWidth size="small" label="Edad" {...register(`protagonistas.${index}.conductorEdad`)} />
+              <TextField fullWidth label="Edad" {...register(`protagonistas.${index}.conductorEdad`)} />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth label="Alcoholemia (G/L)" {...register(`protagonistas.${index}.graduacionAlcoholica`)} />
+              <Controller
+              name={`protagonistas.${index}.graduacionAlcoholica`}
+              control={control}
+              render={({ field, fieldState }) => (
+                <TextField
+                  {...field}
+                  label="Graduación Alcohólica (g/L)"
+                  type="number" // Mantiene el teclado numérico en móviles
+                  fullWidth
+                  // Esto es la clave:
+                  inputProps={{ 
+                    step: "0.01", // Permite incrementos de 0.01 (decimales)
+                    min: 0,
+                    max: 10 
+                  }}
+                  // Importante: convertir el string del input a float de JS
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    field.onChange(val === "" ? "" : parseFloat(val));
+                  }}
+                  error={!!fieldState.error}
+                  helperText={fieldState.error?.message}
+                />
+              )}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
-              <TextField fullWidth label="Nacionalidad" {...register(`protagonistas.${index}.conductorNacionalidad`)} />
-            </Grid>
-
+            <Controller
+              name={`protagonistas.${index}.conductorNacionalidad`}
+              control={control}
+              defaultValue=""
+              render={({ field, fieldState }) => (
+                <TextField
+                  {...field}
+                  select
+                  fullWidth
+                  label="Nacionalidad"
+                  error={!!fieldState.error}
+                  helperText={fieldState.error?.message}
+                >
+                  <MenuItem value="ARGENTINA">ARGENTINA</MenuItem>
+                  <MenuItem value="CHILENA">CHILENA</MenuItem>
+                  <MenuItem value="BOLIVIANA">BOLIVIANA</MenuItem>
+                  <MenuItem value="PARAGUAYA">PARAGUAYA</MenuItem>
+                  <MenuItem value="BRASILERA">BRASILERA</MenuItem>
+                  <MenuItem value="PERUANA">PERUANA</MenuItem>
+                  <MenuItem value="VENEZOLANA">VENEZOLANA</MenuItem>
+                </TextField>
+              )}
+            />
+          </Grid>
             {/* Licencia */}
             <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
+              <Controller
+                name={`protagonistas.${index}.licenciaClase`}
+                control={control}
+                defaultValue=""
+                render={({ field, fieldState }) => (
+                  <TextField
+                    {...field}
                     select
                     fullWidth
                     label="Tipo de licencia"
-                    defaultValue=""
-                    {...register(`protagonistas.${index}.licenciaClase`)}
-                >
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                  >
                     <MenuItem value="MUNICIPAL">MUNICIPAL</MenuItem>
                     <MenuItem value="PROVINCIAL">PROVINCIAL</MenuItem>
                     <MenuItem value="NACIONAL">NACIONAL</MenuItem>
                     <MenuItem value="EXTRANJERA">EXTRANJERA</MenuItem>
-                </TextField>
+                  </TextField>
+                )}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField fullWidth label="Licencia Nro" {...register(`protagonistas.${index}.licenciaNro`)} />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField select fullWidth label="Estado Licencia" {...register(`protagonistas.${index}.licenciaEstado`)}>
-                <MenuItem value="VIGENTE">VIGENTE</MenuItem>
-                <MenuItem value="VENCIDA">VENCIDA</MenuItem>
-                <MenuItem value="NO POSEE">NO POSEE</MenuItem>
-              </TextField>
+              <Controller
+                name={`protagonistas.${index}.licenciaEstado`}
+                control={control}
+                defaultValue=""
+                render={({ field, fieldState }) => (
+                  <TextField
+                    {...field}
+                    select
+                    fullWidth
+                    label="Estado Licencia"
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                  >
+                    <MenuItem value="VIGENTE">VIGENTE</MenuItem>
+                    <MenuItem value="VENCIDA">VENCIDA</MenuItem>
+                    <MenuItem value="NO_POSEE">NO POSEE</MenuItem>
+                  </TextField>
+                )}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 12 }}>
             <TextField
@@ -227,6 +346,28 @@ export const SeccionProtagonistas = ({ control, register, watch }: { control: an
                 minRows={3}
                 {...register(`protagonistas.${index}.trasladoConductor`)}
             />
+            </Grid>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <Controller
+                name={`protagonistas.${index}.estadoSalud`}
+                control={control}
+                defaultValue=""
+                render={({ field, fieldState }) => (
+                  <TextField
+                    {...field}
+                    select
+                    fullWidth
+                    label="Estado de salud"
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                  >
+                    <MenuItem value="SIN LESIONES">SIN LESIONES</MenuItem>
+                    <MenuItem value="HERIDO LEVE">HERIDO LEVE</MenuItem>
+                    <MenuItem value="HERIDO GRAVE">HERIDO GRAVE</MenuItem>
+                    <MenuItem value="FALLECIDO">FALLECIDO</MenuItem>
+                  </TextField>
+                )}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
                 <FormControl component="fieldset">
@@ -245,12 +386,44 @@ export const SeccionProtagonistas = ({ control, register, watch }: { control: an
                 </FormControl>
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <TextField fullWidth label="Ref Nro Acta" {...register(`protagonistas.${index}.actaRef`)} />
+              <TextField fullWidth label="Ref Nro acta" {...register(`protagonistas.${index}.actaRef`)} />
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <TextField fullWidth label="Articulado, EJ. ART 40 INC B, ART 40 INC A, ETC" 
-              {...register(`protagonistas.${index}.articuladoRef`)} />
+              <TextField fullWidth label="Ref nro acta retencion" {...register(`protagonistas.${index}.actaRetencionRef`)} />
             </Grid>
+            <FormControl fullWidth>
+              <InputLabel id="articulos-label">Artículos</InputLabel>
+
+              <Controller
+                name={`protagonistas.${index}.articuladoRef`}
+                control={control}
+                defaultValue={[]}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    labelId="articulos-label"
+                    multiple
+                    input={<OutlinedInput label="Artículos" />}
+                    renderValue={(selected) =>
+                      articulos
+                        .filter(a => selected.includes(a.idArt))
+                        .map(a => `Art. ${a.nro}`)
+                        .join(', ')
+                    }
+                  >
+                    {articulos.map((art) => (
+                      <MenuItem key={art.idArt} value={art.idArt}>
+                        <Checkbox checked={field.value.includes(art.idArt)} />
+                        <ListItemText
+                          primary={`Art. ${art.nro}`}
+                          secondary={art.detalle}
+                        />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                )}
+              />
+            </FormControl>
             {esFuerza && (
               <>
                 <Grid size={{ xs: 12, md: 4 }}>

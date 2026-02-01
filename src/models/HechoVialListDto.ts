@@ -7,9 +7,10 @@ export interface HechoVialListDto {
   ruta: string;
   dependencia: string;
   victimaFatal: string;
-  danosMateriales: string;
+  danosMateriales: 'SI' | 'NO';
   zona: string;
   tipoVia: string;
+  grupo: number;
   tipoViaOtro?: string;
   involucrados: string[];
   configuracionVia: string;
