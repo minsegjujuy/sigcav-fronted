@@ -1,30 +1,32 @@
 import type { UbicacionRequest } from "./UbicacionRequest";
 
 export interface HechoVialForm {
-  destacamento: number;
-  fecha: string;
-  hora: string;
-  ruta: string;
-  dependencia: string;
-  ubicacionReq: UbicacionRequest;
-  victimaFatal: string; // "SI" | "NO"
+  id?: number;
+  destacamento: number; //obligatorio
+  grupo: number;
+  fecha: string; //obligatorio
+  hora: string; //obligatorio
+  ruta: string; //obligatorio
+  dependencia: string; //obligatorio
+  ubicacionReq: UbicacionRequest; //obligatorio
+  victimaFatal: string;
   danosMateriales: string;
-  zona: string;
-  tipoVia: string;
+  zona: string; //obligatorio
+  tipoVia: string; //obligatorio
   tipoViaOtro?: string;
-  involucrados: Involucrado[];
-  configuracionVia: string;
-  estadoCalzada: string;
-  materialCalzada: string;
-  estadoFisicoCalzada: string;
-  estadoAmbiental: string;
-  luzArtificial: string;
-  semaforo: string;
-  tipoSiniestro: string;
+  involucrados: Involucrado[]; //obligatorio
+  configuracionVia: string; //obligatorio
+  estadoCalzada: string; //obligatorio
+  materialCalzada: string; //obligatorio
+  estadoFisicoCalzada: string; //obligatorio
+  estadoAmbiental: string; //obligatorio
+  luzArtificial: string; //obligatorio
+  semaforo: string; //obligatorio
+  tipoSiniestro: string; //obligatorio
   tipoColision?: string;
-  posiblesCausas: string[];
-  sintesis: string;
-  protagonistas: Protagonista[];
+  posiblesCausas: string[]; //obligatorio
+  sintesis: string; //obligatorio
+  protagonistas: Protagonista[]; //obligatorio
 }
 
 export interface Involucrado {
@@ -77,9 +79,11 @@ export interface Protagonista {
   legajo?: string;
   // Salud y Alcohol
   trasladoConductor: string;
-  graduacionAlcoholica: string;
+  graduacionAlcoholica: number; // si es null no se realizó ningun test
+  estadoSalud: string;
   actaRef: string;
-  articuladoRef: string;
+  actaRetencionRef: string;
+  articuladoRef: number[];
   // Lista anidada
   acompanantes: Acompanante[];
 }

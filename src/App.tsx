@@ -9,6 +9,7 @@ import { lazy, Suspense, useMemo, useState } from 'react'
 import { createTheme, CssBaseline, ThemeProvider } from '@mui/material'
 import { ActaProvider } from './context/ActaResumenContext'
 import ReloadPrompt from './components/ui/modal/ReloadPrompt'
+import { HechoVialProvider } from './context/HechoVialContext'
 
 // 1. Carga diferida de componentes (Lazy Imports)
 const Login = lazy(() => import('./pages/Login'));
@@ -21,6 +22,7 @@ const Reporte = lazy(() => import('./pages/Reporte'));
 const ActaForm = lazy(() => import('./pages/ActaForm'));
 const FormularioHechoVial = lazy(() => import('./pages/HechoVialForm'));
 const HechosVialesTable = lazy(() => import('./pages/HechosVialesTable'));
+const MapaJujuySource = lazy(() => import('./components/containers/MapaJujuySource'));
 
 function App() {
   const [mode, setMode] = useState<"light" | "dark">("light");
@@ -65,6 +67,7 @@ function App() {
           </div>
 
           <ActaProvider>
+            <HechoVialProvider>
             {/* 2. Suspense envuelve las rutas que se cargan de forma perezosa */}
             <Suspense fallback={<div style={{ padding: 20 }}>Cargando módulo...</div>}>
               <Routes>
@@ -76,7 +79,7 @@ function App() {
                   <Route path="/dashboard/mis-actas" element={<ActaResumenTable />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   {/*<Route path="/zonas" element={<MapaZonas />} />*/}
-                  <Route path='/dashboard/hechos-viales/nuevo' element={<FormularioHechoVial />} />
+                  
                   <Route path='/dashboard/hechos-viales' element={<HechosVialesTable />} />
                 </Route>
 
@@ -85,14 +88,18 @@ function App() {
                   <Route path="/dashboard/talonarios" element={<Talonario />} />
                   <Route path="/dashboard/talonarios/registros" element={<RegistroTalonario />} />
                   <Route path="/dashboard/informes" element={<Reporte />} />
+                  <Route path="/dashboard/hechos-viales/mapa" element={<MapaJujuySource />} />
                 </Route>
 
                 {/* Alta y modificación */}
                 <Route element={<RequireAuth allowedRoles={["ADMIN", "SECRETARIO", "PERSONAL"]} />}>
                   <Route path="/dashboard/nueva-acta" element={<ActaForm />} />
+                  <Route path="/dashboard/hechos-viales/modificacion/:id" element={<FormularioHechoVial />} />
+                  <Route path='/dashboard/hechos-viales/nuevo' element={<FormularioHechoVial />} />
                 </Route>
               </Routes>
             </Suspense>
+            </HechoVialProvider>
           </ActaProvider>
         </ArticuloProvider>
       </SnackbarProvider>

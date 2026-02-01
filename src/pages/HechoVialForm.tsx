@@ -10,7 +10,6 @@ import {
   Chip,
 } from '@mui/material';
 import { useForm, Controller, useWatch, useFieldArray } from 'react-hook-form';
-import type { HechoVialForm } from '../models/HechoVialForm';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { SeccionProtagonistas } from './SeccionProtagonista';
@@ -24,9 +23,24 @@ import type { Localidad } from '../models/Localidad';
 import type { UnidadRegional } from '../models/UnidadRegional';
 import { guardarhechoVial } from '../services/HechoVialService';
 import { SnackbarUtilities } from '../utilities/SnackbarUtilities';
+import type { HechoVialForm } from '../models/HechoVialForm';
+import { useHechoVial } from '../context/HechoVialContext';
 
 const FormularioHechoVial = () => {
-  const { register, handleSubmit, control, watch } = useForm<HechoVialForm>();
+  const {
+    register,
+    control,
+    handleSubmit,
+    reset,
+    watch
+  } = useForm<HechoVialForm>({
+    defaultValues: {
+      protagonistas: [],
+      victimaFatal: "NO",
+      zona: "URBANA",
+      danosMateriales: "SI",
+    }
+  });
   const TIPOS_INVOLUCRADOS = [
     "AUTOMOVIL", "MOTOCICLETA", "PEATON", "VEHICULO MOVILIDAD PERSONAL",
     "BICICLETA", "CUATRICLO", "CAMIONETA/UTILITARIO", "TRANSPORTE DE CARGA",
@@ -37,6 +51,7 @@ const FormularioHechoVial = () => {
     name: "involucrados"
   });
   const [puestos, setPuestos] = useState<Puesto[]>([]);
+  const { hechoVial, modo, limpiarHechoVial } = useHechoVial();
   const [localidades, setLocalidades] = useState<Localidad[]>([]);
   const [unidadesRegionales, setUnidadesRegionales] = useState<UnidadRegional[]>([]);
   const [ubicacion, setUbicacion] = useState<UbicacionRequest>({
@@ -62,9 +77,11 @@ const FormularioHechoVial = () => {
         ...data,
         ubicacionReq: ubicacion
     };
+    //danosMateriales, zona, y victimaFatal  son undefined si no los selcciono explicitamente
     console.log("Datos capturados:", payload);
     await guardarhechoVial(payload);
-    SnackbarUtilities.success('Se guardó correctamente el hecho vial')
+    SnackbarUtilities.success('Se guardó correctamente el hecho vial');
+    limpiarHechoVial();
   };
 
    const handleMapSelect = async (point: UbicacionRequest) => {
@@ -87,10 +104,19 @@ const FormularioHechoVial = () => {
     const localidadId = Number(event.target.value);
     setUbicacion(prevData => ({...prevData, localidad: localidadId}));
   }
-
+  
   useEffect(() => {
     fetchPuestos();
-  }, [])
+    if (modo === 'edit' && hechoVial) {
+      console.log('hv edit ', hechoVial.ubicacionReq);
+      reset(hechoVial);
+      handleMapSelect(hechoVial.ubicacionReq)
+    }
+    return () => {
+      reset();
+    };
+  }, [hechoVial, modo, reset]);
+
 
   return (
     <Paper elevation={4} sx={{ p: { xs: 2, md: 4 }, maxWidth: 1000, mx: 'auto', my: 4, borderRadius: 3 }}>
@@ -122,6 +148,33 @@ const FormularioHechoVial = () => {
             </TextField>
             </Grid>
 
+          <Controller
+            name="grupo"
+            control={control}
+            render={({ field: { onChange, value, ...field }, fieldState }) => (
+              <TextField
+                {...field}
+                value={value} 
+                onChange={(e) => onChange(Number(e.target.value))}
+                select
+                fullWidth
+                label="Seleccionar grupo"
+                error={!!fieldState.error}
+                helperText={fieldState.error?.message}
+              >
+                {[
+                  { label: "GRUPO 1", id: 1 },
+                  { label: "GRUPO 2", id: 2 },
+                  { label: "GRUPO 3", id: 3 },
+                ].map((item) => (
+                  <MenuItem key={item.id} value={item.id}>
+                    {item.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
+          />
+
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField fullWidth type="date" label="Fecha" InputLabelProps={{ shrink: true }} {...register("fecha")} />
           </Grid>
@@ -133,7 +186,7 @@ const FormularioHechoVial = () => {
           <Grid size={{ xs: 12 }}>
             <TextField fullWidth label="Ubicación (Lugar del hecho - KM/Altura)" {...register("ruta")} />
           </Grid>
-          <MapaJujuy onSelect={handleMapSelect} />
+          <MapaJujuy onSelect={handleMapSelect} initialValue={hechoVial?.ubicacionReq} />
 
           <Grid size={{ xs: 12, md: 4 }}>
             <FormControl fullWidth size="small">
@@ -226,12 +279,36 @@ const FormularioHechoVial = () => {
           </Grid>
 
           <Grid size={{ xs: 12, md: 4 }}>
-            <TextField select fullWidth label="Tipo de Vía" defaultValue="" {...register("tipoVia")}>
-              {["CALLE", "AVENIDA", "SEMIAUTOPISTA", "AUTOPISTA", "RUTA NACIONAL", "RUTA PROVINCIAL"].map((option) => (
-                <MenuItem key={option} value={option}>{option}</MenuItem>
-              ))}
-              <MenuItem value="OTRO">OTRO (ESPECIFICAR)</MenuItem>
-            </TextField>
+            <Controller
+              name="tipoVia"
+              control={control}
+              defaultValue=""
+              render={({ field, fieldState }) => (
+                <TextField
+                  {...field}
+                  select
+                  fullWidth
+                  label="Tipo de Vía"
+                  error={!!fieldState.error}
+                  helperText={fieldState.error?.message}
+                >
+                  {[
+                    "CALLE",
+                    "AVENIDA",
+                    "SEMIAUTOPISTA",
+                    "AUTOPISTA",
+                    "RUTA NACIONAL",
+                    "RUTA PROVINCIAL",
+                  ].map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+
+                  <MenuItem value="OTRO">OTRO (ESPECIFICAR)</MenuItem>
+                </TextField>
+              )}
+            />
           </Grid>
           {/* INVOLUCRADOS */}
           <Grid size={{ xs: 12 }}>
@@ -313,14 +390,45 @@ const FormularioHechoVial = () => {
           </Grid>
 
           <Grid size={{ xs: 12, md: 4 }}>
-            <TextField select fullWidth label="Configuración de la Vía" defaultValue="" {...register("configuracionVia")}>
-              {["INTERSECCION","MITAD DE CALLE/AVENIDA", "INGRESO/EGRESO DE LA VIA", "RECTA", "CURVA HORIZONTAL", 
-              "CURVA VERTICAL","ROTONDA","DISTRIBUIDOR", "BIFURCACION", "PASO A NIVEL FFCC", "PUENTE", 
-            "VIADUCTO", "TUNEL", "CICLOVIA", "FUERA DE CALZADA"].map((val) => (
-                <MenuItem key={val} value={val}>{val}</MenuItem>
-              ))}
-            </TextField>
+            <Controller
+              name="configuracionVia"
+              control={control}
+              defaultValue=""
+              render={({ field, fieldState }) => (
+                <TextField
+                  {...field}
+                  select
+                  fullWidth
+                  label="Configuración de la Vía"
+                  error={!!fieldState.error}
+                  helperText={fieldState.error?.message}
+                >
+                  {[
+                    "INTERSECCION",
+                    "MITAD DE CALLE/AVENIDA",
+                    "INGRESO/EGRESO DE LA VIA",
+                    "RECTA",
+                    "CURVA HORIZONTAL",
+                    "CURVA VERTICAL",
+                    "ROTONDA",
+                    "DISTRIBUIDOR",
+                    "BIFURCACION",
+                    "PASO A NIVEL FFCC",
+                    "PUENTE",
+                    "VIADUCTO",
+                    "TUNEL",
+                    "CICLOVIA",
+                    "FUERA DE CALZADA"
+                  ].map((val) => (
+                    <MenuItem key={val} value={val}>
+                      {val}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+            />
           </Grid>
+
           {/* --- SECCIÓN: ESTADO DE LA CALZADA --- */}
         <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>
@@ -329,21 +437,28 @@ const FormularioHechoVial = () => {
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-        <TextField
-            select
-            fullWidth
-            label="Seleccionar Estado"
+          <Controller
+            name="estadoFisicoCalzada"
+            control={control}
             defaultValue=""
-            {...register("estadoFisicoCalzada")}
-        >
-            <MenuItem value="APTO">APTO</MenuItem>
-            <MenuItem value="CON BACHES">CON BACHES</MenuItem>
-            <MenuItem value="AHUELLAMIENTO">AHUELLAMIENTO</MenuItem>
-            <MenuItem value="EN REPARACION">EN REPARACIÓN</MenuItem>
-            <MenuItem value="OTRO">OTRO (ESPECIFICAR)</MenuItem>
-        </TextField>
+            render={({ field, fieldState }) => (
+              <TextField
+                {...field}
+                select
+                fullWidth
+                label="Seleccionar Estado"
+                error={!!fieldState.error}
+                helperText={fieldState.error?.message}
+              >
+                <MenuItem value="APTO">APTO</MenuItem>
+                <MenuItem value="CON BACHES">CON BACHES</MenuItem>
+                <MenuItem value="AHUELLAMIENTO">AHUELLAMIENTO</MenuItem>
+                <MenuItem value="EN REPARACION">EN REPARACIÓN</MenuItem>
+                <MenuItem value="OTRO">OTRO (ESPECIFICAR)</MenuItem>
+              </TextField>
+            )}
+          />
         </Grid>
-
         <Grid size={{ xs: 12, md: 6 }}>
         <TextField
             fullWidth
@@ -361,21 +476,29 @@ const FormularioHechoVial = () => {
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-        <TextField
-            select
-            fullWidth
-            label="Condición de superficie"
-            defaultValue=""
-            {...register("estadoCalzada")}
-        >
-            <MenuItem value="SECA">SECA</MenuItem>
-            <MenuItem value="MOJADA">MOJADA</MenuItem>
-            <MenuItem value="INUNDADA">INUNDADA</MenuItem>
-            <MenuItem value="CON CHARCOS">CON CHARCOS</MenuItem>
-            <MenuItem value="CON HIELO">CON HIELO</MenuItem>
-            <MenuItem value="CON NIEVE">CON NIEVE</MenuItem>
-            <MenuItem value="OTRO">OTRO (ESPECIFICAR)</MenuItem>
-        </TextField>
+        <Controller
+          name="estadoCalzada"
+          control={control}
+          defaultValue=""
+          render={({ field, fieldState }) => (
+            <TextField
+              {...field}
+              select
+              fullWidth
+              label="Condición de superficie"
+              error={!!fieldState.error}
+              helperText={fieldState.error?.message}
+            >
+              <MenuItem value="SECA">SECA</MenuItem>
+              <MenuItem value="MOJADA">MOJADA</MenuItem>
+              <MenuItem value="INUNDADA">INUNDADA</MenuItem>
+              <MenuItem value="CON CHARCOS">CON CHARCOS</MenuItem>
+              <MenuItem value="CON HIELO">CON HIELO</MenuItem>
+              <MenuItem value="CON NIEVE">CON NIEVE</MenuItem>
+              <MenuItem value="OTRO">OTRO (ESPECIFICAR)</MenuItem>
+            </TextField>
+          )}
+        />
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
@@ -386,13 +509,29 @@ const FormularioHechoVial = () => {
         />
         </Grid>
 
-          <Grid size={{ xs: 12, md: 4 }}>
-            <TextField select fullWidth label="Estado Ambiental" defaultValue="" {...register("estadoAmbiental")}>
-              {["DESPEJADO", "LLUVIA", "NIEBLA", "VIENTO", "POLVO"].map((val) => (
-                <MenuItem key={val} value={val}>{val}</MenuItem>
-              ))}
-            </TextField>
-          </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Controller
+            name="estadoAmbiental"
+            control={control}
+            defaultValue=""
+            render={({ field, fieldState }) => (
+              <TextField
+                {...field}
+                select
+                fullWidth
+                label="Estado Ambiental"
+                error={!!fieldState.error}
+                helperText={fieldState.error?.message}
+              >
+                {["DESPEJADO", "LLUVIA", "NIEBLA", "VIENTO", "POLVO"].map((val) => (
+                  <MenuItem key={val} value={val}>
+                    {val}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
+          />
+        </Grid>
           {/* --- SECCIÓN: SEMÁFORO Y LUZ ARTIFICIAL --- */}
         <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>
@@ -402,35 +541,50 @@ const FormularioHechoVial = () => {
 
         {/* Semáforo */}
         <Grid size={{ xs: 12, md: 6 }}>
-        <TextField
-            select
-            fullWidth
-            label="Semáforo"
+          <Controller
+            name="semaforo"
+            control={control}
             defaultValue=""
-            {...register("semaforo")}
-        >
-            <MenuItem value="SI">SI</MenuItem>
-            <MenuItem value="NO">NO</MenuItem>
-            <MenuItem value="INTERMITENTE">INTERMITENTE</MenuItem>
-        </TextField>
+            render={({ field, fieldState }) => (
+              <TextField
+                {...field}
+                select
+                fullWidth
+                label="Semáforo"
+                error={!!fieldState.error}
+                helperText={fieldState.error?.message}
+              >
+                <MenuItem value="SI">SI</MenuItem>
+                <MenuItem value="NO">NO</MenuItem>
+                <MenuItem value="INTERMITENTE">INTERMITENTE</MenuItem>
+              </TextField>
+            )}
+          />
         </Grid>
+
 
             {/* Luz Artificial */}
             <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-                select
-                fullWidth
-                label="Luz Artificial"
-                defaultValue=""
-                {...register("luzArtificial")}
-                helperText="Indicar presencia y funcionamiento"
-            >
-                <MenuItem value="SI">SI</MenuItem>
-                <MenuItem value="NO">NO</MenuItem>
-                <MenuItem value="FUNCIONA">FUNCIONA</MenuItem>
-            </TextField>
-            </Grid>
-
+            <Controller
+              name="luzArtificial"
+              control={control}
+              defaultValue=""
+              render={({ field, fieldState }) => (
+                <TextField
+                  {...field}
+                  select
+                  fullWidth
+                  label="Luz Artificial"
+                  helperText={fieldState.error?.message || "Indicar presencia y funcionamiento"}
+                  error={!!fieldState.error}
+                >
+                  <MenuItem value="SI">SI</MenuItem>
+                  <MenuItem value="NO">NO</MenuItem>
+                  <MenuItem value="FUNCIONA">FUNCIONA</MenuItem>
+                </TextField>
+              )}
+            />
+          </Grid>
             {/* --- SECCIÓN: MATERIAL DE LA CALZADA --- */}
             <Grid size={{ xs: 12 }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>
@@ -439,40 +593,73 @@ const FormularioHechoVial = () => {
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-                select
-                fullWidth
-                label="Material"
+              <Controller
+                name="materialCalzada"
+                control={control}
                 defaultValue=""
-                {...register("materialCalzada")}
-            >
-                <MenuItem value="ASFALTO">ASFALTO</MenuItem>
-                <MenuItem value="RIPIO">RIPIO</MenuItem>
-                <MenuItem value="TIERRA">TIERRA</MenuItem>
-                <MenuItem value="ADOQUIN">ADOQUIN</MenuItem>
-            </TextField>
+                render={({ field, fieldState }) => (
+                  <TextField
+                    {...field}
+                    select
+                    fullWidth
+                    label="Material"
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                  >
+                    <MenuItem value="ASFALTO">ASFALTO</MenuItem>
+                    <MenuItem value="RIPIO">RIPIO</MenuItem>
+                    <MenuItem value="TIERRA">TIERRA</MenuItem>
+                    <MenuItem value="ADOQUIN">ADOQUIN</MenuItem>
+                  </TextField>
+                )}
+              />
             </Grid>
-
           <Grid size={{ xs: 12 }}><Divider /></Grid>
-
           {/* --- TIPO DE SINIESTRO --- */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <TextField select fullWidth label="Tipo de Siniestro" defaultValue="" {...register("tipoSiniestro")}>
-              <MenuItem value="COLISION">COLISIÓN ENTRE VEHÍCULOS</MenuItem>
-              <MenuItem value="VUELCO">VUELCO</MenuItem>
-              <MenuItem value="ATROPELLO_PEATON">ATROPELLO PEATÓN</MenuItem>
-              <MenuItem value="DESPISTE">DESPISTE</MenuItem>
-            </TextField>
+            <Controller
+              name="tipoSiniestro"
+              control={control}
+              defaultValue=""
+              render={({ field, fieldState }) => (
+                <TextField
+                  {...field}
+                  select
+                  fullWidth
+                  label="Tipo de Siniestro"
+                  error={!!fieldState.error}
+                  helperText={fieldState.error?.message}
+                >
+                  <MenuItem value="COLISION">COLISIÓN ENTRE VEHÍCULOS</MenuItem>
+                  <MenuItem value="VUELCO">VUELCO</MenuItem>
+                  <MenuItem value="ATROPELLO_PEATON">ATROPELLO PEATÓN</MenuItem>
+                  <MenuItem value="DESPISTE">DESPISTE</MenuItem>
+                </TextField>
+              )}
+            />
           </Grid>
-
           {tipoSiniestro === "COLISION" && (
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField select fullWidth label="Tipo de Colisión" defaultValue="" {...register("tipoColision")}>
-                <MenuItem value="FRONTAL">FRONTAL</MenuItem>
-                <MenuItem value="ALCANCE">POR ALCANCE</MenuItem>
-                <MenuItem value="LATERAL">LATERAL</MenuItem>
-                <MenuItem value="ANGULO">EN ÁNGULO</MenuItem>
-              </TextField>
+              <Controller
+                name="tipoColision"
+                control={control}
+                defaultValue=""
+                render={({ field, fieldState }) => (
+                  <TextField
+                    {...field}
+                    select
+                    fullWidth
+                    label="Tipo de Colisión"
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                  >
+                    <MenuItem value="FRONTAL">FRONTAL</MenuItem>
+                    <MenuItem value="ALCANCE">POR ALCANCE</MenuItem>
+                    <MenuItem value="LATERAL">LATERAL</MenuItem>
+                    <MenuItem value="ANGULO">EN ÁNGULO</MenuItem>
+                  </TextField>
+                )}
+              />
             </Grid>
           )}
 

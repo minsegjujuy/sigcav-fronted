@@ -19,6 +19,12 @@ const myIcon = L.icon({
   popupAnchor: [0, -38] // punto desde donde se abrirá el popup
 });
 
+// Define el tipo para el valor inicial
+interface MapaJujuyProps {
+  onSelect: (point: UbicacionRequest) => void;
+  initialValue?: UbicacionRequest | null; // Prop opcional
+}
+
 export interface PointWithDepartamento {
   lat: number;
   lng: number;
@@ -63,16 +69,16 @@ function ClickHandler({
 }
 
 
-export default function MapaJujuy({onSelect,}: {onSelect: (point: UbicacionRequest) => void;}) {
-  const [point, setPoint] = useState<UbicacionRequest | null>(null);
-
-  
+export default function MapaJujuy({ onSelect, initialValue }: MapaJujuyProps) {
+  // Inicializamos el estado con el valor que viene por prop
+  const [point, setPoint] = useState<UbicacionRequest | null>(initialValue || null);
 
   return (
     <>
       <MapContainer
-        center={[-24.2, -65.3]}
-        zoom={7}
+        // Si tienes un punto inicial, podrías querer centrar el mapa ahí
+        center={initialValue ? [initialValue.lat, initialValue.lng] : [-24.2, -65.3]}
+        zoom={initialValue ? 12 : 7} 
         style={{ height: "400px", width: "100%" }}
       >
         <TileLayer
@@ -80,35 +86,28 @@ export default function MapaJujuy({onSelect,}: {onSelect: (point: UbicacionReque
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* Límite real de Jujuy */}
         <GeoJSON
           data={jujuyGeoJson as any}
-          style={{
-            color: "blue",
-            weight: 2,
-            fillOpacity: 0.1,
-          }}
+          style={{ color: "blue", weight: 2, fillOpacity: 0.1 }}
         />
 
         <ClickHandler
-            onValidClick={(p) => {
-            setPoint(p);     // marcador visual
-            onSelect(p);     // envío al formulario
-            }}
+          onValidClick={(p) => {
+            setPoint(p);
+            onSelect(p);
+          }}
         />
 
-        {point && <Marker position={point} icon={myIcon} />}
+        {/* El marcador se renderiza si hay un punto (ya sea inicial o clickeado) */}
+        {point && <Marker position={[point.lat, point.lng]} icon={myIcon} />}
       </MapContainer>
 
       <div style={{ marginTop: 10 }}>
         {point ? (
           <>
-            <strong>Coordenadas válidas:</strong>
-            <div>Lat: {point.lat.toFixed(6)}</div>
-            <div>Lng: {point.lng.toFixed(6)}</div>
-            <div>
-            <strong>Departamento:</strong> {point.departamento}
-            </div>
+            <strong>Ubicación seleccionada:</strong>
+            <div>Lat: {point.lat.toFixed(6)} | Lng: {point.lng.toFixed(6)}</div>
+            <div><strong>Departamento:</strong> {point.departamento}</div>
           </>
         ) : (
           <em>Seleccioná un punto dentro de Jujuy</em>
