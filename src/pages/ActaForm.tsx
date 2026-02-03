@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ActaRequest } from "../models/ActaRequest";
-import { Box, Button, Checkbox, Container, FormControl, FormControlLabel, FormGroup, FormHelperText, FormLabel, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, TextField, Typography, type SelectChangeEvent } from "@mui/material";
+import { Box, Button, Checkbox, Container, FormControl, FormControlLabel, FormGroup, FormHelperText, FormLabel, Grid, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, TextField, Typography, type SelectChangeEvent } from "@mui/material";
 import type { Articulo } from "../models/Articulo";
 import type { Tipo } from "../models/Tipo";
 import type { Grupo } from "../models/Grupo";
@@ -28,6 +28,7 @@ import type { UbicacionRequest } from "../models/UbicacionRequest";
 import { obtenerUnidadesRegionalesPorDepartamento } from "../services/UnidadRegionalService";
 import type { UnidadRegional } from "../models/UnidadRegional";
 import { DateInput } from "../components/ui/datetime/FechaPicker.styles";
+import { TIPO_RODADO } from "../utilities/tipoRodado";
 //Quitar estado inicial
 const initialState: ActaRequest = {
   idGrupo: 1,
@@ -57,6 +58,7 @@ const initialState: ActaRequest = {
     dominio: "",
     motor: "",
     cuadro: "",
+    tipoRodado: "",
     propietario: {
       nombre: "",
       apellido: "",
@@ -87,7 +89,6 @@ export default function ActaForm() {
   const [selected, setSelected] = useState<string[]>([]);
   const [otroTexto, setOtroTexto] = useState("");
   const navigate = useNavigate();
-
   const handleCountryChange = (e: SelectChangeEvent) => {
     const pais = e.target.value;
 
@@ -728,6 +729,20 @@ export default function ActaForm() {
             <Typography variant="h6" sx={{ mt: 3 }}>Vehículo</Typography>
             <TextField label="Marca" fullWidth margin="normal" value={form.vehiculo.marca} onChange={(e) => handleChange("vehiculo.marca", e.target.value)} error={!!errors["vehiculo.marca"]} helperText={errors["vehiculo.marca"]} />
             <TextField label="Modelo" fullWidth margin="normal" value={form.vehiculo.modelo} onChange={(e) => handleChange("vehiculo.modelo", e.target.value)} error={!!errors["vehiculo.modelo"]} helperText={errors["vehiculo.modelo"]} />
+            <FormControl fullWidth>
+            <InputLabel>Tipo rodado</InputLabel>
+            <Select
+              value={form.vehiculo.tipoRodado}
+              label="Tipo rodado"
+              onChange={(e)=>handleChange("vehiculo.tipoRodado", e.target.value)}
+            >
+              {TIPO_RODADO.map((tr) => (
+                <MenuItem key={tr} value={tr}>
+                  {tr}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
             <TextField label="Año" type="number" fullWidth margin="normal" value={form.vehiculo.año as any} onChange={(e) => handleChange("vehiculo.año", e.target.value ? Number(e.target.value) : "")} error={!!errors["vehiculo.año"]} helperText={errors["vehiculo.año"]} />
             <TextField label="Dominio *" fullWidth margin="normal" value={form.vehiculo.dominio} onChange={(e) => {
               handleChange("vehiculo.dominio", e.target.value);
@@ -796,7 +811,7 @@ export default function ActaForm() {
 
             {/* Artículos checklist */}
             {articulos.length > 0 && (
-            <Box mt={3}>
+            <Grid size={{ xs: 12, md: 6, sm: 4 }}>
             <Typography variant="h6">Artículos</Typography>
             <FormGroup>
             {articulos.map((articulo) => (
@@ -809,7 +824,7 @@ export default function ActaForm() {
             ))}
             </FormGroup>
             {!!errors.articulos && <FormHelperText error>{errors.articulos}</FormHelperText>}
-            </Box>
+            </Grid>
             )}
 
           <Button type="submit" variant="contained" color="primary" sx={{ mt: 4 }}>

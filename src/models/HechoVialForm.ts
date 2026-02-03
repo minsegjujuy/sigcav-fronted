@@ -71,10 +71,12 @@ export interface Protagonista {
   conductorEdad: string;
   conductorFechaNacimiento: string;
   licenciaNro: string;
+  municipio: string;
   licenciaClase: string;
   licenciaEstado: 'VIGENTE' | 'VENCIDA' | 'NO POSEE' | 'SD';
   // Personal de Seguridad (Opcional)
   esFuerzaSeguridad: boolean;
+  situacion: string;
   jerarquia?: string;
   legajo?: string;
   // Salud y Alcohol
