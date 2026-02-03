@@ -25,6 +25,7 @@ import { guardarhechoVial } from '../services/HechoVialService';
 import { SnackbarUtilities } from '../utilities/SnackbarUtilities';
 import type { HechoVialForm } from '../models/HechoVialForm';
 import { useHechoVial } from '../context/HechoVialContext';
+import { TIPOS_INVOLUCRADOS } from '../utilities/tipoRodado';
 
 const FormularioHechoVial = () => {
   const {
@@ -41,11 +42,7 @@ const FormularioHechoVial = () => {
       danosMateriales: "SI",
     }
   });
-  const TIPOS_INVOLUCRADOS = [
-    "AUTOMOVIL", "MOTOCICLETA", "PEATON", "VEHICULO MOVILIDAD PERSONAL",
-    "BICICLETA", "CUATRICLO", "CAMIONETA/UTILITARIO", "TRANSPORTE DE CARGA",
-    "TRANSPORTE DE PASAJERO", "MAQUINARIA", "OTRO"
-    ];
+  
   const { fields, append, remove } = useFieldArray<HechoVialForm>({
     control,
     name: "involucrados"

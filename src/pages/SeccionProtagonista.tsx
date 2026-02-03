@@ -1,4 +1,4 @@
-import { Box, Button, Checkbox, Divider, FormControl, FormControlLabel, FormLabel, Grid, InputLabel, ListItemText, MenuItem, OutlinedInput, Paper, Radio, RadioGroup, Select, TextField, Typography } from "@mui/material";
+import { Box, Button, Checkbox, Divider, FormControl, FormControlLabel, FormHelperText, FormLabel, Grid, InputLabel, ListItemText, MenuItem, OutlinedInput, Paper, Radio, RadioGroup, Select, TextField, Typography } from "@mui/material";
 import { SeccionAcompanantes } from "./SeccionAcompanantes";
 import { Controller, useFieldArray } from "react-hook-form";
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -6,6 +6,8 @@ import AddIcon from '@mui/icons-material/Add';
 import type { Articulo } from "../models/Articulo";
 import { useEffect, useState } from "react";
 import { getArticulos } from "../services/ArticuloService";
+import { getJerarquias } from "../services/JerarquiaService";
+import type { Jerarquia } from "../models/Jerarquia";
 
 export const SeccionProtagonistas = ({ control, register, watch }: { control: any, register: any, watch: any }) => {
   const { fields, append, remove } = useFieldArray({
@@ -13,6 +15,7 @@ export const SeccionProtagonistas = ({ control, register, watch }: { control: an
     name: "protagonistas"
   });
   const [articulos, setArticulos] = useState<Articulo[]>([]);
+  const [jerarquias, setjerarquias] = useState<Jerarquia[]>([]);
 
   const fetchArticulos = async () => {
     const data = await getArticulos();
@@ -20,8 +23,15 @@ export const SeccionProtagonistas = ({ control, register, watch }: { control: an
     console.log('data articulos ', data)
   }
 
+  const fetchJerarquias = async() => {
+    const data = await getJerarquias();
+    console.log('jerarquias ' , data)
+    setjerarquias(data);
+  }
+
   useEffect(()=> {
     fetchArticulos();
+    fetchJerarquias();
   }, [])
 
   return (
@@ -35,6 +45,7 @@ export const SeccionProtagonistas = ({ control, register, watch }: { control: an
 
       {fields.map((field, index) => {
         const esFuerza = watch(`protagonistas.${index}.esFuerzaSeguridad`);
+        const licenciaClase = watch(`protagonistas.${index}.licenciaClase`);
         return (
           <Paper key={field.id} sx={{ p: 3, mb: 4, borderLeft: '6px solid', borderColor: 'primary.main' }} elevation={2}>
           <Grid container spacing={3}>
@@ -316,6 +327,11 @@ export const SeccionProtagonistas = ({ control, register, watch }: { control: an
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField fullWidth label="Licencia Nro" {...register(`protagonistas.${index}.licenciaNro`)} />
             </Grid>
+            {licenciaClase === 'MUNICIPAL' && (
+              <Grid size={{ xs: 12, md: 4 }}>
+              <TextField fullWidth label="Municipio" {...register(`protagonistas.${index}.municipio`)} />
+            </Grid>
+            )}
             <Grid size={{ xs: 12, md: 4 }}>
               <Controller
                 name={`protagonistas.${index}.licenciaEstado`}
@@ -440,10 +456,46 @@ export const SeccionProtagonistas = ({ control, register, watch }: { control: an
                   <Controller
                     name={`protagonistas.${index}.jerarquia`}
                     control={control}
-                    render={({ field }) => (
-                      <TextField {...field} label="Jerarquía" fullWidth />
+                    render={({ field, fieldState }) => (
+                      <FormControl
+                        fullWidth
+                        error={!!fieldState.error}
+                      >
+                        <InputLabel id="jerarquia-label">
+                          Jerarquía
+                        </InputLabel>
+
+                        <Select
+                          {...field}
+                          labelId="jerarquia-label"
+                          label="Jerarquía"
+                          value={field.value ?? ''}
+                        >
+                          <MenuItem value="">
+                            <em>Seleccione una jerarquía</em>
+                          </MenuItem>
+
+                          {jerarquias.map((jerarquia) => (
+                            <MenuItem
+                              key={jerarquia.idJer}
+                              value={jerarquia.nombre}
+                            >
+                              {jerarquia.nombre}
+                            </MenuItem>
+                          ))}
+                        </Select>
+
+                        {fieldState.error && (
+                          <FormHelperText>
+                            {fieldState.error.message}
+                          </FormHelperText>
+                        )}
+                      </FormControl>
                     )}
                   />
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <TextField fullWidth label="Situacion de revista" {...register(`protagonistas.${index}.situacion`)} />
                 </Grid>
               </>
             )}

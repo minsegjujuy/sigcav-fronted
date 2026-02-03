@@ -8,5 +8,6 @@ export interface VehiculoSolicitud {
   dominio: string;
   motor?: string | undefined | null;
   cuadro?: string | undefined | null;
+  tipoRodado?: string;
   propietario?: Propietario | null;
 }
