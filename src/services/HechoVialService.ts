@@ -87,6 +87,17 @@ export const listarHechosVialesPorDia= async (params: {
   return data;
 };
 
+export const listarHechosVialesPorTipoRodado= async (params: {
+  fechaInicio: string;
+  fechaFin: string
+}) => {
+  const { data } = await axios.get<DiasCantidad[]>(
+    `${baseURL}/hechos-viales/tipo-rodado`,
+    {params, ...getAuthHeader()}
+  );
+  return data;
+};
+
 
 export const guardarhechoVial = async (hv: HechoVialForm) => {
   const { data } = await api.post<PageResponse<HechoVialListDto>>(
