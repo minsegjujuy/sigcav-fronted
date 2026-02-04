@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import MapaJujuyHechosViales from "./MapaJujuyHechosViales";
 import type { UbicacionPunto } from "../../models/UbicacionPunto";
-import { listarHechosVialesAlcoholizados, listarHechosVialesMetricas, listarHechosVialesPorDia, listarHechosVialesPorTurnos, listarHechosVialesUbicaciones } from "../../services/HechoVialService";
+import { listarHechosVialesAlcoholizados, listarHechosVialesMetricas, listarHechosVialesPorDia, listarHechosVialesPorTipoRodado, listarHechosVialesPorTurnos, listarHechosVialesUbicaciones } from "../../services/HechoVialService";
 import { Alert, Box, Button, CircularProgress, Divider, Grid, Paper, Stack, TextField, Typography } from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
 import LeyendaMapa from "./TablaLeyendaHechosViales";
@@ -13,6 +13,9 @@ import { type TurnoData } from "../../models/TurnoData";
 import GraficoTurnos from "../modules/GraficoTurnos";
 import type { DiasCantidad } from "../../models/DiasCantidad";
 import BarChart from "../../pages/ReportePorGrupoYPuesto";
+import { RankingVehiculos } from "../modules/RankingVehiculos";
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import { generarPDF } from "../../utilities/GenerarPdf";
 
 const MapaJujuySource = () => {
     const [puntos, setPuntos] = useState<UbicacionPunto[]>([]);
@@ -22,9 +25,11 @@ const MapaJujuySource = () => {
     const [porcentajeAlcoholizados, setPorcentajeAlcoholizados] = useState<PorcentajeAlcoholizados>();
     const [turnos, setTurnos] = useState<TurnoData[]>();
     const [dias, setDias] = useState<DiasCantidad[]>();
+    const [rodados, setRodados] = useState<DiasCantidad[]>();
     // Estados para las fechas
     const [fechaInicio, setFechaInicio] = useState("");
     const [fechaFin, setFechaFin] = useState("");
+    const reporteRef = useRef<HTMLDivElement>(null);
 
     const fetchMetricas = async () => {
         const data = await listarHechosVialesMetricas({fechaInicio, fechaFin});
@@ -47,6 +52,21 @@ const MapaJujuySource = () => {
         const data = await listarHechosVialesPorDia({fechaInicio, fechaFin});
         setDias(data);
     }
+
+    const fetchRodados = async () => {
+        const data = await listarHechosVialesPorTipoRodado({fechaInicio, fechaFin});
+        setRodados(data);
+    }
+
+    const handleDescargarPDF = async () => {
+    const params = {
+      fechaInicio: fechaInicio, // Estos vendrían de tus estados
+      fechaFin: fechaFin
+    };
+
+    // Llamamos a tu función de utilidad
+    await generarPDF(reporteRef, params);
+  };
 
     //porcentaje de actas por dia
     const labelsCantidad = dias?.map(d => d.dia);
@@ -82,6 +102,7 @@ const MapaJujuySource = () => {
             fetchAlcoholizados();
             fetchturnos();
             fetchDias();
+            fetchRodados();
         } catch (err) {
             setError("Error al conectar con el servidor. Verifique su conexión.");
         } finally {
@@ -137,7 +158,17 @@ const MapaJujuySource = () => {
                 )}
                 <LeyendaMapa />
             </Paper>
-
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                <Button 
+                variant="contained" 
+                color="secondary" 
+                startIcon={<PictureAsPdfIcon />}
+                onClick={handleDescargarPDF}
+                >
+                Exportar Reporte PDF
+                </Button>
+            </Box>
+            <div ref={reporteRef} style={{ padding: '20px', backgroundColor: '#fff' }}>
             <Paper elevation={4} sx={{ borderRadius: 2, overflow: 'hidden', height: '500px' }}>
                 <MapaJujuyHechosViales puntos={puntos} />
             </Paper>
@@ -158,6 +189,9 @@ const MapaJujuySource = () => {
                         {/* Fila 1: Tabla de Resultados y Métrica de Alcohol */}
                         <Grid size={{ xs: 12, lg: 8 }}>
                         <TablaMetricasSiniestros metricas={metricas!} />
+                        </Grid>
+                        <Grid size={{ xs: 12, lg: 8 }}>
+                        <RankingVehiculos datos={rodados!} />
                         </Grid>
 
                         <Grid size={{ xs: 12, lg: 4 }} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
@@ -187,6 +221,7 @@ const MapaJujuySource = () => {
                     </Grid>
                     </Box>
             )}
+            </div>
         </Box>
     );
 };
