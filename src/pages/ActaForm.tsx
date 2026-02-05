@@ -29,6 +29,7 @@ import { obtenerUnidadesRegionalesPorDepartamento } from "../services/UnidadRegi
 import type { UnidadRegional } from "../models/UnidadRegional";
 import { DateInput } from "../components/ui/datetime/FechaPicker.styles";
 import { TIPO_RODADO } from "../utilities/tipoRodado";
+import FullscreenMultiSelect from "../components/containers/MultiSelect";
 //Quitar estado inicial
 const initialState: ActaRequest = {
   idGrupo: 1,
@@ -212,7 +213,7 @@ export default function ActaForm() {
     fetchArticulosPorLey(leyId);
   };
 
-  const handleCheck = (idArt: number) => {
+  /*const handleCheck = (idArt: number) => {
     const alreadySelected = articulosSeleccionados.includes(idArt);
     const updated = alreadySelected
       ? articulosSeleccionados.filter((id) => id !== idArt)
@@ -224,7 +225,7 @@ export default function ActaForm() {
       ...form,
       articulos: updated,
     });
-  };
+  };*/
 
   const fetchUnidadesRegionales = async (departamento: string) => {
     const data = await obtenerUnidadesRegionalesPorDepartamento(departamento);
@@ -241,6 +242,7 @@ export default function ActaForm() {
         console.log('propietario ', form.vehiculo.propietario)
         form.infractor.propietario = propietario;
         form.idTipo = Number(selectedTipoActa);
+        form.articulos = articulosSeleccionados;
         console.log('acta ', form);
         let response = null;
         if(actaSeleccionada){
@@ -808,25 +810,24 @@ export default function ActaForm() {
             {!!errors.ley && <FormHelperText>{errors.ley}</FormHelperText>}
             </FormControl>
 
-
-            {/* Artículos checklist */}
             {articulos.length > 0 && (
             <Grid size={{ xs: 12, md: 6, sm: 4 }}>
-            <Typography variant="h6">Artículos</Typography>
-            <FormGroup>
-            {articulos.map((articulo) => (
-            <FormControlLabel
-            key={articulo.idArt}
-            control={<Checkbox checked={articulosSeleccionados.includes(articulo.idArt)} onChange={() => handleCheck(articulo.idArt)} />}
-            label={`${articulo.nro}: ${articulo.detalle}`}
-            value={articulosSeleccionados}
-            />
-            ))}
-            </FormGroup>
-            {!!errors.articulos && <FormHelperText error>{errors.articulos}</FormHelperText>}
-            </Grid>
-            )}
+              <FullscreenMultiSelect
+                label="Artículos"
+                value={articulosSeleccionados}
+                onChange={setArticulosSeleccionados}
+                placeholder="Seleccionar artículos"
+                options={articulos.map((art) => ({
+                  id: art.idArt,
+                  label: `${art.nro}: ${art.detalle}`,
+                }))}
+              />
 
+              {!!errors.articulos && (
+                <FormHelperText error>{errors.articulos}</FormHelperText>
+              )}
+            </Grid>
+          )}
           <Button type="submit" variant="contained" color="primary" sx={{ mt: 4 }}>
             Enviar
           </Button>

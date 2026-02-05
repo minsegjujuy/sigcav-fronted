@@ -1,4 +1,4 @@
-import { Box, Button, Checkbox, Divider, FormControl, FormControlLabel, FormHelperText, FormLabel, Grid, InputLabel, ListItemText, MenuItem, OutlinedInput, Paper, Radio, RadioGroup, Select, TextField, Typography } from "@mui/material";
+import { Box, Button, Divider, FormControl, FormControlLabel, FormHelperText, FormLabel, Grid, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, TextField, Typography } from "@mui/material";
 import { SeccionAcompanantes } from "./SeccionAcompanantes";
 import { Controller, useFieldArray } from "react-hook-form";
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { getArticulos } from "../services/ArticuloService";
 import { getJerarquias } from "../services/JerarquiaService";
 import type { Jerarquia } from "../models/Jerarquia";
+import FullscreenMultiSelect from "../components/containers/MultiSelect";
 
 export const SeccionProtagonistas = ({ control, register, watch }: { control: any, register: any, watch: any }) => {
   const { fields, append, remove } = useFieldArray({
@@ -408,35 +409,21 @@ export const SeccionProtagonistas = ({ control, register, watch }: { control: an
               <TextField fullWidth label="Ref nro acta retencion" {...register(`protagonistas.${index}.actaRetencionRef`)} />
             </Grid>
             <FormControl fullWidth>
-              <InputLabel id="articulos-label">Artículos</InputLabel>
-
               <Controller
                 name={`protagonistas.${index}.articuladoRef`}
                 control={control}
-                defaultValue={[]}
                 render={({ field }) => (
-                  <Select
-                    {...field}
-                    labelId="articulos-label"
-                    multiple
-                    input={<OutlinedInput label="Artículos" />}
-                    renderValue={(selected) =>
-                      articulos
-                        .filter(a => selected.includes(a.idArt))
-                        .map(a => `Art. ${a.nro}`)
-                        .join(', ')
-                    }
-                  >
-                    {articulos.map((art) => (
-                      <MenuItem key={art.idArt} value={art.idArt}>
-                        <Checkbox checked={field.value.includes(art.idArt)} />
-                        <ListItemText
-                          primary={`Art. ${art.nro}`}
-                          secondary={art.detalle}
-                        />
-                      </MenuItem>
-                    ))}
-                  </Select>
+                  <FullscreenMultiSelect
+                    label="Artículos"
+                    value={field.value || []}
+                    onChange={field.onChange}
+                    options={articulos.map(a => ({
+                      id: a.idArt,
+                      label: `Art. ${a.nro}`,
+                      description: a.detalle,
+                    }))}
+                    placeholder="Seleccionar artículos"
+                  />
                 )}
               />
             </FormControl>

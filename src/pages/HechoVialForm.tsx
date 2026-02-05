@@ -6,8 +6,6 @@ import {
   IconButton,
   InputLabel,
   Select,
-  OutlinedInput,
-  Chip,
 } from '@mui/material';
 import { useForm, Controller, useWatch, useFieldArray } from 'react-hook-form';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -26,6 +24,7 @@ import { SnackbarUtilities } from '../utilities/SnackbarUtilities';
 import type { HechoVialForm } from '../models/HechoVialForm';
 import { useHechoVial } from '../context/HechoVialContext';
 import { TIPOS_INVOLUCRADOS } from '../utilities/tipoRodado';
+import FullscreenMultiSelect from '../components/containers/MultiSelect';
 
 const FormularioHechoVial = () => {
   const {
@@ -668,46 +667,35 @@ const FormularioHechoVial = () => {
         </Grid>
 
         <Grid size={{ xs: 12, md: 8 }}>
-        <FormControl fullWidth>
-            <InputLabel id="causas-multiple-label">Seleccionar Causas</InputLabel>
-            <Controller
-            name="posiblesCausas"
-            control={control}
-            defaultValue={[]} // Importante: debe ser un array vacío
-            render={({ field }) => (
-                <Select
-                {...field}
-                multiple
-                labelId="causas-multiple-label"
-                input={<OutlinedInput label="Seleccionar Causas" />}
-                // Esta parte hace que se vean como etiquetas (Chips) al seleccionar
-                renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {(selected as string[]).map((value) => (
-                        <Chip key={value} label={value} size="small" />
-                    ))}
-                    </Box>
-                )}
-                >
-                <MenuItem value="EXCESO DE VELOCIDAD">EXCESO DE VELOCIDAD</MenuItem>
-                <MenuItem value="MANIOBRA RIESGOSA">MANIOBRA RIESGOSA</MenuItem>
-                <MenuItem value="VIOLACION DEL SEMAFORO">VIOLACIÓN DEL SEMÁFORO</MenuItem>
-                <MenuItem value="NO RESPETO DE LA PRIORIDAD">NO RESPETO DE LA PRIORIDAD</MenuItem>
-                <MenuItem value="GIRO A LA IZQUIERDA/DERECHA">GIRO A LA IZQUIERDA/DERECHA</MenuItem>
-                <MenuItem value="INVASION DE CARRIL CONTRARIO">INVASIÓN DE CARRIL CONTRARIO</MenuItem>
-                <MenuItem value="PERDIDA DE CONTROL">PÉRDIDA DE CONTROL</MenuItem>
-                <MenuItem value="PRESENCIA DE ALCOHOL Y/O DROGAS">PRESENCIA DE ALCOHOL Y/O DROGAS</MenuItem>
-                <MenuItem value="CANSANCIO/FATIGA/SUEÑO">CANSANCIO / FATIGA / SUEÑO</MenuItem>
-                <MenuItem value="DISTRACCION">DISTRACCIÓN</MenuItem>
-                <MenuItem value="PEATON IMPRUDENTE">PEATÓN IMPRUDENTE</MenuItem>
-                <MenuItem value="FALLA EN LA VIA">FALLA EN LA VÍA</MenuItem>
-                <MenuItem value="FALLA EN EL VEHICULO">FALLA EN EL VEHÍCULO</MenuItem>
-                <MenuItem value="NO SE PUEDE DETERMINAR">NO SE PUEDE DETERMINAR</MenuItem>
-                <MenuItem value="OTRO">OTRO (ESPECIFICAR)</MenuItem>
-                </Select>
-            )}
+        <Controller
+          name="posiblesCausas"
+          control={control}
+          defaultValue={[]}
+          render={({ field }) => (
+            <FullscreenMultiSelect
+              label="Seleccionar Causas"
+              value={field.value || []}
+              onChange={field.onChange}
+              placeholder="Seleccionar causas"
+              options={[
+                { id: "EXCESO DE VELOCIDAD", label: "EXCESO DE VELOCIDAD" },
+                { id: "MANIOBRA RIESGOSA", label: "MANIOBRA RIESGOSA" },
+                { id: "VIOLACION DEL SEMAFORO", label: "VIOLACIÓN DEL SEMÁFORO" },
+                { id: "NO RESPETO DE LA PRIORIDAD", label: "NO RESPETO DE LA PRIORIDAD" },
+                { id: "GIRO A LA IZQUIERDA/DERECHA", label: "GIRO A LA IZQUIERDA/DERECHA" },
+                { id: "INVASION DE CARRIL CONTRARIO", label: "INVASIÓN DE CARRIL CONTRARIO" },
+                { id: "PERDIDA DE CONTROL", label: "PÉRDIDA DE CONTROL" },
+                { id: "PRESENCIA DE ALCOHOL Y/O DROGAS", label: "PRESENCIA DE ALCOHOL Y/O DROGAS" },
+                { id: "CANSANCIO/FATIGA/SUEÑO", label: "CANSANCIO / FATIGA / SUEÑO" },
+                { id: "DISTRACCION", label: "DISTRACCIÓN" },
+                { id: "PEATON IMPRUDENTE", label: "PEATÓN IMPRUDENTE" },
+                { id: "FALLA EN LA VIA", label: "FALLA EN LA VÍA" },
+                { id: "FALLA EN EL VEHICULO", label: "FALLA EN EL VEHÍCULO" },
+                { id: "NO SE PUEDE DETERMINAR", label: "NO SE PUEDE DETERMINAR" },
+              ]}
             />
-        </FormControl>
+          )}
+        />
         </Grid>
 
           {/* --- SÍNTESIS FINAL --- */}
