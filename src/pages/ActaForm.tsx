@@ -537,28 +537,6 @@ export default function ActaForm() {
             {!!errors.puesto && <FormHelperText>{errors.puesto}</FormHelperText>}
           </FormControl>
 
-
-          {/* Grupo */}
-          <FormControl fullWidth margin="normal" error={!!errors.grupo}>
-          <InputLabel id="grupo-label">Grupo *</InputLabel>
-          <Select
-            labelId="grupo-label"
-            id="grupo"
-            value={selectedGrupo}
-            label="Grupo"
-            onChange={(e) => { setSelectedGrupo(e.target.value as any); setErrors((er) => { const c = { ...er }; delete c.grupo; return c; }); }}
-            >
-            <MenuItem value="">Seleccione un grupo</MenuItem>
-            {grupos.map((grupo) => (
-            <MenuItem key={grupo.idGrupo} value={grupo.idGrupo}>
-            {grupo.nombre}
-            </MenuItem>
-            ))}
-          </Select>
-          {!!errors.grupo && <FormHelperText>{errors.grupo}</FormHelperText>}
-          </FormControl>
-
-
           {/* Datos generales */}
             <FormControl sx={{ display: 'flex', alignItems: 'flex-start' }} error={!!errors.motivo}>
               <FormLabel id="demo-radio-buttons-group-label">Observacion *</FormLabel>
@@ -577,6 +555,25 @@ export default function ActaForm() {
               </RadioGroup>
               {!!errors.motivo && <FormHelperText>{errors.motivo}</FormHelperText>}
             </FormControl>
+            {/* Grupo */}
+              <FormControl fullWidth margin="normal" error={!!errors.grupo}>
+              <InputLabel id="grupo-label">Grupo *</InputLabel>
+              <Select
+                labelId="grupo-label"
+                id="grupo"
+                value={selectedGrupo}
+                label="Grupo"
+                onChange={(e) => { setSelectedGrupo(e.target.value as any); setErrors((er) => { const c = { ...er }; delete c.grupo; return c; }); }}
+                >
+                <MenuItem value="">Seleccione un grupo</MenuItem>
+                {grupos.map((grupo) => (
+                <MenuItem key={grupo.idGrupo} value={grupo.idGrupo}>
+                {grupo.nombre}
+                </MenuItem>
+                ))}
+              </Select>
+              {!!errors.grupo && <FormHelperText>{errors.grupo}</FormHelperText>}
+              </FormControl>
             <FormControl component="fieldset">
             <FormLabel component="legend">Adjunta lo siguiente</FormLabel>
 

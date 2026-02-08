@@ -78,6 +78,7 @@ function App() {
                 <Route element={<RequireAuth allowedRoles={["ADMIN", "REPAT", "SECRETARIO", "JEFE", "PERSONAL", "OFICIAL"]} />}>
                   <Route path="/dashboard/mis-actas" element={<ActaResumenTable />} />
                   <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path='/dashboard/hechos-viales' element={<HechosVialesTable />} />
                   {/*<Route path="/zonas" element={<MapaZonas />} />*/}
                   
                 </Route>
@@ -87,7 +88,6 @@ function App() {
                   <Route path="/dashboard/talonarios" element={<Talonario />} />
                   <Route path="/dashboard/talonarios/registros" element={<RegistroTalonario />} />
                   <Route path="/dashboard/informes" element={<Reporte />} />
-                  
                 </Route>
 
                 {/* Alta y modificación */}
@@ -96,7 +96,6 @@ function App() {
                 </Route>
                 {/* Hechos viales */}
                 <Route element={<RequireAuth allowedRoles={["ADMIN", "REPAT", "PERSONAL, JEFE", "OFICIAL"]} />}>
-                  <Route path='/dashboard/hechos-viales' element={<HechosVialesTable />} />
                   <Route path="/dashboard/hechos-viales/mapa" element={<MapaJujuySource />} />
                   <Route path="/dashboard/hechos-viales/modificacion/:id" element={<FormularioHechoVial />} />
                   <Route path='/dashboard/hechos-viales/nuevo' element={<FormularioHechoVial />} />

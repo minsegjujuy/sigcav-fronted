@@ -628,8 +628,13 @@ const FormularioHechoVial = () => {
                 >
                   <MenuItem value="COLISION">COLISIÓN ENTRE VEHÍCULOS</MenuItem>
                   <MenuItem value="VUELCO">VUELCO</MenuItem>
+                  <MenuItem value="DESPEÑAMIENTO">DESPEÑAMIENTO</MenuItem>
                   <MenuItem value="ATROPELLO_PEATON">ATROPELLO PEATÓN</MenuItem>
+                  <MenuItem value="ATROPELLO_ANIMAL">ATROPELLO ANIMAL</MenuItem>
+                  <MenuItem value="SALIDA DE LA CALZADA">SALIDA DE LA CALZADA</MenuItem>
+                  <MenuItem value="CHOQUE CONTRA OBJETO FIJO">CHOQUE CONTRA OBJETO FIJO</MenuItem>
                   <MenuItem value="DESPISTE">DESPISTE</MenuItem>
+                  <MenuItem value="DERRAPE">DERRAPE</MenuItem>
                 </TextField>
               )}
             />

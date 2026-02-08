@@ -183,6 +183,7 @@ const Reporte: React.FC = () => {
 
           <DatePicker
             label="Fecha inicio"
+            format="DD-MM-YYYY HH:mm:ss"
             value={fechaInicio}
             onChange={(newValue) => setFechaInicio(newValue)}
             slotProps={{ textField: { fullWidth: true, variant: "outlined" } }}
@@ -190,6 +191,7 @@ const Reporte: React.FC = () => {
 
           <DatePicker
             label="Fecha fin"
+            format="DD-MM-YYYY HH:mm:ss"
             value={fechaFin}
             onChange={(newValue) => setFechaFin(newValue)}
             slotProps={{ textField: { fullWidth: true, variant: "outlined" } }}
