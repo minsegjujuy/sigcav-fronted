@@ -239,7 +239,7 @@ const ActaResumenTable: React.FC = () => {
   const handleEdit = (acta: ActaResumenDto) => {
     seleccionarActa(acta);
     console.log('acta seleccionada ', acta)
-    navigate('/dashboard/nueva-acta');
+    navigate('/dashboard/modificacion');
   }
 
   const handleChangeDate = (fecha: Dayjs | null, name: "fechaInicio" | "fechaFin") => {

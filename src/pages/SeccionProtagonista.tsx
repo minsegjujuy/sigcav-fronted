@@ -269,10 +269,10 @@ export const SeccionProtagonistas = ({ control, register, watch }: { control: an
                   // Importante: convertir el string del input a float de JS
                   onChange={(e) => {
                     const val = e.target.value;
-                    field.onChange(val === "" ? "" : parseFloat(val));
+                    field.onChange(val === "" ? null : parseFloat(val));
                   }}
                   error={!!fieldState.error}
-                  helperText={fieldState.error?.message}
+                  helperText="dejar en blanco si el conductor se retiró sin hacerse el test"
                 />
               )}
               />

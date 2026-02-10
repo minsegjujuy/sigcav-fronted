@@ -167,9 +167,26 @@ export const HechoVialDetalle = ({ hecho }: Props) => {
       <Divider sx={{ my: 3 }} />
 
       {/* PIE */}
-      <Typography variant="body2">
-        PERSONAL INTERVINIENTE: {hecho.puesto}
+      <Typography variant="body2" sx={{ fontWeight: "bold", mt: 2 }}>
+        PERSONAL INTERVINIENTE:
       </Typography>
+
+      {hecho?.unidades?.map((unidad, uIndex) => (
+        <div key={uIndex}>
+          {/* Unidad */}
+          <Typography variant="body2" sx={{ ml: 1, mt: 1, fontWeight: 500 }}>
+            {unidad.unidad}
+          </Typography>
+
+          {/* Personal de esa unidad */}
+          {unidad.personal?.map((p, pIndex) => (
+            <Typography key={pIndex} variant="body2" sx={{ ml: 3 }}>
+              • {p.jerarquia} {p.nombre}
+              {p.observacion ? ` (${p.observacion})` : ""}
+            </Typography>
+          ))}
+        </div>
+      ))}
     </Paper>
   );
 };

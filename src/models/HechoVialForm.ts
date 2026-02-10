@@ -1,3 +1,4 @@
+import type { UnidadInterviniente } from "./PersonalInterviniente";
 import type { UbicacionRequest } from "./UbicacionRequest";
 
 export interface HechoVialForm {
@@ -27,6 +28,7 @@ export interface HechoVialForm {
   posiblesCausas: string[]; //obligatorio
   sintesis: string; //obligatorio
   protagonistas: Protagonista[]; //obligatorio
+  unidades: UnidadInterviniente[];
 }
 
 export interface Involucrado {
@@ -81,7 +83,7 @@ export interface Protagonista {
   legajo?: string;
   // Salud y Alcohol
   trasladoConductor: string;
-  graduacionAlcoholica: number; // si es null no se realizó ningun test
+  graduacionAlcoholica: number | null; // si es null no se realizó ningun test
   estadoSalud: string;
   actaRef: string;
   actaRetencionRef: string;

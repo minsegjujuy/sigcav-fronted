@@ -11,7 +11,7 @@ export default defineConfig({
       includeAssets: ['favicon.ico'],
       manifest: {
         name: 'Seguridad vial',
-        short_name: 'svapp',
+        short_name: 'SIGCAV',
         description: 'Sistema para gestionar infracciones de transito',
         theme_color: '#ffffff',
         screenshots: [
