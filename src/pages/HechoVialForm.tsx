@@ -25,6 +25,7 @@ import type { HechoVialForm } from '../models/HechoVialForm';
 import { useHechoVial } from '../context/HechoVialContext';
 import { TIPOS_INVOLUCRADOS } from '../utilities/tipoRodado';
 import FullscreenMultiSelect from '../components/containers/MultiSelect';
+import { PersonalUnidad } from './PersonalUnidad';
 
 const FormularioHechoVial = () => {
   const {
@@ -39,6 +40,12 @@ const FormularioHechoVial = () => {
       victimaFatal: "NO",
       zona: "URBANA",
       danosMateriales: "SI",
+      unidades: [
+        {
+          unidad: "",
+          personal: [{ nombre: "", jerarquia: "", observacion: "" }],
+        },
+      ],
     }
   });
   
@@ -46,6 +53,17 @@ const FormularioHechoVial = () => {
     control,
     name: "involucrados"
   });
+
+  // FieldArray de UNIDADES
+  const {
+    fields: unidadesFields,
+    append: appendUnidad,
+    remove: removeUnidad,
+  } = useFieldArray({
+    control,
+    name: "unidades",
+  });
+
   const [puestos, setPuestos] = useState<Puesto[]>([]);
   const { hechoVial, modo, limpiarHechoVial } = useHechoVial();
   const [localidades, setLocalidades] = useState<Localidad[]>([]);
@@ -702,6 +720,56 @@ const FormularioHechoVial = () => {
           )}
         />
         </Grid>
+        {/*CARGAR UNIDADES*/}
+        {unidadesFields.map((field, index) => (
+          <Paper key={field.id} sx={{ p: 2, mb: 3 }}>
+            <Grid size={{ xs: 12 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>
+                PERSONAL INTERVINIENTE POR UNIDADES
+            </Typography>
+            </Grid>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, md: 10 }}>
+              <Controller
+              name={`unidades.${index}.unidad`}
+              control={control}
+              render={({ field }) => (
+              <TextField {...field} label="Unidad" fullWidth />
+              )}
+              />
+              </Grid>
+              <Grid size={{ xs: 12, md:4 }}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              >
+              <IconButton color="error" onClick={() => removeUnidad(index)}>
+              <DeleteIcon />
+              </IconButton>
+              </Grid>
+
+
+              {/* Personal de la unidad */}
+              <Grid size={{ xs: 12 }}>
+              <PersonalUnidad control={control} unidadIndex={index} />
+              </Grid>
+            </Grid>
+          </Paper>
+          ))}
+
+
+          <Button
+            variant="outlined"
+            onClick={() =>
+            appendUnidad({
+            unidad: "",
+            personal: [{ nombre: "", jerarquia: "", observacion: "" }],
+            })
+            }
+            sx={{ mr: 2 }}
+          >
+            Agregar otra unidad
+          </Button>
 
           {/* --- SÍNTESIS FINAL --- */}
           <Grid size={{ xs: 12 }}>

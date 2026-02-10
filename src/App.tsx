@@ -75,29 +75,28 @@ function App() {
                 <Route path="/forbidden" element={<ForbiddenPage />} />
 
                 {/* Todos */}
-                <Route element={<RequireAuth allowedRoles={["ADMIN", "REPAT", "SECRETARIO", "JEFE", "PERSONAL", "OFICIAL"]} />}>
+                <Route element={<RequireAuth allowedRoles={["ADMIN", "REPAT", "SECRETARIO", "JEFE", "PERSONAL", "OFICIAL_DE_GUARDIA"]} />}>
                   <Route path="/dashboard/mis-actas" element={<ActaResumenTable />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path='/dashboard/hechos-viales' element={<HechosVialesTable />} />
                   {/*<Route path="/zonas" element={<MapaZonas />} />*/}
-                  
                 </Route>
 
                 {/* Visualización */}
-                <Route element={<RequireAuth allowedRoles={["ADMIN", "REPAT", "SECRETARIO", "JEFE", "OFICIAL"]} />}>
+                <Route element={<RequireAuth allowedRoles={["ADMIN", "REPAT", "SECRETARIO", "JEFE"]} />}>
                   <Route path="/dashboard/talonarios" element={<Talonario />} />
                   <Route path="/dashboard/talonarios/registros" element={<RegistroTalonario />} />
                   <Route path="/dashboard/informes" element={<Reporte />} />
                 </Route>
 
                 {/* Alta y modificación */}
-                <Route element={<RequireAuth allowedRoles={["ADMIN", "SECRETARIO", "PERSONAL", "OFICIAL"]} />}>
+                <Route element={<RequireAuth allowedRoles={["ADMIN", "SECRETARIO", "PERSONAL"]} />}>
                   <Route path="/dashboard/nueva-acta" element={<ActaForm />} />
+                  <Route path="/dashboard/hechos-viales/modificacion/:id" element={<FormularioHechoVial />} />
                 </Route>
                 {/* Hechos viales */}
-                <Route element={<RequireAuth allowedRoles={["ADMIN", "REPAT", "PERSONAL, JEFE", "OFICIAL"]} />}>
+                <Route element={<RequireAuth allowedRoles={["ADMIN", "REPAT", "PERSONAL, JEFE", "OFICIAL_DE_GUARDIA"]} />}>
                   <Route path="/dashboard/hechos-viales/mapa" element={<MapaJujuySource />} />
-                  <Route path="/dashboard/hechos-viales/modificacion/:id" element={<FormularioHechoVial />} />
                   <Route path='/dashboard/hechos-viales/nuevo' element={<FormularioHechoVial />} />
                 </Route>
               </Routes>
