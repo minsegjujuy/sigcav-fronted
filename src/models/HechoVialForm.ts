@@ -83,7 +83,7 @@ export interface Protagonista {
   legajo?: string;
   // Salud y Alcohol
   trasladoConductor: string;
-  graduacionAlcoholica: number; // si es null no se realizó ningun test
+  graduacionAlcoholica: number | null; // si es null no se realizó ningun test
   estadoSalud: string;
   actaRef: string;
   actaRetencionRef: string;

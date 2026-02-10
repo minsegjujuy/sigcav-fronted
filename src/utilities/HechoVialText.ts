@@ -37,6 +37,9 @@ TIPO COLISIÓN: ${hecho.tipoColision}
 POSIBLES CAUSAS:
 ${hecho.posiblesCausas.join(' - ')}
 
+${buildPersonalIntervinienteText(hecho)}
+
+
 SÍNTESIS:
 ${hecho.sintesis}
 
@@ -92,4 +95,26 @@ Traslado: ${a.trasladado}
   });
 
   return texto;
+};
+
+
+const buildPersonalIntervinienteText = (hecho?: HechoVialListDto) => {
+  if (!hecho?.unidades?.length) return "PERSONAL INTERVINIENTE: Sin datos";
+
+  const textoUnidades = hecho.unidades
+    .map((unidad) => {
+      const personalTexto = unidad.personal
+        ?.map(
+          (p) =>
+            `   • ${p.jerarquia} ${p.nombre}${
+              p.observacion ? ` (${p.observacion})` : ""
+            }`
+        )
+        .join("\n");
+
+      return `${unidad.unidad}\n${personalTexto ?? ""}`;
+    })
+    .join("\n\n");
+
+  return `PERSONAL INTERVINIENTE:\n${textoUnidades}`;
 };

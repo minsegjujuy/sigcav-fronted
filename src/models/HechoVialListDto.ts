@@ -1,4 +1,5 @@
 import type { Protagonista } from "./HechoVialForm";
+import type { UnidadInterviniente } from "./PersonalInterviniente";
 import type { UbicacionDto } from "./UbicacionDto";
 
 export interface HechoVialListDto {
@@ -27,4 +28,6 @@ export interface HechoVialListDto {
   ubicacionReq: UbicacionDto;
   protagonistas: Protagonista[];
   puesto: string;
+  unidades: UnidadInterviniente[];
+  usuario: string;
 }
