@@ -57,6 +57,7 @@ export function mapHechoVialListDtoToForm(
     posiblesCausas: dto.posiblesCausas,
     sintesis: dto.sintesis,
     protagonistas: dto.protagonistas,
+    unidades: dto.unidades
     /*protagonistas: dto.protagonistas.map((p) => ({
       ...p,
       asegurado: Boolean(p.asegurado),
