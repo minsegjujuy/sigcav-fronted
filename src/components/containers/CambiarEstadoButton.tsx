@@ -33,11 +33,10 @@ export const CambiarEstadoButton: React.FC<Props> = ({ actaId, onSuccess }) => {
   return (
     <>
       <Button
-        size="small"
-        onClick={(e: React.MouseEvent) => {
-          e.stopPropagation();
-          setOpen(true);
-        }}
+        size="small" 
+        onClick={() => 
+          setOpen(true)
+        }
       >
         <AdjustIcon />
       </Button>
