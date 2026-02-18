@@ -27,6 +27,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import { mapActaSalienteDtoToRequest } from "../utilities/mapActaSalienteRequestToDto";
 import { useNavigate } from "react-router-dom";
 import { useActaSaliente } from "../context/ActaSalienteContext";
+import HistoryIcon from '@mui/icons-material/History';
 
 const ActaSalienteTable: React.FC = () => {
   const [data, setData] = useState<ActaSalienteDto[]>([]);
@@ -183,11 +184,6 @@ const ActaSalienteTable: React.FC = () => {
           <TableBody>
             {data.map((row: ActaSalienteDto) => (
               <TableRow key={row.id} hover 
-                onClick={() => {
-                  setActaSeleccionada(row);
-                  navigate(`/actas-salientes/${row.id}`);
-                }}
-                sx={{ cursor: "pointer" }}
               >
                 <TableCell>{row.id}</TableCell>
                 <TableCell>{row.lugar}</TableCell>
@@ -207,10 +203,9 @@ const ActaSalienteTable: React.FC = () => {
                 <TableCell>{row.juzgado}</TableCell>
                 <TableCell>
                   <Button
-                    onClick={(e) => {
-                      e.stopPropagation(); // ⬅ evita navegar al detalle
-                      handleEdit(row);
-                    }}
+                    onClick={() => 
+                      handleEdit(row)
+                    }
                   >
                     <EditIcon />
                   </Button>
@@ -218,8 +213,15 @@ const ActaSalienteTable: React.FC = () => {
                   <CambiarEstadoButton
                     actaId={row.id}
                     onSuccess={fetchData}
-                    
                   />
+                  <Button
+                    onClick={() => {
+                      navigate(`/actas-salientes/${row.id}`);
+                      setActaSeleccionada(row)
+                    }}
+                  >
+                    <HistoryIcon />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
