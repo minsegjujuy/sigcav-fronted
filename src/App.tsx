@@ -10,6 +10,8 @@ import { createTheme, CssBaseline, ThemeProvider } from '@mui/material'
 import { ActaProvider } from './context/ActaResumenContext'
 import ReloadPrompt from './components/ui/modal/ReloadPrompt'
 import { HechoVialProvider } from './context/HechoVialContext'
+import ActaSalienteDetalle from './pages/RegistrosActaSaliente'
+import { ActaSalienteProvider } from './context/ActaSalienteContext'
 
 // 1. Carga diferida de componentes (Lazy Imports)
 const Login = lazy(() => import('./pages/Login'));
@@ -23,6 +25,7 @@ const ActaForm = lazy(() => import('./pages/ActaForm'));
 const FormularioHechoVial = lazy(() => import('./pages/HechoVialForm'));
 const HechosVialesTable = lazy(() => import('./pages/HechosVialesTable'));
 const MapaJujuySource = lazy(() => import('./components/containers/MapaJujuySource'));
+const ActaSalienteTable = lazy(() => import('./pages/ActaSalienteTable'));
 
 function App() {
   const [mode, setMode] = useState<"light" | "dark">("light");
@@ -68,6 +71,7 @@ function App() {
 
           <ActaProvider>
             <HechoVialProvider>
+              <ActaSalienteProvider>
             {/* 2. Suspense envuelve las rutas que se cargan de forma perezosa */}
             <Suspense fallback={<div style={{ padding: 20 }}>Cargando módulo...</div>}>
               <Routes>
@@ -79,6 +83,7 @@ function App() {
                   <Route path="/dashboard/mis-actas" element={<ActaResumenTable />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   {/*<Route path="/zonas" element={<MapaZonas />} />*/}
+                  <Route path="/actas-salientes/:id" element={<ActaSalienteDetalle />} />
                 </Route>
 
                 {/* Visualización */}
@@ -86,6 +91,7 @@ function App() {
                   <Route path="/dashboard/talonarios" element={<Talonario />} />
                   <Route path="/dashboard/talonarios/registros" element={<RegistroTalonario />} />
                   <Route path="/dashboard/modificacion" element={<ActaForm />} />
+                  <Route path='/dashboard/actas-salientes' element={<ActaSalienteTable />} />
                 </Route>
 
                 <Route element={<RequireAuth allowedRoles={["ADMIN", "REPAT", "SECRETARIO", "PERSONAL"]} />}>
@@ -108,6 +114,7 @@ function App() {
                 </Route>
               </Routes>
             </Suspense>
+            </ActaSalienteProvider>
             </HechoVialProvider>
           </ActaProvider>
         </ArticuloProvider>

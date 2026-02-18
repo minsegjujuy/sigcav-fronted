@@ -8,6 +8,7 @@ import AssessmentIcon from '@mui/icons-material/Assessment';  // Informes
 import MenuBookIcon from '@mui/icons-material/MenuBook';      // Talonarios
 import CarCrashIcon from '@mui/icons-material/CarCrash';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import ForwardToInboxIcon from '@mui/icons-material/ForwardToInbox';
 
 interface DashboardItem {
   id: number;
@@ -21,9 +22,10 @@ const data: DashboardItem[] = [
   { id: 1, value: 'Mis Actas', icon: <AssignmentIcon fontSize="large" />, color: '#1976d2', path: '/dashboard/mis-actas' },
   { id: 2, value: 'Nueva acta', icon: <AddDocumentIcon fontSize="large" />, color: '#2e7d32', path: '/dashboard/nueva-acta' },
   { id: 3, value: 'Informes', icon: <AssessmentIcon fontSize="large" />, color: '#ed6c02', path: '/dashboard/informes' },
-  { id: 4, value: 'Talonarios', icon: <MenuBookIcon fontSize="large" />, color: '#9c27b0', path: '/dashboard/talonarios' },
-  { id: 4, value: 'Hechos viales', icon: <CarCrashIcon fontSize="large" />, color: '#3b2e3d', path: '/dashboard/hechos-viales' },
-  { id: 4, value: 'Ubicaciones', icon: <LocationOnIcon fontSize="large" />, color: '#e04646', path: '/dashboard/hechos-viales/mapa' },
+  { id: 5, value: 'Talonarios', icon: <MenuBookIcon fontSize="large" />, color: '#9c27b0', path: '/dashboard/talonarios' },
+  { id: 6, value: 'Hechos viales', icon: <CarCrashIcon fontSize="large" />, color: '#3b2e3d', path: '/dashboard/hechos-viales' },
+  { id: 7, value: 'Ubicaciones', icon: <LocationOnIcon fontSize="large" />, color: '#e04646', path: '/dashboard/hechos-viales/mapa' },
+  { id: 8, value: 'Actas salientes', icon: <ForwardToInboxIcon fontSize="large" />, color: '#85810e', path: '/dashboard/actas-salientes' },
 ];
 
 const Dashboard = () => {
