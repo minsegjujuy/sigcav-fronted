@@ -16,7 +16,7 @@ import {
   Button,
 } from "@mui/material";
 import type { ActaSalienteDto } from "../models/ActaSalienteDto";
-import { actualizarActaSaliente, crearActaSaliente, obtenerActasSalientes } from "../services/ActaSalienteService";
+import { actualizarActaSaliente, crearActaSaliente, descargarExcelActas, obtenerActasSalientes } from "../services/ActaSalienteService";
 import { CambiarEstadoButton } from "../components/containers/CambiarEstadoButton";
 import ReusableModal from "../components/ui/modal/ReusableModal";
 import FormActaSaliente, { type ActaSalienteRequest } from "./FormActaSaliente";
@@ -28,6 +28,7 @@ import { mapActaSalienteDtoToRequest } from "../utilities/mapActaSalienteRequest
 import { useNavigate } from "react-router-dom";
 import { useActaSaliente } from "../context/ActaSalienteContext";
 import HistoryIcon from '@mui/icons-material/History';
+import DownloadIcon from "@mui/icons-material/Download";
 
 const ActaSalienteTable: React.FC = () => {
   const [data, setData] = useState<ActaSalienteDto[]>([]);
@@ -45,6 +46,7 @@ const ActaSalienteTable: React.FC = () => {
   const [dniFilter, setDniFilter] = useState("");
   const [nroActaFilter, setNroActaFilter] = useState("");
   const [nombre, setNombre] = useState("");
+  const [recibo, setRecibo] = useState("");
 
   const fetchData = async () => {
     //setLoading(true);
@@ -55,6 +57,7 @@ const ActaSalienteTable: React.FC = () => {
         size: rowsPerPage.toString(),
         dni: dniFilter,
         nroActa: nroActaFilter,
+        recibo: recibo,
         nombre: nombre
       };
       console.log('params', params, ' ' , dniFilter)
@@ -98,6 +101,11 @@ const ActaSalienteTable: React.FC = () => {
     setSelectedItem(mapActaSalienteDtoToRequest(acta, 1));
   }
 
+  const handleDownload = async () => {
+    console.log('recibo ', recibo)
+    await descargarExcelActas(recibo);
+  };
+
   useEffect(() => {
     fetchData();
     fetchJuzgados();
@@ -114,8 +122,25 @@ const ActaSalienteTable: React.FC = () => {
         <Typography variant="h6" gutterBottom>
           Actas salientes
         </Typography>
-        <Grid size={{xs:12, md:4}}>
-          <Button variant="outlined" onClick={handleOpen} >Nueva</Button>
+        <Grid container spacing={2} alignItems="center">
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Button variant="contained" fullWidth onClick={handleOpen}>
+              Nueva
+            </Button>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Button
+              size="small"
+              startIcon={<DownloadIcon />}
+              onClick={handleDownload}
+              variant="contained"
+              fullWidth
+              disabled={recibo === ""}
+            >
+              Excel
+            </Button>
+          </Grid>
         </Grid>
         <ReusableModal open={open} children={<FormActaSaliente action={action} defaultValues={selectedItem} onSubmit={handleSubmit} juzgados={juzgados} />} 
         onClose={()=>setOpen(false)} /> 
@@ -134,6 +159,14 @@ const ActaSalienteTable: React.FC = () => {
               label="Nombre"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
+              fullWidth
+            />
+          </Grid>
+          <Grid size={{xs:12, md:4}}>
+            <TextField
+              label="N° Recibo"
+              value={recibo}
+              onChange={(e) => setRecibo(e.target.value)}
               fullWidth
             />
           </Grid>
