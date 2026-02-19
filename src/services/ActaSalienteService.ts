@@ -49,3 +49,31 @@ export const cambiarEstado = async (
 
   return response.data;
 };
+
+export const descargarExcelActas = async (recibo: string): Promise<void> => {
+  const response = await axios.get(
+    `${baseURL}/actas-salientes/exportar/${recibo}`,
+    {
+      responseType: "blob",
+      headers: {
+        ...getAuthHeader().headers, // 👈 clave
+      },
+    }
+  );
+
+  const blob = new Blob([response.data], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+
+  const url = window.URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `actas_recibo_${recibo}.xlsx`;
+  document.body.appendChild(link);
+  link.click();
+
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
+
