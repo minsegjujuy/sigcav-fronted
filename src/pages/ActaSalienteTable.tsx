@@ -14,6 +14,7 @@ import {
   Grid,
   Paper,
   Button,
+  IconButton,
 } from "@mui/material";
 import type { ActaSalienteDto } from "../models/ActaSalienteDto";
 import { actualizarActaSaliente, crearActaSaliente, descargarExcelActas, obtenerActasSalientes } from "../services/ActaSalienteService";
@@ -189,78 +190,120 @@ const ActaSalienteTable: React.FC = () => {
           </Grid>
         </Grid>
 
-        {/* Table */}
         <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Lugar</TableCell>
-              <TableCell>Legajo</TableCell>
-              <TableCell>Fecha</TableCell>
-              <TableCell>Recibo</TableCell>
-              <TableCell>Dictamen</TableCell>
-              <TableCell>N° Acta</TableCell>
-              <TableCell>Fecha Acta</TableCell>
-              <TableCell>Nombre Infractor</TableCell>
-              <TableCell>DNI</TableCell>
-              <TableCell>Tipo</TableCell>
-              <TableCell>Articulado</TableCell>
-              <TableCell>Retención</TableCell>
-              <TableCell>Descargo</TableCell>
-              <TableCell>Cantidad Fojas</TableCell>
-              <TableCell>Juzgado</TableCell>
-              <TableCell>Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-
-          <TableBody>
-            {data.map((row: ActaSalienteDto) => (
-              <TableRow key={row.id} hover 
-              >
-                <TableCell>{row.id}</TableCell>
-                <TableCell>{row.lugar}</TableCell>
-                <TableCell>{row.legajo}</TableCell>
-                <TableCell>{row.fecha}</TableCell>
-                <TableCell>{row.recibo}</TableCell>
-                <TableCell>{row.dictamen}</TableCell>
-                <TableCell>{row.nroActa}</TableCell>
-                <TableCell>{row.fechaActa}</TableCell>
-                <TableCell>{row.nombreInfractor}</TableCell>
-                <TableCell>{row.dni}</TableCell>
-                <TableCell>{row.tipo}</TableCell>
-                <TableCell>{row.articulado}</TableCell>
-                <TableCell>{row.retencion ? "Sí" : "No"}</TableCell>
-                <TableCell>{row.descargo ? "Sí" : "No"}</TableCell>
-                <TableCell>{row.cantidadFojas}</TableCell>
-                <TableCell>{row.juzgado}</TableCell>
-                <TableCell>
-                  <Button
-                    onClick={() => 
-                      handleEdit(row)
-                    }
-                  >
-                    <EditIcon />
-                  </Button>
-
-                  <CambiarEstadoButton
-                    actaId={row.id}
-                    onSuccess={fetchData}
-                  />
-                  <Button
-                    onClick={() => {
-                      navigate(`/actas-salientes/${row.id}`);
-                      setActaSeleccionada(row)
-                    }}
-                  >
-                    <HistoryIcon />
-                  </Button>
-                </TableCell>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>ID</TableCell>
+                <TableCell>Lugar</TableCell>
+                <TableCell>Juzgado</TableCell>
+                <TableCell>Fecha</TableCell>
+                <TableCell>Recibo</TableCell>
+                <TableCell>Dictamen</TableCell>
+                <TableCell>Actas</TableCell>
+                <TableCell>Infractor</TableCell>
+                <TableCell>DNI Infractor</TableCell>
+                <TableCell>Retención</TableCell>
+                <TableCell>Descargo</TableCell>
+                <TableCell>Fojas</TableCell>
+                <TableCell>Expediente</TableCell>
+                <TableCell>Acciones</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+
+            <TableBody>
+              {data.map((row: ActaSalienteDto) => (
+                <TableRow key={row.id} hover>
+                  {/* 1. ID */}
+                  <TableCell>{row.id}</TableCell>
+                  
+                  {/* 2. Lugar */}
+                  <TableCell>{row.lugar}</TableCell>
+                  
+                  {/* 3. Juzgado */}
+                  <TableCell>{row.juzgado}</TableCell>
+                  
+                  {/* 4. Fecha */}
+                  <TableCell>{row.fecha}</TableCell>
+                  
+                  {/* 5. Recibo */}
+                  <TableCell>{row.recibo}</TableCell>
+                  
+                  {/* 6. Dictamen */}
+                  <TableCell>{row.dictamen}</TableCell>
+                  
+                  {/* 7. Acta (Detalles) */}
+                  <TableCell>
+                    {row.actas.map((detalle, index) => (
+                      <div key={index} style={{ fontSize: '0.8rem', marginBottom: '4px' }}>
+                        • <strong>{detalle.nroActa}</strong> ({detalle.tipo})
+                        <div style={{ fontSize: '0.75rem', color: 'gray' }}>{detalle.articulado}</div>
+                      </div>
+                    ))}
+                  </TableCell>
+                  
+                  {/* 8. Infractor */}
+                  <TableCell>{row.nombreInfractor}</TableCell>
+                  
+                  {/* 9. DNI Infractor */}
+                  <TableCell>{row.dni}</TableCell>
+                  
+                  {/* 10. Retencion */}
+                  <TableCell>{row.retencion ? "Sí" : "No"}</TableCell>
+                  
+                  {/* 11. Descargo */}
+                  <TableCell>{row.descargo ? "Sí" : "No"}</TableCell>
+                  
+                  {/* 12. Fojas */}
+                  <TableCell>{row.cantidadFojas}</TableCell>
+                  
+                  {/* 13. Expediente */}
+                  <TableCell>{row.expediente}</TableCell>
+
+                  {/* 14. Acciones */}
+                  <TableCell>
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: '8px',          // Espacio uniforme entre botones
+                    flexWrap: 'nowrap',   // Evita que se rompan en filas (o úsalo en 'wrap' si la pantalla es muy pequeña)
+                    alignItems: 'center',
+                    justifyContent: 'flex-start'
+                  }}>
+                    {/* Botón Editar */}
+                    <IconButton 
+                      color="primary" 
+                      size="small"
+                      onClick={() => handleEdit(row)}
+                      title="Editar"
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+
+                    {/* Botón Estado (Asumiendo que internamente usa un botón o icono) */}
+                    <CambiarEstadoButton
+                      actaId={row.id}
+                      onSuccess={fetchData}
+                    />
+
+                    {/* Botón Historial */}
+                    <IconButton
+                      color="primary"
+                      size="small"
+                      onClick={() => {
+                        navigate(`/actas-salientes/${row.id}`);
+                        setActaSeleccionada(row);
+                      }}
+                      title="Ver historial"
+                    >
+                      <HistoryIcon fontSize="small" />
+                    </IconButton>
+                  </div>
+                </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
         {/* Pagination */}
         <TablePagination
