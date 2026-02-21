@@ -10,10 +10,14 @@ import {
   TableBody,
   Paper,
   TableContainer,
+  Box,
+  Chip,
+  Divider,
 } from "@mui/material";
 import { useActaSaliente } from "../context/ActaSalienteContext";
 import { useEffect, useState } from "react";
 import { obtenerRegistrosActaSaliente } from "../services/RegistroActaSAlienteService";
+import AssignmentIcon from '@mui/icons-material/Assignment';
 
 export type EstadoActaSaliente =
   | "ENVIADA"
@@ -67,10 +71,6 @@ const ActaSalienteDetalle = () => {
               </Grid>
 
               <Grid size={{xs:12, md:4}}>
-                <Typography><strong>N° Acta:</strong> {actaSeleccionada?.nroActa}</Typography>
-              </Grid>
-
-              <Grid size={{xs:12, md:4}}>
                 <Typography><strong>DNI:</strong> {actaSeleccionada?.dni}</Typography>
               </Grid>
 
@@ -100,6 +100,54 @@ const ActaSalienteDetalle = () => {
             </Grid>
           </CardContent>
         </Card>
+      </Grid>
+
+      {/* ================= SECCIÓN DETALLES (Actas Detalle) ================= */}
+      <Grid size={{ xs: 12 }} sx={{ mt: 3 }}>
+        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <AssignmentIcon color="primary" /> Detalle de Infracciones (Actas)
+        </Typography>
+        
+        <Grid container spacing={2}>
+          {actaSeleccionada?.actas && actaSeleccionada.actas.length > 0 ? (
+            actaSeleccionada.actas.map((detalle, index) => (
+              <Grid size={{ xs: 12, md: 6 }} key={index}>
+                <Card variant="outlined" sx={{ bgcolor: '#fafafa', height: '100%' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#1976d2' }}>
+                        Nro. Acta: {detalle.nroActa}
+                      </Typography>
+                      <Chip 
+                        label={detalle.tipo} 
+                        size="small" 
+                        color="info" 
+                        variant="filled" 
+                      />
+                    </Box>
+
+                    <Divider sx={{ my: 1 }} />
+
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      <strong>Fecha:</strong> {new Date(detalle.fechaActa).toLocaleString('es-AR')}
+                    </Typography>
+
+                    <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+                      <strong>Articulado:</strong><br />
+                      {detalle.articulado}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))
+          ) : (
+            <Grid size={{ xs: 12 }}>
+              <Typography variant="body2" color="textSecondary" sx={{ textAlign: 'center', py: 2 }}>
+                No hay actas de detalle registradas.
+              </Typography>
+            </Grid>
+          )}
+        </Grid>
       </Grid>
 
       {/* ================= TABLA REGISTROS ================= */}

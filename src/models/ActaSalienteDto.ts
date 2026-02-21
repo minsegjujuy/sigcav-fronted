@@ -1,18 +1,21 @@
+import type { ActaDetalleDto } from "./ActaDetalleDto";
+
 export interface ActaSalienteDto {
-  id: number;
-  lugar: string;
-  legajo: string;
-  fecha: string;
-  recibo: string;
-  dictamen: string;
-  nroActa: string;
-  fechaActa: string;
-  nombreInfractor: string;
-  dni: string;
-  tipo: string;
-  articulado: string;
-  retencion: boolean;
-  descargo: boolean;
-  cantidadFojas: number;
-  juzgado: string;
+    id: number;
+    lugar: string;
+    legajo: string;
+    fecha: string; // Se recomienda string si manejas formato ISO (YYYY-MM-DD)
+    recibo: string;
+    dictamen: string;
+    nombreInfractor: string;
+    dni: string;
+    retencion: boolean;
+    descargo: boolean;
+    cantidadFojas: number;
+    expediente: string;
+    licencia: boolean;
+    juzgado: string;
+    
+    // Relación con el detalle
+    actas: ActaDetalleDto[];
 }

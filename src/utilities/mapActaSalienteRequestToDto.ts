@@ -11,15 +11,13 @@ export const mapActaSalienteDtoToRequest = (
     fecha: dto.fecha,
     recibo: dto.recibo,
     dictamen: dto.dictamen,
-    nroActa: dto.nroActa,
-    fechaActa: dto.fechaActa,
     nombreInfractor: dto.nombreInfractor,
     dni: dto.dni,
-    tipo: dto.tipo,
-    articulado: dto.articulado,
     retencion: dto.retencion,
     descargo: dto.descargo,
     cantidadFojas: dto.cantidadFojas,
-    juzgado: juzgadoId, // 👈 necesario porque el DTO trae nombre, no id
+    actas: dto.actas,
+    expediente: dto.expediente,
+    juzgado: juzgadoId,
   };
 };

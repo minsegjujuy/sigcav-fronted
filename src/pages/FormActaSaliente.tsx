@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useFieldArray } from "react-hook-form";
 import {
   TextField,
   Button,
@@ -12,28 +12,36 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  Divider,
+  Chip,
+  Box,
 } from "@mui/material";
 import type { Juzgado } from "../models/Juzgado";
 import FullscreenMultiSelect from "../components/containers/MultiSelect";
 import type { Articulo } from "../models/Articulo";
 import { getArticulos } from "../services/ArticuloService";
+import type { ActaSalienteDetalleRequest } from "../models/ActaSalienteDetalleRequest";
 
 export interface ActaSalienteRequest {
-  id?: number;
-  lugar: string;
-  fecha: string;
-  recibo: string;
-  dictamen: string;
-  nroActa: string;
-  fechaActa: string;
-  nombreInfractor: string;
-  dni: string;
-  tipo: string;
-  articulado: string;
-  retencion: boolean;
-  descargo: boolean;
-  cantidadFojas: number;
-  juzgado: number;
+    id: number | null; // null para nuevas actas
+    lugar: string;
+    fecha: string; // LocalDate en Java
+    recibo: string;
+    dictamen: string;
+    
+    // Datos del infractor
+    nombreInfractor: string;
+    dni: string;
+
+    // Metadatos y estados
+    retencion: boolean;
+    descargo: boolean;
+    cantidadFojas: number;
+    juzgado: number;
+    expediente: string;
+
+    // Lista de actas asociadas
+    actas: ActaSalienteDetalleRequest[];
 }
 
 interface Props {
@@ -56,20 +64,22 @@ const FormActaSaliente: React.FC<Props> = ({
       fecha: "",
       recibo: "",
       dictamen: "",
-      nroActa: "",
-      fechaActa: "",
       nombreInfractor: "",
       dni: "",
-      tipo: "",
-      articulado: "",
       retencion: false,
+      actas: [],
       descargo: false,
       cantidadFojas: 0,
       juzgado: undefined,
+      expediente: "",
       ...defaultValues,
     },
   });
   const [articulos, setArticulos] = useState<Articulo[]>([]);
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "actas"
+  });
 
   const fetchArticulos = async () => {
       const data = await getArticulos();
@@ -86,16 +96,14 @@ const FormActaSaliente: React.FC<Props> = ({
       fecha: "",
       recibo: "",
       dictamen: "",
-      nroActa: "",
-      fechaActa: "",
       nombreInfractor: "",
       dni: "",
-      tipo: "",
-      articulado: "",
       retencion: false,
       descargo: false,
       cantidadFojas: 0,
       juzgado: undefined,
+      actas:[],
+      expediente:""
     });
   }
 }, [action, reset]);
@@ -104,168 +112,197 @@ const FormActaSaliente: React.FC<Props> = ({
   return (
     <Paper sx={{ p: 3, maxWidth: 900, mx: "auto" }}>
       <Typography variant="h6" mb={2}>
-        Acta Saliente
+        Formulario de Acta Saliente
       </Typography>
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <Grid container spacing={2}>
-          {[
-            { name: "fecha", label: "Fecha", type: "datetime-local" },
-            { name: "recibo", label: "Recibo" },
-            { name: "dictamen", label: "Dictamen" },
-            { name: "nroActa", label: "N° Acta" },
-            { name: "fechaActa", label: "Fecha Acta", type: "datetime-local" },
-            { name: "nombreInfractor", label: "Nombre Infractor" },
-            { name: "dni", label: "DNI" },
-          ].map((field) => (
-            <Grid size={{xs:12, md:6}} key={field.name}>
-              <Controller
-                name={field.name as keyof ActaSalienteRequest}
-                control={control}
-                render={({ field: controllerField }) => (
-                  <TextField
-                    {...controllerField}
-                    label={field.label}
-                    type={field.type || "text"}
-                    fullWidth
-                    InputLabelProps={field.type ? { shrink: true } : undefined}
-                  />
-                )}
-              />
-            </Grid>
-          ))}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Controller
-                name="lugar"
-                control={control}
-                render={({ field }) => (
-                <TextField select label="Lugar" {...field} fullWidth>
-                    <MenuItem value="BARRIO NORTE 107">BARRIO NORTE 107</MenuItem>
-                    <MenuItem value="DTO CHAMICAL">DTO CHAMICAL</MenuItem>
-                    <MenuItem value="DTO PAMPA BLANCA">DTO PAMPA BLANCA</MenuItem>
-                    <MenuItem value="DTO PERICO">DTO PERICO</MenuItem>
-                    <MenuItem value="DTSV">DTSV</MenuItem>
-                    <MenuItem value="SSV">SSV</MenuItem>
-                    <MenuItem value="SUSQUES">SUSQUES</MenuItem>
-                </TextField>
-                )}
-            />
-            </Grid>
-            <FormControl fullWidth>
-            <Controller
-                name="articulado"
-                control={control}
-                render={({ field }) => {
-                // convertir string del form → array de labels para el select
-                const selectedValues = field.value
-                    ? field.value.split(", ").map(v => v.trim())
-                    : [];
-
-                return (
-                    <FullscreenMultiSelect
-                    label="Artículos"
-                    value={selectedValues}
-                    onChange={(values: string[]) => {
-                        // convertir array → string "ART 1, ART 40"
-                        const articuladosString = values.join(", ");
-                        field.onChange(articuladosString);
-                    }}
-                    options={articulos.map(a => ({
-                        id: a.nro,
-                        label: a.nro,
-                        description: a.detalle,
-                    }))}
-                    placeholder="Seleccionar artículos"
-                    />
-                );
-                }}
-            />
-            </FormControl>
-            <Grid size={{ xs: 12, md: 6 }}>
-            <Controller
-                name="tipo"
-                control={control}
-                render={({ field }) => (
-                <TextField select label="Tipo de acta" {...field} fullWidth>
-                    <MenuItem value="PDA">PDA</MenuItem>
-                    <MenuItem value="SERIE B">SERIE B</MenuItem>
-                </TextField>
-                )}
-            />
-            </Grid>
-
+          {/* --- SECCIÓN 1: DATOS GENERALES --- */}
           <Grid size={{ xs: 12, md: 4 }}>
             <Controller
-                name="retencion"
-                control={control}
-                render={({ field }) => (
-                <FormControl>
-                    <FormLabel>Retención</FormLabel>
-                    <RadioGroup
-                    row
-                    value={field.value}
-                    onChange={(e) => field.onChange(e.target.value === "true")}
-                    >
-                    <FormControlLabel value="true" control={<Radio />} label="Sí" />
-                    <FormControlLabel value="false" control={<Radio />} label="No" />
-                    </RadioGroup>
-                </FormControl>
-                )}
-            />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 4 }}>
-            <Controller
-                name="descargo"
-                control={control}
-                render={({ field }) => (
-                <FormControl>
-                    <FormLabel>Descargo</FormLabel>
-                    <RadioGroup
-                    row
-                    value={field.value}
-                    onChange={(e) => field.onChange(e.target.value === "true")}
-                    >
-                    <FormControlLabel value="true" control={<Radio />} label="Sí" />
-                    <FormControlLabel value="false" control={<Radio />} label="No" />
-                    </RadioGroup>
-                </FormControl>
-                )}
-            />
-            </Grid>
-          <Grid size={{xs:12, md:4}}>
-            <Controller
-              name="cantidadFojas"
+              name="fecha"
               control={control}
               render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Cantidad de fojas"
-                  type="number"
-                  fullWidth
-                />
+                <TextField {...field} label="Fecha General" type="date" fullWidth InputLabelProps={{ shrink: true }} />
               )}
             />
           </Grid>
-
-          <Grid size={{xs:12, md:4}}>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Controller
+              name="lugar"
+              control={control}
+              render={({ field }) => (
+                <TextField select label="Lugar" {...field} fullWidth>
+                  <MenuItem value="BARRIO NORTE 107">BARRIO NORTE 107</MenuItem>
+                  <MenuItem value="DTO PERICO">DTO PERICO</MenuItem>
+                  <MenuItem value="DTO CHAMICAL">DTO CHAMICAL</MenuItem>
+                  <MenuItem value="DTO PAMPA BLANCA">DTO PAMPA BLANCA</MenuItem>
+                  <MenuItem value="DTSV">DTSV</MenuItem>
+                  <MenuItem value="SSV">SSV</MenuItem>
+                  <MenuItem value="SUSQUES">SUSQUES</MenuItem>
+                </TextField>
+              )}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Controller
               name="juzgado"
               control={control}
               render={({ field }) => (
                 <TextField select label="Juzgado" {...field} fullWidth>
                   {juzgados.map((j) => (
-                    <MenuItem key={j.id} value={j.id}>
-                      {j.nombre}
-                    </MenuItem>
+                    <MenuItem key={j.id} value={j.id}>{j.nombre}</MenuItem>
                   ))}
                 </TextField>
               )}
             />
           </Grid>
 
-          <Grid size={{xs:12}}>
-            <Button type="submit" variant="contained" fullWidth>
+          {/* --- SECCIÓN 2: INFRACTOR --- */}
+          <Grid size={{ xs: 12, md: 8 }}>
+            <Controller
+              name="nombreInfractor"
+              control={control}
+              render={({ field }) => <TextField {...field} label="Nombre Infractor" fullWidth />}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Controller
+              name="dni"
+              control={control}
+              render={({ field }) => <TextField {...field} label="DNI" fullWidth />}
+            />
+          </Grid>
+
+          {/* --- SECCIÓN 3: DETALLES DINÁMICOS (LISTA DE ACTAS) --- */}
+          <Grid size={{ xs: 12 }}>
+            <Divider sx={{ my: 2 }}>
+              <Chip label="Detalle de Actas Involucradas" />
+            </Divider>
+            
+            {fields.map((item, index) => (
+              <Box key={item.id} sx={{ p: 2, mb: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    <Controller
+                      name={`actas.${index}.nroActa`}
+                      control={control}
+                      render={({ field }) => <TextField {...field} label="N° Acta" fullWidth size="small" />}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    <Controller
+                      name={`actas.${index}.tipo`}
+                      control={control}
+                      render={({ field }) => (
+                        <TextField select label="Tipo" {...field} fullWidth size="small">
+                          <MenuItem value="PDA">PDA</MenuItem>
+                          <MenuItem value="SERIE B">SERIE B</MenuItem>
+                        </TextField>
+                      )}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    <Controller
+                      name={`actas.${index}.fechaActa`}
+                      control={control}
+                      render={({ field }) => (
+                        <TextField {...field} label="Fecha Acta" type="datetime-local" fullWidth size="small" InputLabelProps={{ shrink: true }} />
+                      )}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    <Button color="error" onClick={() => remove(index)}>Eliminar</Button>
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <Controller
+                      name={`actas.${index}.articulado`}
+                      control={control}
+                      render={({ field }) => (
+                        <FullscreenMultiSelect
+                          label="Artículos del Acta"
+                          value={field.value ? field.value.split(", ") : []}
+                          onChange={(vals) => field.onChange(vals.join(", "))}
+                          options={articulos.map(a => ({ id: a.nro, label: a.nro, description: a.detalle }))}
+                        />
+                      )}
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+            ))}
+            <Button variant="outlined" onClick={() => append({ nroActa: '', tipo: '', fechaActa: '', articulado: '' })}>
+              + Agregar otra Acta
+            </Button>
+          </Grid>
+
+          {/* --- SECCIÓN 4: DATOS FINALES --- */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Controller
+              name="recibo"
+              control={control}
+              render={({ field }) => <TextField {...field} label="Recibo" fullWidth />}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Controller
+              name="dictamen"
+              control={control}
+              render={({ field }) => <TextField {...field} label="Dictamen" fullWidth />}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Controller
+              name="expediente"
+              control={control}
+              render={({ field }) => <TextField {...field} label="Expediente" fullWidth />}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Controller
+              name="retencion"
+              control={control}
+              render={({ field }) => (
+                <FormControl>
+                  <FormLabel>Retención</FormLabel>
+                  <RadioGroup row {...field} onChange={(e) => field.onChange(e.target.value === "true")}>
+                    <FormControlLabel value="true" control={<Radio />} label="Sí" />
+                    <FormControlLabel value="false" control={<Radio />} label="No" />
+                  </RadioGroup>
+                </FormControl>
+              )}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Controller
+              name="descargo"
+              control={control}
+              render={({ field }) => (
+                <FormControl>
+                  <FormLabel>¿Presentó descargo?</FormLabel>
+                  <RadioGroup row {...field} onChange={(e) => field.onChange(e.target.value === "true")}>
+                    <FormControlLabel value="true" control={<Radio />} label="Sí" />
+                    <FormControlLabel value="false" control={<Radio />} label="No" />
+                  </RadioGroup>
+                </FormControl>
+              )}
+            />
+          </Grid>
+
+          {/* ... (campos similares para descargo y licencia) */}
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Controller
+              name="cantidadFojas"
+              control={control}
+              render={({ field }) => <TextField {...field} type="number" label="Cantidad Fojas" fullWidth />}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12 }}>
+            <Button type="submit" variant="contained" color="primary" fullWidth size="large">
               Guardar Acta Saliente
             </Button>
           </Grid>
