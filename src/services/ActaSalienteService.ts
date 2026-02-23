@@ -52,11 +52,11 @@ export const cambiarEstado = async (
 
 export const descargarExcelActas = async (recibo: string): Promise<void> => {
   const response = await axios.get(
-    `${baseURL}/actas-salientes/exportar/${recibo}`,
+    `${baseURL}/actas-salientes/exportar?recibo=${recibo}`,
     {
       responseType: "blob",
       headers: {
-        ...getAuthHeader().headers, // 👈 clave
+        ...getAuthHeader().headers,
       },
     }
   );
@@ -67,13 +67,18 @@ export const descargarExcelActas = async (recibo: string): Promise<void> => {
 
   const url = window.URL.createObjectURL(blob);
 
+  // 🔥 Sanitizar caracteres inválidos
+  const reciboSeguro = recibo.replace(/[\\/:*?"<>|]/g, "_");
+
   const link = document.createElement("a");
   link.href = url;
-  link.download = `actas_recibo_${recibo}.xlsx`;
+  link.download = `actas_recibo_${reciboSeguro}.xlsx`;
+
   document.body.appendChild(link);
   link.click();
 
   link.remove();
   window.URL.revokeObjectURL(url);
 };
+
 
