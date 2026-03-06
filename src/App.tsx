@@ -26,6 +26,7 @@ const FormularioHechoVial = lazy(() => import('./pages/HechoVialForm'));
 const HechosVialesTable = lazy(() => import('./pages/HechosVialesTable'));
 const MapaJujuySource = lazy(() => import('./components/containers/MapaJujuySource'));
 const ActaSalienteTable = lazy(() => import('./pages/ActaSalienteTable'));
+const DocumentScanner = lazy(() => import('./components/modules/DocumentScanner'));
 
 function App() {
   const [mode, setMode] = useState<"light" | "dark">("light");
@@ -82,6 +83,7 @@ function App() {
                 <Route element={<RequireAuth allowedRoles={["ADMIN", "REPAT", "SECRETARIO", "JEFE", "PERSONAL", "OFICIAL_DE_GUARDIA"]} />}>
                   <Route path="/dashboard/mis-actas" element={<ActaResumenTable />} />
                   <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/escanner" element={<DocumentScanner />} />
                   {/*<Route path="/zonas" element={<MapaZonas />} />*/}
                   <Route path="/actas-salientes/:id" element={<ActaSalienteDetalle />} />
                 </Route>

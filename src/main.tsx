@@ -22,7 +22,7 @@ if (import.meta.env.PROD) {
 }
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
+  
     <BrowserRouter>
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
@@ -30,5 +30,4 @@ createRoot(document.getElementById('root')!).render(
       </PersistGate>
       </Provider>
     </BrowserRouter>
-  </StrictMode>,
 )
