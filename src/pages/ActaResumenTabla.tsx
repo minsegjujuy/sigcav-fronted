@@ -1,5 +1,5 @@
 import { useEffect, useState, useTransition, type SyntheticEvent } from "react";
-import { getResumenActas, getResumenActasPdf, getResumenActasPersonal } from "../services/ActaService";
+import { descargarPdfActa, getResumenActas, getResumenActasPdf, getResumenActasPersonal } from "../services/ActaService";
 import { Box, Card, CardActions, CardContent, CircularProgress, FormControl, Grid, IconButton, InputLabel, MenuItem, Pagination, Paper, Select, Stack, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, Tabs, Tooltip, Typography } from "@mui/material";
 import type { ActaResumenDto } from "../models/ActaResumenDto";
 import { useSelector } from "react-redux";
@@ -23,6 +23,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import type { SortDirection, SortItem } from "../models/Sortitem";
 import { TableSkeleton } from "../components/ui/skeletonTable/TableSkeleton";
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 
 const ActaResumenTable: React.FC = () => {
   const [actas, setActas] = useState<ActaResumenDto[]>([]);
@@ -156,6 +157,21 @@ const ActaResumenTable: React.FC = () => {
         console.error('Error al obtener resumen de actas', error);
       }
     });
+  };
+
+  const descargarActa = async (nro: string) => {
+    const blob = await descargarPdfActa(nro);
+
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `acta-${nro}.pdf`;
+
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
   };
 
   const getSortDirection = (
@@ -530,6 +546,11 @@ const ActaResumenTable: React.FC = () => {
                         {acta.ubicacionResponse && <Tooltip title="Ver ubicación en Google Maps">
                           <IconButton onClick={() => openGoogleMaps(acta.ubicacionResponse.lat, acta.ubicacionResponse.lng)}>
                             <LocationOnIcon />
+                          </IconButton>
+                        </Tooltip>}
+                        {acta.idTipo === 2 && <Tooltip title="Generar pdf de acta serie B">
+                          <IconButton onClick={() => descargarActa(acta.nro)}>
+                            <PictureAsPdfIcon />
                           </IconButton>
                         </Tooltip>}
                       </TableCell>

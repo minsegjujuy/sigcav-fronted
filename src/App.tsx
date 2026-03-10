@@ -6,17 +6,18 @@ import { ArticuloProvider } from './context/ArticuloContext'
 import { RequireAuth } from './guards/RequireGuard'
 import Navbar from './components/Navbar'
 import { lazy, Suspense, useMemo, useState } from 'react'
-import { createTheme, CssBaseline, ThemeProvider } from '@mui/material'
+import { Box, CircularProgress, createTheme, CssBaseline, ThemeProvider } from '@mui/material'
 import { ActaProvider } from './context/ActaResumenContext'
 import ReloadPrompt from './components/ui/modal/ReloadPrompt'
 import { HechoVialProvider } from './context/HechoVialContext'
-import ActaSalienteDetalle from './pages/RegistrosActaSaliente'
+//import ActaSalienteDetalle from './pages/RegistrosActaSaliente'
 import { ActaSalienteProvider } from './context/ActaSalienteContext'
+import { protectedRoutes } from './routes/ProtectedRoutes'
 
 // 1. Carga diferida de componentes (Lazy Imports)
 const Login = lazy(() => import('./pages/Login'));
 const ForbiddenPage = lazy(() => import('./pages/Forbidden'));
-const ActaResumenTable = lazy(() => import('./pages/ActaResumenTabla'));
+/*const ActaResumenTable = lazy(() => import('./pages/ActaResumenTabla'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Talonario = lazy(() => import('./pages/Talonario'));
 const RegistroTalonario = lazy(() => import('./pages/RegistroTalonario'));
@@ -25,8 +26,7 @@ const ActaForm = lazy(() => import('./pages/ActaForm'));
 const FormularioHechoVial = lazy(() => import('./pages/HechoVialForm'));
 const HechosVialesTable = lazy(() => import('./pages/HechosVialesTable'));
 const MapaJujuySource = lazy(() => import('./components/containers/MapaJujuySource'));
-const ActaSalienteTable = lazy(() => import('./pages/ActaSalienteTable'));
-const DocumentScanner = lazy(() => import('./components/modules/DocumentScanner'));
+const ActaSalienteTable = lazy(() => import('./pages/ActaSalienteTable'));*/
 
 function App() {
   const [mode, setMode] = useState<"light" | "dark">("light");
@@ -53,6 +53,23 @@ function App() {
     [mode]
   );
 
+  const PageLoader = () => (
+    <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+      <CircularProgress />
+    </Box>
+  );
+
+  // Agrupa rutas por conjunto de roles
+  const groupedRoutes = protectedRoutes.reduce<Record<string, typeof protectedRoutes>>(
+    (acc, route) => {
+      const key = route.allowedRoles.slice().sort().join(",");
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(route);
+      return acc;
+    },
+    {}
+  );
+
   return (
     <>
       <ThemeProvider theme={theme}>
@@ -74,48 +91,23 @@ function App() {
             <HechoVialProvider>
               <ActaSalienteProvider>
             {/* 2. Suspense envuelve las rutas que se cargan de forma perezosa */}
-            <Suspense fallback={<div style={{ padding: 20 }}>Cargando módulo...</div>}>
-              <Routes>
-                <Route path="/" element={<Login />} />
-                <Route path="/forbidden" element={<ForbiddenPage />} />
+            <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/" element={<Login />} />
+                  <Route path="/forbidden" element={<ForbiddenPage />} />
 
-                {/* Todos */}
-                <Route element={<RequireAuth allowedRoles={["ADMIN", "REPAT", "SECRETARIO", "JEFE", "PERSONAL", "OFICIAL_DE_GUARDIA"]} />}>
-                  <Route path="/dashboard/mis-actas" element={<ActaResumenTable />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/escanner" element={<DocumentScanner />} />
-                  {/*<Route path="/zonas" element={<MapaZonas />} />*/}
-                  <Route path="/actas-salientes/:id" element={<ActaSalienteDetalle />} />
-                </Route>
-
-                {/* Visualización */}
-                <Route element={<RequireAuth allowedRoles={["ADMIN", "REPAT", "SECRETARIO", "JEFE"]} />}>
-                  <Route path="/dashboard/talonarios" element={<Talonario />} />
-                  <Route path="/dashboard/talonarios/registros" element={<RegistroTalonario />} />
-                  <Route path="/dashboard/modificacion" element={<ActaForm />} />
-                  <Route path='/dashboard/actas-salientes' element={<ActaSalienteTable />} />
-                </Route>
-
-                <Route element={<RequireAuth allowedRoles={["ADMIN", "REPAT", "SECRETARIO", "PERSONAL"]} />}>
-                  <Route path="/dashboard/modificacion" element={<ActaForm />} />
-                </Route>
-
-                {/* Alta y modificación */}
-                <Route element={<RequireAuth allowedRoles={["ADMIN", "SECRETARIO", "PERSONAL"]} />}>
-                  <Route path="/dashboard/nueva-acta" element={<ActaForm />} />
-                  <Route path="/dashboard/hechos-viales/modificacion/:id" element={<FormularioHechoVial />} />
-                </Route>
-                {/* Hechos viales */}
-                <Route element={<RequireAuth allowedRoles={["ADMIN", "REPAT", "PERSONAL", "JEFE", "OFICIAL_DE_GUARDIA"]} />}>
-                  <Route path="/dashboard/hechos-viales/mapa" element={<MapaJujuySource />} />
-                  <Route path='/dashboard/hechos-viales/nuevo' element={<FormularioHechoVial />} />
-                </Route>
-                <Route element={<RequireAuth allowedRoles={["ADMIN", "REPAT", "JEFE", "OFICIAL_DE_GUARDIA"]} />}>
-                  <Route path="/dashboard/informes" element={<Reporte />} />
-                  <Route path='/dashboard/hechos-viales' element={<HechosVialesTable />} />
-                </Route>
-              </Routes>
-            </Suspense>
+                  {Object.entries(groupedRoutes).map(([key, routes]) => (
+                    <Route
+                      key={key}
+                      element={<RequireAuth allowedRoles={routes[0].allowedRoles} />}
+                    >
+                      {routes.map(({ path, component: Component }) => (
+                        <Route key={path} path={path} element={<Component />} />
+                      ))}
+                    </Route>
+                  ))}
+                </Routes>
+              </Suspense>
             </ActaSalienteProvider>
             </HechoVialProvider>
           </ActaProvider>
@@ -127,3 +119,4 @@ function App() {
 }
 
 export default App
+
