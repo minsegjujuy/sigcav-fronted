@@ -4,6 +4,14 @@ export interface InfractorSolicitud {
   apellido: string;
   dni: string;
   nacionalidad: string;
+  domicilio: string;
   provincia:string
+  //licencia
+  idLic?:number;
+  clase?:string;
+  numero?:string;
+  autoridadExpedicion?: string;
+  fechaExpedicion?: string;
+  fechaVencimiento?: string;
   propietario: boolean;
 }

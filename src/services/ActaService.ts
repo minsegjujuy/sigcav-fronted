@@ -68,6 +68,15 @@ export const obtenerActasPorDia = async (fi: string, ff: string): Promise<DiasCa
   return response.data;
 }
 
+export const descargarPdfActa = async (nro: string): Promise<Blob> => {
+  const response = await axios.get(`${baseURL}/acta/${nro}/pdf`, {
+    responseType: "blob",
+    ...getAuthHeader()
+  });
+
+  return response.data;
+};
+
 export const obtenerPorcentajeDeActasPorDia = async (fi: string, ff: string): Promise<DiasCantidad[]> => {
   const params = {
     fechaInicio:fi,
