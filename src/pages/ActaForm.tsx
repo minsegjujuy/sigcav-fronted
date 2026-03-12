@@ -260,6 +260,7 @@ export default function ActaForm() {
         form.infractor.propietario = propietario;
         form.idTipo = Number(selectedTipoActa);
         form.articulos = articulosSeleccionados;
+        
         console.log('acta ', form);
         let response = null;
         if(actaSeleccionada){
@@ -422,11 +423,12 @@ export default function ActaForm() {
                       idInfrac: data.idInfrac || null,
                       nombre: data.nombre || "",
                       apellido: data.apellido || "",
-                      autoridadExpedicion: data.licencias[0].autoridadExpedicion || "",
-                      clase: data.licencias[0].clase,
+                      autoridadExpedicion: data.licencias[0]?.autoridadExpedicion || "",
+                      clase: data.licencias[0]?.clase,
                       domicilio: data.domicilio,
-                      fechaExpedicion: data.licencias[0].fechaExpedicion,
-                      fechaVencimiento: data.licencias[0].fechaVencimiento,
+                      fechaExpedicion: data.licencias[0]?.fechaExpedicion,
+                      fechaVencimiento: data.licencias[0]?.fechaVencimiento,
+                      numero: data.licencias[0]?.numero,
                       dni: data.dni,
                       lugar: data.lugar || "",
                       propietario: data.propietario ?? true,
@@ -573,6 +575,7 @@ export default function ActaForm() {
   useEffect(()=> {
     if (actaSeleccionada?.idActa) {
       console.log('acta para editar ', actaSeleccionada);
+      //actaSeleccionada.
       const articulos = actaSeleccionada.articulos.map(a => a.idArt)
       setSelectedTipoActa(actaSeleccionada.idTipo);
       setSelectedGrupo(actaSeleccionada.idGrupo)
@@ -586,6 +589,7 @@ export default function ActaForm() {
         lng: actaSeleccionada.ubicacionResponse.lng,
         //unidadRegional: actaSeleccionada.ubicacionResponse.unidadRegional
       }
+
       handleMapSelect(ubicacion);
       if(actaSeleccionada.adjunta){
         let partes = actaSeleccionada.adjunta?.split(',').map(item => item.trim());
