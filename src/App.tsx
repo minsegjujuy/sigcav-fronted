@@ -5,7 +5,8 @@ import { SnackbarUtilitiesConfigurator } from './utilities/SnackbarUtilities'
 import { ArticuloProvider } from './context/ArticuloContext'
 import { RequireAuth } from './guards/RequireGuard'
 import Navbar from './components/Navbar'
-import { lazy, Suspense, useMemo, useState } from 'react'
+import BackgroundFX from './components/ui/BackgroundFX'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { Box, CircularProgress, createTheme, CssBaseline, ThemeProvider } from '@mui/material'
 import { ActaProvider } from './context/ActaResumenContext'
 import ReloadPrompt from './components/ui/modal/ReloadPrompt'
@@ -29,7 +30,16 @@ const MapaJujuySource = lazy(() => import('./components/containers/MapaJujuySour
 const ActaSalienteTable = lazy(() => import('./pages/ActaSalienteTable'));*/
 
 function App() {
-  const [mode, setMode] = useState<"light" | "dark">("light");
+  const THEME_MODE_STORAGE_KEY = 'themeMode';
+
+  const [mode, setMode] = useState<"light" | "dark">(() => {
+    const saved = localStorage.getItem(THEME_MODE_STORAGE_KEY);
+    return saved === 'dark' ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    localStorage.setItem(THEME_MODE_STORAGE_KEY, mode);
+  }, [mode]);
 
   // useMemo para evitar recrear el tema en cada render
   const theme = useMemo(
@@ -39,12 +49,12 @@ function App() {
           mode,
           ...(mode === "light"
             ? {
-                // 🎨 colores personalizados para modo claro
+                // colores personalizados para modo claro
                 primary: { main: "#66682E" },
                 background: { default: "#f5f5f5", paper: "#fff" },
               }
             : {
-                // 🌙 colores personalizados para modo oscuro
+                // colores personalizados para modo oscuro
                 primary: { main: "#8D926A" },
                 background: { default: "#0B0A06", paper: "#1e1e1e" },
               }),
@@ -73,20 +83,14 @@ function App() {
   return (
     <>
       <ThemeProvider theme={theme}>
-        <ReloadPrompt />
-      <SnackbarProvider>
+        <BackgroundFX />
+        <Box sx={{ position: 'relative', zIndex: 1, minHeight: '100vh' }}>
+          <ReloadPrompt />
+          <SnackbarProvider>
         <SnackbarUtilitiesConfigurator />
         <ArticuloProvider>
-          <Navbar />
+          <Navbar mode={mode} onModeChange={setMode} />
           <CssBaseline />
-
-          <div style={{ padding: 20 }}>
-            <h2>Modo {mode === "light" ? "Claro ☀️" : "Oscuro 🌙"}</h2>
-            <button onClick={() => setMode(mode === "light" ? "dark" : "light")}>
-              Cambiar modo
-            </button>
-          </div>
-
           <ActaProvider>
             <HechoVialProvider>
               <ActaSalienteProvider>
@@ -113,7 +117,8 @@ function App() {
           </ActaProvider>
         </ArticuloProvider>
       </SnackbarProvider>
-    </ThemeProvider>
+        </Box>
+      </ThemeProvider>
     </>
   )
 }
