@@ -3,7 +3,7 @@ import type { RouteConfig } from '../models/RouteConfig';
 
 const ActaResumenTable = lazy(() => import('../pages/ActaResumenTabla'));
 const Dashboard = lazy(() => import('../pages/Dashboard'));
-const Talonario = lazy(() => import('../pages/Talonario'));
+//const Talonario = lazy(() => import('../pages/Talonario'));
 const RegistroTalonario = lazy(() => import('../pages/RegistroTalonario'));
 const Reporte = lazy(() => import('../pages/Reporte'));
 const ActaForm = lazy(() => import('../pages/ActaForm'));
@@ -21,7 +21,7 @@ export const protectedRoutes: RouteConfig[] = [
   { path: "/actas-salientes/:id",                    component: ActaSalienteDetalle, allowedRoles: ["ADMIN", "DICTAMEN"] },
 
   // Visualización
-  { path: "/dashboard/talonarios",                   component: Talonario,           allowedRoles: ["ADMIN", "REPAT", "SECRETARIO", "JEFE"] },
+  //{ path: "/dashboard/talonarios",                   component: Talonario,           allowedRoles: ["ADMIN", "REPAT", "SECRETARIO", "JEFE"] },
   { path: "/dashboard/talonarios/registros",         component: RegistroTalonario,   allowedRoles: ["ADMIN", "REPAT", "SECRETARIO", "JEFE"] },
   { path: "/dashboard/actas-salientes",              component: ActaSalienteTable,   allowedRoles: ["ADMIN", "DICTAMEN"] },
 

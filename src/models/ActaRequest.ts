@@ -1,3 +1,4 @@
+import type { FirmaDTO } from "./FirmaDTO";
 import type { InfractorSolicitud } from "./InfractorSolicitud";
 import type { UbicacionRequest } from "./UbicacionRequest";
 import type { VehiculoSolicitud } from "./VehiculoSolicitud";
@@ -16,5 +17,6 @@ export interface ActaRequest {
   vehiculo: VehiculoSolicitud;
   adjunta: string,
   retencion: string,
-  ubicacionRequest: UbicacionRequest
+  ubicacionRequest: UbicacionRequest,
+  firma?: FirmaDTO,
 }

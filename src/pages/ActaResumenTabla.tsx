@@ -1,6 +1,6 @@
-import { useEffect, useState, useTransition, type SyntheticEvent } from "react";
+﻿import { useEffect, useRef, useState, useTransition, type SyntheticEvent } from "react";
 import { descargarPdfActa, getResumenActas, getResumenActasPdf, getResumenActasPersonal } from "../services/ActaService";
-import { Box, Card, CardActions, CardContent, CircularProgress, FormControl, Grid, IconButton, InputLabel, MenuItem, Pagination, Paper, Select, Stack, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, Tabs, Tooltip, Typography } from "@mui/material";
+import { Box, Card, CardActions, CardContent, CircularProgress, FormControl, Grid, IconButton, InputLabel, MenuItem, Pagination, Paper, Select, Stack, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, Tabs, Tooltip, Typography , useMediaQuery } from "@mui/material";
 import type { ActaResumenDto } from "../models/ActaResumenDto";
 import { useSelector } from "react-redux";
 import type { RootState } from "../redux/store/Store";
@@ -24,6 +24,7 @@ import type { SortDirection, SortItem } from "../models/Sortitem";
 import { TableSkeleton } from "../components/ui/skeletonTable/TableSkeleton";
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import { useTheme } from "@mui/material/styles";
 
 const ActaResumenTable: React.FC = () => {
   const [actas, setActas] = useState<ActaResumenDto[]>([]);
@@ -33,9 +34,12 @@ const ActaResumenTable: React.FC = () => {
   const [totalElements , setTotalElements] = useState(0);
   const { rol } = useSelector((state: RootState) => state.auth);
   const [showFilterUser, setShowFilterUser] = useState(false);
-  const [fechaInicio, setFechaInicio] = useState<Dayjs | null>(dayjs());
-  const [fechaFin, setFechaFin] = useState<Dayjs | null>(dayjs());
+  const [fechaInicio, setFechaInicio] = useState<Dayjs | null>(dayjs().startOf("day"));
+  const [fechaFin, setFechaFin] = useState<Dayjs | null>(dayjs().startOf("day"));
   const [view, setView] = useState<0 | 1>(1);
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+  const hasAutoActivatedQuickViewRef = useRef(false);
   const [filters, setFilters] = useState<Record<string, any>>({
     page: 0, grupo:null, puesto:null,articulo:null, size:12});
     const [filtersPersonal, setFiltersPersonal] = useState<Record<string, any>>({
@@ -65,8 +69,8 @@ const ActaResumenTable: React.FC = () => {
     try {
       setDescargando(true);
 
-      // 1. Llamamos a tu función adaptada
-      // Supongamos que 'filtros' es tu estado de búsqueda
+      // 1. Llamamos a tu funciÃ³n adaptada
+      // Supongamos que 'filtros' es tu estado de bÃºsqueda
       const blob = await getResumenActasPdf(filters);
 
       // 2. Creamos el link de descarga
@@ -86,7 +90,7 @@ const ActaResumenTable: React.FC = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error al descargar el PDF:", error);
-      // Aquí podrías mostrar una alerta de MUI (Snackbar)
+      // AquÃ­ podrÃ­as mostrar una alerta de MUI (Snackbar)
     } finally {
       setDescargando(false);
     }
@@ -148,7 +152,7 @@ const ActaResumenTable: React.FC = () => {
           totalElementsResult = data.totalElements;
         }
 
-        // 3. Estas actualizaciones de estado se marcan como "transición"
+        // 3. Estas actualizaciones de estado se marcan como "transiciÃ³n"
         setTotalElements(totalElementsResult);
         setTotalPages(totalPagesResult);
         setActas(content);
@@ -282,6 +286,22 @@ const ActaResumenTable: React.FC = () => {
     }));
   };
 
+
+  useEffect(() => {
+    if (!isSmallScreen) {
+      hasAutoActivatedQuickViewRef.current = false;
+      return;
+    }
+
+    if (hasAutoActivatedQuickViewRef.current) return;
+
+    if (view === 1) {
+      setView(0);
+    }
+
+    hasAutoActivatedQuickViewRef.current = true;
+  }, [isSmallScreen, view]);
+
   const openGoogleMaps = (lat: number, lng: number) => {
     const url = `https://www.google.com/maps?q=${lat},${lng}`;
     window.open(url, "_blank");
@@ -342,7 +362,7 @@ const ActaResumenTable: React.FC = () => {
           renderInput={(params) => (
             <TextField
               {...params}
-              label="Artículo"
+              label="ArtÃ­culo"
               onChange={handleInputChange}    
             />
           )}
@@ -357,6 +377,7 @@ const ActaResumenTable: React.FC = () => {
           <DatePicker
             label="Fecha inicio"
             value={fechaInicio}
+            format="DD-MM-YYYY HH:mm:ss"
             name="fechaInicio"
             onChange={(newValue) => handleChangeDate(newValue, "fechaInicio")}
             slotProps={{ textField: { fullWidth: true, variant: "outlined" } }}
@@ -365,6 +386,7 @@ const ActaResumenTable: React.FC = () => {
           <DatePicker
             label="Fecha fin"
             name="fechaFin"
+            format="DD-MM-YYYY HH:mm:ss"
             value={fechaFin}
             onChange={(newValue) => handleChangeDate(newValue, "fechaFin")}
             slotProps={{ textField: { fullWidth: true, variant: "outlined" } }}
@@ -388,7 +410,8 @@ const ActaResumenTable: React.FC = () => {
 
         <Tabs
           value={view}
-          onChange={(_, newValue) => setView(newValue)}
+          onChange={(_, newValue) => setView(newValue as 0 | 1)}
+          variant={isSmallScreen ? "fullWidth" : "standard"}
           sx={{ mb: 2 }}
         >
           <Tab label="Vista rapida" />
@@ -401,10 +424,10 @@ const ActaResumenTable: React.FC = () => {
           <Grid
             container
             spacing={{ xs: 2, md: 3 }}
-            columns={{ xs: 4, sm: 8, md: 12 }}
+            columns={{ xs: 12, sm: 12, md: 12 }}
           >
-            {actas.map((acta, index) => (
-              <Grid key={index} size={{ xs: 2, sm: 4, md: 4 }}>
+            {actas.map((acta) => (
+              <Grid key={acta.idActa} size={{ xs: 12, sm: 6, md: 4 }}>
                 <Card
                   sx={{
                     borderRadius: 2,
@@ -443,10 +466,10 @@ const ActaResumenTable: React.FC = () => {
                     </Typography>
 
                     <Typography variant="body2">
-                      <strong>Vehículo:</strong> {acta.vehiculo.dominio}
+                      <strong>VehÃ­culo:</strong> {acta.vehiculo.dominio}
                     </Typography>
 
-                    <CardActions>
+                    <CardActions sx={{ display: "flex", gap: 1, flexWrap: "wrap", justifyContent: "flex-end" }}>
                       <Button
                         onClick={() => handleEdit(acta)}
                         disabled={!canEdit(acta.fecha)}
@@ -458,6 +481,22 @@ const ActaResumenTable: React.FC = () => {
                       >
                         <EditIcon />
                       </Button>
+
+                      {acta.ubicacionResponse && (
+                        <Tooltip title="Ver ubicación en Google Maps">
+                          <IconButton onClick={() => openGoogleMaps(acta.ubicacionResponse.lat, acta.ubicacionResponse.lng)}>
+                            <LocationOnIcon />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+
+                      {acta.idTipo === 2 && (
+                        <Tooltip title="Generar pdf de acta serie B">
+                          <IconButton onClick={() => descargarActa(acta.nro)}>
+                            <PictureAsPdfIcon />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                     </CardActions>
                   </CardContent>
                 </Card>
@@ -476,7 +515,7 @@ const ActaResumenTable: React.FC = () => {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Nº Acta</TableCell>
+                    <TableCell>NÂº Acta</TableCell>
                     <TableCell>
                       <TableSortLabel
                         active={!!getSortDirection('id_grupo')}
@@ -548,11 +587,11 @@ const ActaResumenTable: React.FC = () => {
                             <LocationOnIcon />
                           </IconButton>
                         </Tooltip>}
-                        {acta.idTipo === 2 && <Tooltip title="Generar pdf de acta serie B">
+                        <Tooltip title="Generar pdf de acta">
                           <IconButton onClick={() => descargarActa(acta.nro)}>
                             <PictureAsPdfIcon />
                           </IconButton>
-                        </Tooltip>}
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -584,3 +623,6 @@ const ActaResumenTable: React.FC = () => {
 };
 
 export default ActaResumenTable;
+
+
+

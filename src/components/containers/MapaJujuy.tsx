@@ -3,6 +3,7 @@ import {
   TileLayer,
   Marker,
   GeoJSON,
+  useMap,
   useMapEvents,
 } from "react-leaflet";
 import { useEffect, useState } from "react";
@@ -14,9 +15,9 @@ import L from 'leaflet';
 
 const myIcon = L.icon({
   iconUrl: customMarkerIcon,
-  iconSize: [38, 38], // tamaño del icono
-  iconAnchor: [19, 38], // punto del icono que corresponderá a la ubicación del marcador
-  popupAnchor: [0, -38] // punto desde donde se abrirá el popup
+  iconSize: [38, 38], // tamaÃ±o del icono
+  iconAnchor: [19, 38], // punto del icono que corresponderÃ¡ a la ubicaciÃ³n del marcador
+  popupAnchor: [0, -38] // punto desde donde se abrirÃ¡ el popup
 });
 
 // Define el tipo para el valor inicial
@@ -72,15 +73,30 @@ function ClickHandler({
 export default function MapaJujuy({ onSelect, initialValue }: MapaJujuyProps) {
   // Inicializamos el estado con el valor que viene por prop
   const [point, setPoint] = useState<UbicacionRequest | null>(initialValue || null);
+  useEffect(() => {
+    setPoint(initialValue || null);
+  }, [initialValue?.lat, initialValue?.lng, initialValue?.departamento]);
+
+  const Recenter = ({ value }: { value: UbicacionRequest | null }) => {
+    const map = useMap();
+
+    useEffect(() => {
+      if (!value) return;
+      map.setView([value.lat, value.lng], 12);
+    }, [map, value?.lat, value?.lng]);
+
+    return null;
+  };
 
   return (
     <>
       <MapContainer
-        // Si tienes un punto inicial, podrías querer centrar el mapa ahí
-        center={initialValue ? [initialValue.lat, initialValue.lng] : [-24.2, -65.3]}
-        zoom={initialValue ? 12 : 7} 
+        // Si tienes un punto inicial, podrÃ­as querer centrar el mapa ahÃ­
+        center={point ? [point.lat, point.lng] : [-24.2, -65.3]}
+        zoom={point ? 12 : 7} 
         style={{ height: "400px", width: "100%" }}
       >
+        <Recenter value={point} />
         <TileLayer
           attribution="&copy; OpenStreetMap contributors"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -93,8 +109,14 @@ export default function MapaJujuy({ onSelect, initialValue }: MapaJujuyProps) {
 
         <ClickHandler
           onValidClick={(p) => {
-            setPoint(p);
-            onSelect(p);
+            const next: UbicacionRequest = {
+              ...p,
+              descripcion: "",
+              unidadRegional: undefined,
+              localidad: undefined,
+            };
+            setPoint(next);
+            onSelect(next);
           }}
         />
 
@@ -105,15 +127,16 @@ export default function MapaJujuy({ onSelect, initialValue }: MapaJujuyProps) {
       <div style={{ marginTop: 10 }}>
         {point ? (
           <>
-            <strong>Ubicación seleccionada:</strong>
+            <strong>Ubicacion seleccionada:</strong>
             <div>Lat: {point.lat.toFixed(6)} | Lng: {point.lng.toFixed(6)}</div>
             <div><strong>Departamento:</strong> {point.departamento}</div>
           </>
         ) : (
-          <em>Seleccioná un punto dentro de Jujuy</em>
+          <em>Selecciona un punto dentro de Jujuy</em>
         )}
       </div>
     </>
   );
 }
+
 

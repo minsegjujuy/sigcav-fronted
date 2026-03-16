@@ -25,6 +25,7 @@ export function mapHechoVialListDtoToForm(
       departamento: dto.ubicacionReq.departamento,
       localidad: dto.ubicacionReq.localidad,
       unidadRegional: dto.ubicacionReq.unidadRegional,
+      descripcion: "",
     },
 
     victimaFatal: dto.victimaFatal as 'SI' | 'NO',
@@ -74,3 +75,5 @@ export function mapHechoVialListDtoToForm(
     })),*/
   };
 }
+
+

@@ -44,6 +44,7 @@
     "react-leaflet-draw": "^0.21.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.6.2",
+    "react-signature-canvas": "^1.1.0-alpha.2",
     "redux-persist": "^6.0.0",
     "styled-components": "^6.1.19",
     "tesseract.js": "^7.0.0",

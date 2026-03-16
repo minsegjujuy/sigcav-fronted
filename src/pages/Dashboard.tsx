@@ -2,7 +2,6 @@
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import AddDocumentIcon from "@mui/icons-material/NoteAdd";
 import AssessmentIcon from "@mui/icons-material/Assessment";
-import MenuBookIcon from "@mui/icons-material/MenuBook";
 import CarCrashIcon from "@mui/icons-material/CarCrash";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import ForwardToInboxIcon from "@mui/icons-material/ForwardToInbox";
@@ -23,8 +22,8 @@ const data: DashboardItem[] = [
   { id: 1, value: "Mis Actas", icon: AssignmentIcon, color: "#1976d2", path: "/dashboard/mis-actas" },
   { id: 2, value: "Nueva acta", icon: AddDocumentIcon, color: "#2e7d32", path: "/dashboard/nueva-acta" },
   { id: 3, value: "Informes", icon: AssessmentIcon, color: "#ed6c02", path: "/dashboard/informes" },
-  { id: 5, value: "Talonarios", icon: MenuBookIcon, color: "#9c27b0", path: "/dashboard/talonarios" },
-  { id: 6, value: "Hechos viales", icon: CarCrashIcon, color: "#3b2e3d", path: "/dashboard/hechos-viales" },
+  //{ id: 5, value: "Talonarios", icon: MenuBookIcon, color: "#9c27b0", path: "/dashboard/talonarios" },
+  { id: 6, value: "Hechos viales", icon: CarCrashIcon, color: "#9c27b0", path: "/dashboard/hechos-viales" },
   { id: 7, value: "Ubicaciones", icon: LocationOnIcon, color: "#e04646", path: "/dashboard/hechos-viales/mapa" },
   { id: 8, value: "Actas salientes", icon: ForwardToInboxIcon, color: "#85810e", path: "/dashboard/actas-salientes" },
 ];
