@@ -73,7 +73,8 @@ const FormularioHechoVial = () => {
     lng: 0,
     unidadRegional: 0,
     departamento: '',
-    localidad: undefined
+    localidad: undefined,
+    descripcion:'',
 });
 
   const fetchPuestos = async () => {
@@ -94,7 +95,7 @@ const FormularioHechoVial = () => {
     //danosMateriales, zona, y victimaFatal  son undefined si no los selcciono explicitamente
     console.log("Datos capturados:", payload);
     await guardarhechoVial(payload);
-    SnackbarUtilities.success('Se guardó correctamente el hecho vial');
+    SnackbarUtilities.success('Se guardÃ³ correctamente el hecho vial');
     limpiarHechoVial();
   };
 
@@ -141,7 +142,7 @@ const FormularioHechoVial = () => {
       <form onSubmit={handleSubmit(onSubmit)}>
         <Grid container spacing={3}>
           
-          {/* --- ENCABEZADO Y UBICACIÓN --- */}
+          {/* --- ENCABEZADO Y UBICACIÃ“N --- */}
           <Grid size={{ xs: 12 }}>
             <Typography variant="h6" color="secondary">Datos de Identificación</Typography>
           </Grid>
@@ -198,7 +199,7 @@ const FormularioHechoVial = () => {
           </Grid>
 
           <Grid size={{ xs: 12 }}>
-            <TextField fullWidth label="Ubicación (Lugar del hecho - KM/Altura)" {...register("ruta")} />
+            <TextField fullWidth label="UbicaciÃ³n (Lugar del hecho - KM/Altura)" {...register("ruta")} />
           </Grid>
           <MapaJujuy onSelect={handleMapSelect} initialValue={hechoVial?.ubicacionReq} />
 
@@ -241,10 +242,10 @@ const FormularioHechoVial = () => {
 
           <Grid size={{ xs: 12 }}><Divider /></Grid>
 
-          {/* --- CLASIFICACIÓN DEL HECHO --- */}
+          {/* --- CLASIFICACIÃ“N DEL HECHO --- */}
           <Grid size={{ xs: 12, md: 4 }}>
             <FormControl component="fieldset">
-              <FormLabel component="legend">¿Víctima Fatal?</FormLabel>
+              <FormLabel component="legend">¿Vi­ctima Fatal?</FormLabel>
               <Controller
                 name="victimaFatal"
                 control={control}
@@ -302,7 +303,7 @@ const FormularioHechoVial = () => {
                   {...field}
                   select
                   fullWidth
-                  label="Tipo de Vía"
+                  label="Tipo de VÃ­a"
                   error={!!fieldState.error}
                   helperText={fieldState.error?.message}
                 >
@@ -355,7 +356,7 @@ const FormularioHechoVial = () => {
                     <TextField
                     select
                     fullWidth
-                    label="Tipo de Vehículo/Persona"
+                    label="Tipo de VehÃ­culo/Persona"
                     defaultValue={field.id}
                     {...register(`involucrados.${index}.tipo`)}
                     >
@@ -376,7 +377,7 @@ const FormularioHechoVial = () => {
                     </Grid>
                 )}
 
-                {/* Botón Eliminar Fila */}
+                {/* BotÃ³n Eliminar Fila */}
                 <Grid size={{ xs: 2, md: 1 }}>
                     <IconButton color="error" onClick={() => remove(index)}>
                     <DeleteIcon />
@@ -398,9 +399,9 @@ const FormularioHechoVial = () => {
 
           <Grid size={{ xs: 12 }}><Divider /></Grid>
 
-          {/* --- CONDICIONES DE LA VÍA --- */}
+          {/* --- CONDICIONES DE LA VÃA --- */}
           <Grid size={{ xs: 12 }}>
-            <Typography variant="h6" color="secondary">Características de la Escena</Typography>
+            <Typography variant="h6" color="secondary">Caracteri­sticas de la Escena</Typography>
           </Grid>
 
           <Grid size={{ xs: 12, md: 4 }}>
@@ -413,7 +414,7 @@ const FormularioHechoVial = () => {
                   {...field}
                   select
                   fullWidth
-                  label="Configuración de la Vía"
+                  label="ConfiguraciÃ³n de la VÃ­a"
                   error={!!fieldState.error}
                   helperText={fieldState.error?.message}
                 >
@@ -443,7 +444,7 @@ const FormularioHechoVial = () => {
             />
           </Grid>
 
-          {/* --- SECCIÓN: ESTADO DE LA CALZADA --- */}
+          {/* --- SECCIÃ“N: ESTADO DE LA CALZADA --- */}
         <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>
             ESTADO DE LA CALZADA
@@ -467,7 +468,7 @@ const FormularioHechoVial = () => {
                 <MenuItem value="APTO">APTO</MenuItem>
                 <MenuItem value="CON BACHES">CON BACHES</MenuItem>
                 <MenuItem value="AHUELLAMIENTO">AHUELLAMIENTO</MenuItem>
-                <MenuItem value="EN REPARACION">EN REPARACIÓN</MenuItem>
+                <MenuItem value="EN REPARACION">EN REPARACIÃ“N</MenuItem>
                 <MenuItem value="OTRO">OTRO (ESPECIFICAR)</MenuItem>
               </TextField>
             )}
@@ -478,14 +479,14 @@ const FormularioHechoVial = () => {
             fullWidth
             label="Especificar Estado (si corresponde)"
             {...register("estadoFisicoCalzada")}
-            helperText="Completar solo si seleccionó OTRO"
+            helperText="Completar solo si seleccionÃ³ OTRO"
         />
         </Grid>
 
-        {/* --- SECCIÓN: ESTADO FÍSICO / AMBIENTAL DE LA CALZADA --- */}
+        {/* --- SECCIÃ“N: ESTADO FÃSICO / AMBIENTAL DE LA CALZADA --- */}
         <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>
-            ESTADO FÍSICO / AMBIENTAL DE LA CALZADA
+            ESTADO FÃSICO / AMBIENTAL DE LA CALZADA
         </Typography>
         </Grid>
 
@@ -499,7 +500,7 @@ const FormularioHechoVial = () => {
               {...field}
               select
               fullWidth
-              label="Condición de superficie"
+              label="CondiciÃ³n de superficie"
               error={!!fieldState.error}
               helperText={fieldState.error?.message}
             >
@@ -518,7 +519,7 @@ const FormularioHechoVial = () => {
         <Grid size={{ xs: 12, md: 6 }}>
         <TextField
             fullWidth
-            label="Especificar Condición (si corresponde)"
+            label="Especificar CondiciÃ³n (si corresponde)"
             {...register("estadoCalzada")}
         />
         </Grid>
@@ -546,14 +547,14 @@ const FormularioHechoVial = () => {
             )}
           />
         </Grid>
-          {/* --- SECCIÓN: SEMÁFORO Y LUZ ARTIFICIAL --- */}
+          {/* --- SECCIÃ“N: SEMÃFORO Y LUZ ARTIFICIAL --- */}
         <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>
-            ILUMINACIÓN Y SEÑALIZACIÓN LUMINOSA
+            ILUMINACION Y SEÑALIZACION LUMINOSA
         </Typography>
         </Grid>
 
-        {/* Semáforo */}
+        {/* SemÃ¡foro */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Controller
             name="semaforo"
@@ -564,7 +565,7 @@ const FormularioHechoVial = () => {
                 {...field}
                 select
                 fullWidth
-                label="Semáforo"
+                label="SemÃ¡foro"
                 error={!!fieldState.error}
                 helperText={fieldState.error?.message}
               >
@@ -599,7 +600,7 @@ const FormularioHechoVial = () => {
               )}
             />
           </Grid>
-            {/* --- SECCIÓN: MATERIAL DE LA CALZADA --- */}
+            {/* --- SECCIÃ“N: MATERIAL DE LA CALZADA --- */}
             <Grid size={{ xs: 12 }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>
                 MATERIAL DE LA CALZADA
@@ -644,10 +645,10 @@ const FormularioHechoVial = () => {
                   error={!!fieldState.error}
                   helperText={fieldState.error?.message}
                 >
-                  <MenuItem value="COLISION">COLISIÓN ENTRE VEHÍCULOS</MenuItem>
+                  <MenuItem value="COLISION">COLISION ENTRE VEHICULOS</MenuItem>
                   <MenuItem value="VUELCO">VUELCO</MenuItem>
                   <MenuItem value="DESPEÑAMIENTO">DESPEÑAMIENTO</MenuItem>
-                  <MenuItem value="ATROPELLO_PEATON">ATROPELLO PEATÓN</MenuItem>
+                  <MenuItem value="ATROPELLO_PEATON">ATROPELLO PEATON</MenuItem>
                   <MenuItem value="ATROPELLO_ANIMAL">ATROPELLO ANIMAL</MenuItem>
                   <MenuItem value="SALIDA DE LA CALZADA">SALIDA DE LA CALZADA</MenuItem>
                   <MenuItem value="CHOQUE CONTRA OBJETO FIJO">CHOQUE CONTRA OBJETO FIJO</MenuItem>
@@ -668,21 +669,21 @@ const FormularioHechoVial = () => {
                     {...field}
                     select
                     fullWidth
-                    label="Tipo de Colisión"
+                    label="Tipo de ColisiÃ³n"
                     error={!!fieldState.error}
                     helperText={fieldState.error?.message}
                   >
                     <MenuItem value="FRONTAL">FRONTAL</MenuItem>
                     <MenuItem value="ALCANCE">POR ALCANCE</MenuItem>
                     <MenuItem value="LATERAL">LATERAL</MenuItem>
-                    <MenuItem value="ANGULO">EN ÁNGULO</MenuItem>
+                    <MenuItem value="ANGULO">EN ÃNGULO</MenuItem>
                   </TextField>
                 )}
               />
             </Grid>
           )}
 
-        {/* --- SECCIÓN: POSIBLES CAUSAS DEL SINIESTRO --- */}
+        {/* --- SECCIÃ“N: POSIBLES CAUSAS DEL SINIESTRO --- */}
         <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>
             POSIBLES CAUSAS DEL SINIESTRO VIAL
@@ -703,17 +704,17 @@ const FormularioHechoVial = () => {
               options={[
                 { id: "EXCESO DE VELOCIDAD", label: "EXCESO DE VELOCIDAD" },
                 { id: "MANIOBRA RIESGOSA", label: "MANIOBRA RIESGOSA" },
-                { id: "VIOLACION DEL SEMAFORO", label: "VIOLACIÓN DEL SEMÁFORO" },
+                { id: "VIOLACION DEL SEMAFORO", label: "VIOLACIÃ“N DEL SEMAFORO" },
                 { id: "NO RESPETO DE LA PRIORIDAD", label: "NO RESPETO DE LA PRIORIDAD" },
                 { id: "GIRO A LA IZQUIERDA/DERECHA", label: "GIRO A LA IZQUIERDA/DERECHA" },
-                { id: "INVASION DE CARRIL CONTRARIO", label: "INVASIÓN DE CARRIL CONTRARIO" },
-                { id: "PERDIDA DE CONTROL", label: "PÉRDIDA DE CONTROL" },
+                { id: "INVASION DE CARRIL CONTRARIO", label: "INVASIÃ“N DE CARRIL CONTRARIO" },
+                { id: "PERDIDA DE CONTROL", label: "PÃ‰RDIDA DE CONTROL" },
                 { id: "PRESENCIA DE ALCOHOL Y/O DROGAS", label: "PRESENCIA DE ALCOHOL Y/O DROGAS" },
-                { id: "CANSANCIO/FATIGA/SUEÑO", label: "CANSANCIO / FATIGA / SUEÑO" },
-                { id: "DISTRACCION", label: "DISTRACCIÓN" },
-                { id: "PEATON IMPRUDENTE", label: "PEATÓN IMPRUDENTE" },
-                { id: "FALLA EN LA VIA", label: "FALLA EN LA VÍA" },
-                { id: "FALLA EN EL VEHICULO", label: "FALLA EN EL VEHÍCULO" },
+                { id: "CANSANCIO/FATIGA/SUEÃ‘O", label: "CANSANCIO / FATIGA / SUEÃ‘O" },
+                { id: "DISTRACCION", label: "DISTRACCION" },
+                { id: "PEATON IMPRUDENTE", label: "PEATON IMPRUDENTE" },
+                { id: "FALLA EN LA VIA", label: "FALLA EN LA VIA" },
+                { id: "FALLA EN EL VEHICULO", label: "FALLA EN EL VEHICULO" },
                 { id: "NO SE PUEDE DETERMINAR", label: "NO SE PUEDE DETERMINAR" },
               ]}
             />
@@ -771,14 +772,14 @@ const FormularioHechoVial = () => {
             Agregar otra unidad
           </Button>
 
-          {/* --- SÍNTESIS FINAL --- */}
+          {/* --- SÃNTESIS FINAL --- */}
           <Grid size={{ xs: 12 }}>
             <TextField 
               fullWidth 
               multiline 
               rows={5} 
-              label="Síntesis del Hecho" 
-              placeholder="Ej. En fecha 09/12/2025 a hora 00:00 por comunicación SAME/911/BASE OPERACIONAL/JEFE SUPERIOR/ AUTORIDAD…/ (EJ. SGTO AYTE VILTE DE BASE OPERACIONAL), se toma conocimiento de un hecho de vial en SOBRE RUTA NAC 9 ALT INGRESO AV FORESTAL, se dirige móvil K45 a cargo de SGTO AYTE ESCALERA con personal de servicio."
+              label="SÃ­ntesis del Hecho" 
+              placeholder="Ej. En fecha 09/12/2025 a hora 00:00 por comunicacion SAME/911/BASE OPERACIONAL/JEFE SUPERIOR/ AUTORIDADâ€¦/ (EJ. SGTO AYTE VILTE DE BASE OPERACIONAL), se toma conocimiento de un hecho de vial en SOBRE RUTA NAC 9 ALT INGRESO AV FORESTAL, se dirige mÃ³vil K45 a cargo de SGTO AYTE ESCALERA con personal de servicio."
               {...register("sintesis")} 
             />
           </Grid>

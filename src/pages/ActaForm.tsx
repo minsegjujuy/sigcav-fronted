@@ -1,6 +1,13 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
+import { keyframes } from "@emotion/react";
+import { useRef } from "react";
+import type { StepIconProps } from "@mui/material/StepIcon";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
+import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
+import DirectionsCarOutlinedIcon from "@mui/icons-material/DirectionsCarOutlined";
+import BorderColorOutlinedIcon from "@mui/icons-material/BorderColorOutlined";
 import type { ActaRequest } from "../models/ActaRequest";
-import { Box, Button, Checkbox, Container, FormControl, FormControlLabel, FormGroup, FormHelperText, FormLabel, Grid, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, Tab, Tabs, TextField, Typography, type SelectChangeEvent } from "@mui/material";
+import { Box, Button, Checkbox, Container, FormControl, FormControlLabel, FormGroup, FormHelperText, FormLabel, Grid, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, Step, StepLabel, Stepper, Tab, Tabs, TextField, Typography, type SelectChangeEvent } from "@mui/material";
 import type { Articulo } from "../models/Articulo";
 import type { Tipo } from "../models/Tipo";
 import type { Grupo } from "../models/Grupo";
@@ -27,6 +34,7 @@ import MapaJujuy from "../components/containers/MapaJujuy";
 import type { UbicacionRequest } from "../models/UbicacionRequest";
 import { obtenerUnidadesRegionalesPorDepartamento } from "../services/UnidadRegionalService";
 import type { UnidadRegional } from "../models/UnidadRegional";
+import type { Localidad } from "../models/Localidad";
 import { DateInput } from "../components/ui/datetime/FechaPicker.styles";
 import { TIPO_RODADO } from "../utilities/tipoRodado";
 import FullscreenMultiSelect from "../components/containers/MultiSelect";
@@ -35,6 +43,79 @@ import type { InfractorSolicitud } from "../models/InfractorSolicitud";
 import type { Propietario } from "../models/Propietario";
 import type { OcrDocumentType } from "../services/OcrService";
 import DocumentDataCapture from "../components/modules/DocumentDataCapture";
+import FirmaCapture, { type FirmaCaptureHandle } from "../components/modules/FirmaCapture";
+import type { FirmaDTO } from "../models/FirmaDTO";
+const tabPulse = keyframes`
+  0%, 100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 0 rgba(25, 118, 210, 0));
+  }
+  50% {
+    opacity: 0.75;
+    filter: drop-shadow(0 0 8px rgba(25, 118, 210, 0.45));
+  }
+`;
+
+const tabPulseSx = {
+  animation: `${tabPulse} 1.6s ease-in-out infinite`,
+  '@media (prefers-reduced-motion: reduce)': {
+    animation: 'none',
+    filter: 'none',
+  },
+} as const;
+
+const getOrCreateDeviceId = (): string => {
+  const storageKey = "sv_device_id";
+  try {
+    const existing = localStorage.getItem(storageKey);
+    if (existing) return existing;
+
+    const next = crypto.randomUUID();
+    localStorage.setItem(storageKey, next);
+    return next;
+  } catch {
+    return "unknown";
+  }
+};
+function ProgressStepIcon(props: StepIconProps) {
+  const { active, completed, icon } = props;
+
+  const size = active ? 34 : 24;
+  const color = active
+    ? "primary.main"
+    : completed
+      ? "success.main"
+      : "text.secondary";
+
+  const iconNode = (() => {
+    switch (String(icon)) {
+      case "1":
+        return <DescriptionOutlinedIcon sx={{ fontSize: size, color }} />;
+      case "2":
+        return <PersonOutlinedIcon sx={{ fontSize: size, color }} />;
+      case "3":
+        return <DirectionsCarOutlinedIcon sx={{ fontSize: size, color }} />;
+      case "4":
+        return <BorderColorOutlinedIcon sx={{ fontSize: size, color }} />;
+      default:
+        return null;
+    }
+  })();
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        transition: "transform 160ms ease",
+        transform: active ? "scale(1.08)" : "scale(1)",
+      }}
+    >
+      {iconNode}
+    </Box>
+  );
+}
 //Quitar estado inicial
 const initialState: ActaRequest = {
   idGrupo: 1,
@@ -46,13 +127,15 @@ const initialState: ActaRequest = {
   nro: "",
   adjunta:"",
   retencion:"",
-  ubicacionRequest: {lat:0,lng:0,departamento:'', unidadRegional:0},
+  ubicacionRequest: {lat:0,lng:0,departamento:'', unidadRegional:0, descripcion:'', localidad: 0},
   articulos: [],
   infractor: {
     idInfrac: null,
     nombre: "",
     apellido: "",
     domicilio:"",
+    fechaNacimiento:"",
+    localidad:"",
     dni: "",
     nacionalidad: "",
     provincia: '',
@@ -66,7 +149,6 @@ const initialState: ActaRequest = {
   vehiculo: {
     marca: "",
     modelo: "",
-    //año: new Date().getFullYear(),
     dominio: "",
     motor: "",
     cuadro: "",
@@ -96,19 +178,51 @@ export default function ActaForm() {
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehiculo | null>(null);
   const [unidadesRegionales, setUnidadesRegionales] = useState<UnidadRegional[]>();
+  const [localidades, setLocalidades] = useState<Localidad[]>([]);
   const { actaSeleccionada, limpiarActa } = useActa();
+  const isEditingActa = Boolean(actaSeleccionada?.idActa);
+  const firmaInfractorRef = useRef<FirmaCaptureHandle | null>(null);
+  const firmaOficialRef = useRef<FirmaCaptureHandle | null>(null);
+  const [firma, setFirma] = useState<FirmaDTO>(() => ({
+    actaId: actaSeleccionada?.idActa ?? 0,
+    firmaInfractorBase64: null,
+    firmaOficialBase64: "",
+    latitud: "",
+    longitud: "",
+    deviceId: getOrCreateDeviceId(),
+    seNegoAFirmar: false,
+  }));
   const [selected, setSelected] = useState<string[]>([]);
   const [otroTexto, setOtroTexto] = useState("");
   const [activeTab, setActiveTab] = useState(0);
   const hasValidInfractorDni = /^[0-9]{8}$/.test(form.infractor.dni || "");
   const tipoRodadoActual = form.vehiculo.tipoRodado ?? "";
   const tipoRodadoFueraDeLista = Boolean(tipoRodadoActual) && !TIPO_RODADO.includes(tipoRodadoActual);
+  const tipoActaDetalleSeleccionado =
+    tipoActa.find((t) => t.idTipo === Number(selectedTipoActa))?.detalle?.toUpperCase() ?? "";
+  const isTipoActaAutomatico = tipoActaDetalleSeleccionado === "AUTOMATICO";
   const navigate = useNavigate();
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    if (newValue === 2 && !hasValidInfractorDni) return;
+    if (newValue >= 2 && !hasValidInfractorDni) return;
+    if (newValue === 3 && isEditingActa) return;
     setActiveTab(newValue);
   };
-  const handleCountryChange = (e: SelectChangeEvent) => {
+
+  const goPrevTab = () => {
+    setActiveTab((prev) => Math.max(0, prev - 1));
+  };
+
+  const goNextTab = () => {
+    setActiveTab((prev) => {
+      const maxTab = isEditingActa ? 2 : 3;
+      const next = Math.min(maxTab, prev + 1);
+      if (next >= 2 && !hasValidInfractorDni) {
+        SnackbarUtilities.error("Ingresa un DNI valido para avanzar");
+        return prev;
+      }
+      return next;
+    });
+  };  const handleCountryChange = (e: SelectChangeEvent) => {
     const pais = e.target.value;
 
     setForm((prev) => ({
@@ -136,6 +250,37 @@ export default function ActaForm() {
   const joinSelected = (updatedSelected: string[]): string => {
     return updatedSelected.join(", ");
   };
+
+  useEffect(() => {
+    if (!actaSeleccionada?.idActa) return;
+    setFirma((prev) => ({ ...prev, actaId: actaSeleccionada.idActa }));
+  }, [actaSeleccionada?.idActa]);
+
+  useEffect(() => {
+    if (!isEditingActa) return;
+    setActiveTab((prev) => (prev === 3 ? 0 : prev));
+  }, [isEditingActa]);
+
+  useEffect(() => {
+    if (!isTipoActaAutomatico) return;
+    setForm((prev) => ({ ...prev, nro: "" }));
+    setErrors((er) => {
+      if (!er.nro) return er;
+      const c = { ...er };
+      delete c.nro;
+      return c;
+    });
+  }, [isTipoActaAutomatico]);
+
+  useEffect(() => {
+    const lat = form.ubicacionRequest?.lat;
+    const lng = form.ubicacionRequest?.lng;
+    setFirma((prev) => ({
+      ...prev,
+      latitud: typeof lat === "number" && lat !== 0 ? String(lat) : "",
+      longitud: typeof lng === "number" && lng !== 0 ? String(lng) : "",
+    }));
+  }, [form.ubicacionRequest?.lat, form.ubicacionRequest?.lng]);
 
 
   const handleToggle = (value: string) => {
@@ -250,25 +395,125 @@ export default function ActaForm() {
     setUnidadesRegionales(data);
   }
 
+
+  const refreshLocalidadesForUr = (
+    unidadRegionalId: number | null | undefined,
+    departamento: string | null | undefined,
+  ) => {
+    if (!unidadRegionalId || !departamento || !unidadesRegionales?.length) {
+      setLocalidades([]);
+      return;
+    }
+
+    const depto = unidadesRegionales
+      .find((u) => u.idUr === unidadRegionalId)
+      ?.departamentos.find((d) => d.nombre === departamento);
+
+    setLocalidades(depto?.localidades ?? []);
+  };
+
+  const splitApellidoNombrePorComa = (
+    value: string | null | undefined,
+  ): { apellido: string; nombre: string } | null => {
+    const raw = (value ?? "").trim();
+    const commaIndex = raw.indexOf(",");
+    if (commaIndex === -1) return null;
+
+    const apellido = raw.slice(0, commaIndex).trim();
+    const nombre = raw.slice(commaIndex + 1).trim();
+    if (!apellido && !nombre) return null;
+
+    return { apellido, nombre };
+  };
+
+  const normalizeInfractorNombreApellido = (
+    infractor: InfractorSolicitud,
+  ): InfractorSolicitud => {
+    const parsedFromNombre = splitApellidoNombrePorComa(infractor.nombre);
+    if (parsedFromNombre) {
+      return {
+        ...infractor,
+        apellido: parsedFromNombre.apellido || infractor.apellido,
+        nombre: parsedFromNombre.nombre || infractor.nombre,
+      };
+    }
+
+    const parsedFromApellido = splitApellidoNombrePorComa(infractor.apellido);
+    if (parsedFromApellido) {
+      return {
+        ...infractor,
+        apellido: parsedFromApellido.apellido || infractor.apellido,
+        nombre: parsedFromApellido.nombre || infractor.nombre,
+      };
+    }
+
+    return infractor;
+  };
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       if(validate()){
+        const actaToSend: ActaRequest = structuredClone(form);
+
         if(propietario){
-          form.vehiculo.propietario = null;
+          actaToSend.vehiculo.propietario = null;
         }
-        console.log('propietario ', form.vehiculo.propietario)
-        form.infractor.propietario = propietario;
-        form.idTipo = Number(selectedTipoActa);
-        form.articulos = articulosSeleccionados;
+        console.log('propietario ', actaToSend.vehiculo.propietario)
+        actaToSend.infractor = normalizeInfractorNombreApellido(actaToSend.infractor);
+        actaToSend.infractor.propietario = propietario;
+        actaToSend.idTipo = Number(selectedTipoActa);
+        actaToSend.idGrupo = Number(selectedGrupo);
+        actaToSend.idPuesto = Number(selectedPuesto);
+        actaToSend.articulos = articulosSeleccionados;
+
+        if (!isEditingActa) {
+          const capturedFirmaInfractorBase64 =
+            firmaInfractorRef.current?.getDataUrl() ?? firma.firmaInfractorBase64;
+          const capturedFirmaOficialBase64 =
+            firmaOficialRef.current?.getDataUrl() ?? (firma.firmaOficialBase64 || null);
+
+          if (!capturedFirmaOficialBase64) {
+            setErrors((prev) => ({ ...prev, firmaOficialBase64: "La firma del personal es obligatoria" }));
+            setActiveTab(3);
+            SnackbarUtilities.error("La firma del personal es obligatoria");
+            return;
+          }
+
+          const firmaToSend: FirmaDTO = {
+            ...firma,
+            actaId: actaToSend.idActa ?? actaSeleccionada?.idActa ?? firma.actaId ?? 0,
+            latitud:
+              typeof actaToSend.ubicacionRequest?.lat === "number" && actaToSend.ubicacionRequest.lat !== 0
+                ? String(actaToSend.ubicacionRequest.lat)
+                : "",
+            longitud:
+              typeof actaToSend.ubicacionRequest?.lng === "number" && actaToSend.ubicacionRequest.lng !== 0
+                ? String(actaToSend.ubicacionRequest.lng)
+                : "",
+            firmaInfractorBase64: firma.seNegoAFirmar ? null : capturedFirmaInfractorBase64,
+            firmaOficialBase64: capturedFirmaOficialBase64,
+          };
+
+          actaToSend.firma = firmaToSend;
+        } else {
+          delete (actaToSend as any).firma;
+        }
         
-        console.log('acta ', form);
-        let response = null;
+        console.log('acta ', actaToSend);
+        let response: ActaRequest | null = null;
         if(actaSeleccionada){
-          response = await actualizarActa(form);
+          response = await actualizarActa(actaToSend);
+          {
+            const nextActaId = response?.idActa;
+            if (typeof nextActaId === "number") setFirma((prev) => ({ ...prev, actaId: nextActaId }));
+          }
           limpiarActa();
           SnackbarUtilities.success('Acta modificada exitasomente')
         }else{
-          response = await crearActa(form);
+          response = await crearActa(actaToSend);
+          {
+            const nextActaId = response?.idActa;
+            if (typeof nextActaId === "number") setFirma((prev) => ({ ...prev, actaId: nextActaId }));
+          }
           SnackbarUtilities.success('Acta creada exitasomente')
           console.log('Acta creada:', response);
         }
@@ -285,7 +530,7 @@ export default function ActaForm() {
         if (!id) {
           console.log('estado if ',event.target.value);
           setSelectedVehicle(null);
-          setForm((prevForm) => ({...prevForm, vehiculo:{dominio: '', año: 2025,
+          setForm((prevForm) => ({...prevForm, vehiculo:{dominio: '',
             cuadro: '', marca: '', modelo: '', idVeh: null
           }}));
           return;
@@ -294,7 +539,7 @@ export default function ActaForm() {
         const vehiculo = vehiculos.find((v) => v.idVeh === id) || null;
         console.log('vehiculo seleccionado ',vehiculo)
         setSelectedVehicle(vehiculo);
-        setForm({...form, vehiculo: {dominio: vehiculo?.dominio!, //año: vehiculo?.año,
+        setForm({...form, vehiculo: {dominio: vehiculo?.dominio!, //aÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±o: vehiculo?.aÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±o,
           cuadro: vehiculo?.cuadro!, marca: vehiculo?.marca, modelo: vehiculo?.modelo, idVeh: vehiculo?.idVeh
         }});
         if (!vehiculo?.propietario) {
@@ -303,18 +548,24 @@ export default function ActaForm() {
           setPropietario(!vehiculo.propietario); 
         }
     };
-
     const handleUnidadRegionalChange = (id: number) => {
-      setForm(prevForm => ({
+      refreshLocalidadesForUr(id, form.ubicacionRequest.departamento);
+
+      setForm((prevForm) => ({
         ...prevForm,
         ubicacionRequest: {
           ...prevForm.ubicacionRequest,
-          unidadRegional: id
-        }
+          unidadRegional: id,
+          localidad: undefined,
+        },
       }));
 
     }
-  
+
+    useEffect(() => {
+      refreshLocalidadesForUr(form.ubicacionRequest.unidadRegional, form.ubicacionRequest.departamento);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [unidadesRegionales, form.ubicacionRequest.unidadRegional, form.ubicacionRequest.departamento]);
     const validate = () => {
       const e: Record<string, string> = {};
 
@@ -326,13 +577,13 @@ export default function ActaForm() {
 
       // campos generales
       if (!form.motivo || form.motivo.trim().length === 0) e.motivo = "El motivo es obligatorio";
-      if (!form.nro || form.nro.trim().length === 0) e.nro = "El número de acta es obligatorio";
+      if (!isTipoActaAutomatico && (!form.nro || form.nro.trim().length === 0)) e.nro = "El nº de acta es obligatorio";
       if (!form.fecha || form.fecha.trim().length === 0) e.fecha = "La fecha es obligatoria";
 
       // infractor
       if (!form.infractor.nombre || form.infractor.nombre.trim() === "") e["infractor.nombre"] = "Nombre del infractor obligatorio";
       //if (!form.infractor.apellido || form.infractor.apellido.trim() === "") e["infractor.apellido"] = "Apellido del infractor obligatorio";
-      if (!/^[0-9]{8}$/.test(form.infractor.dni || "")) e["infractor.dni"] = "DNI del infractor debe tener 8 dígitos";
+      if (!/^[0-9]{8}$/.test(form.infractor.dni || "")) e["infractor.dni"] = "DNI del infractor debe tener 8 digitos";
       if (!form.infractor.nacionalidad || form.infractor.nacionalidad.trim() === "") e["infractor.nacionalidad"] = "Nacionalidad obligatoria";
 
 
@@ -340,7 +591,7 @@ export default function ActaForm() {
       const v = form.vehiculo;
       //if (!v.marca || String(v.marca).trim() === "") e["vehiculo.marca"] = "Marca obligatoria";
       //if (!v.modelo || String(v.modelo).trim() === "") e["vehiculo.modelo"] = "Modelo obligatorio";
-      //f (!v.año) e["vehiculo.año"] = "Año obligatorio";
+    
       if (!v.dominio || String(v.dominio).trim() === "") e["vehiculo.dominio"] = "Dominio obligatorio";
       //if (!v.motor || String(v.motor).trim() === "") e["vehiculo.motor"] = "Motor obligatorio";
       //if (!v.cuadro || String(v.cuadro).trim() === "") e["vehiculo.cuadro"] = "Cuadro obligatorio";
@@ -351,8 +602,8 @@ export default function ActaForm() {
       const p = form.vehiculo.propietario!;
       if (!p.nombre || p.nombre.trim() === "") e["vehiculo.propietario.nombre"] = "Nombre del propietario obligatorio";
       //if (!p.apellido || p.apellido.trim() === "") e["vehiculo.propietario.apellido"] = "Apellido del propietario obligatorio";
-      if (!/^[0-9]{8}$/.test(p.dni || "")) e["vehiculo.propietario.dni"] = "DNI del propietario debe tener 8 dígitos";
-      if (!p.direccion || p.direccion.trim() === "") e["vehiculo.propietario.direccion"] = "Dirección del propietario obligatoria";
+      if (!/^[0-9]{8}$/.test(p.dni || "")) e["vehiculo.propietario.dni"] = "DNI del propietario debe tener 8 di­gitos";
+      if (!p.direccion || p.direccion.trim() === "") e["vehiculo.propietario.direccion"] = "Direccion del propietario obligatoria";
       }
 
       if (!form.ubicacionRequest.unidadRegional) e.ubicacionRequest = "Debe seleccionar una unidad regional";
@@ -361,7 +612,7 @@ export default function ActaForm() {
 
 
       // articulos seleccionados
-      if (articulosSeleccionados.length === 0) e.articulos = "Debe seleccionar al menos un artículo";
+      if (articulosSeleccionados.length === 0) e.articulos = "Debe seleccionar al menos un articulo";
 
 
       setErrors(e);
@@ -415,31 +666,77 @@ export default function ActaForm() {
       try {
         const data = await findByDni(dni);
         console.log("infractor encontrado", data);
+        const isInfractorOwner = data.propietario ?? true;
+        const vehiculosFromBackend = data.vehiculos || [];
         if(data.idInfrac){
-          setForm((prev) => ({
-                    ...prev,
-                    infractor: {
-                      ...prev.infractor,
-                      idInfrac: data.idInfrac || null,
-                      nombre: data.nombre || "",
-                      apellido: data.apellido || "",
-                      autoridadExpedicion: data.licencias[0]?.autoridadExpedicion || "",
-                      clase: data.licencias[0]?.clase,
-                      domicilio: data.domicilio,
-                      fechaExpedicion: data.licencias[0]?.fechaExpedicion,
-                      fechaVencimiento: data.licencias[0]?.fechaVencimiento,
-                      numero: data.licencias[0]?.numero,
-                      dni: data.dni,
-                      lugar: data.lugar || "",
-                      propietario: data.propietario ?? true,
-                    },
-                  }));
-                  setPropietario(true)
+          setForm((prev) => {
+            const updatedInfractor = normalizeInfractorNombreApellido({
+              ...prev.infractor,
+              idInfrac: data.idInfrac || null,
+              nombre: data.nombre || "",
+              apellido: data.apellido || "",
+              autoridadExpedicion: data.licencias[0]?.autoridadExpedicion || "",
+              clase: data.licencias[0]?.clase,
+              domicilio: data.domicilio,
+              fechaExpedicion: data.licencias[0]?.fechaExpedicion,
+              fechaVencimiento: data.licencias[0]?.fechaVencimiento,
+              numero: data.licencias[0]?.numero,
+              dni: data.dni,
+              propietario: isInfractorOwner,
+            });
+
+            const defaultVehicle = vehiculosFromBackend.length === 1 ? vehiculosFromBackend[0] : null;
+
+            return {
+              ...prev,
+              infractor: updatedInfractor,
+              vehiculo: defaultVehicle
+                ? {
+                    ...prev.vehiculo,
+                    idVeh: defaultVehicle.idVeh,
+                    dominio: defaultVehicle.dominio ?? prev.vehiculo.dominio,
+                    marca: defaultVehicle.marca ?? prev.vehiculo.marca,
+                    modelo: defaultVehicle.modelo ?? prev.vehiculo.modelo,
+                    motor: defaultVehicle.motor ?? prev.vehiculo.motor,
+                    cuadro: defaultVehicle.cuadro ?? prev.vehiculo.cuadro,
+                    propietario: !isInfractorOwner
+                      ? (defaultVehicle.propietario ?? prev.vehiculo.propietario ?? null)
+                      : prev.vehiculo.propietario,
+                  }
+                : prev.vehiculo,
+            };
+          });
+
+          setPropietario(isInfractorOwner);
+          setVehiculos(vehiculosFromBackend);
+
+          const defaultVehicle = vehiculosFromBackend.length === 1 ? vehiculosFromBackend[0] : null;
+          if (defaultVehicle) {
+            setSelectedVehicle(defaultVehicle);
+            return;
+          }
+
+          setSelectedVehicle(null);
+
+          if (!isInfractorOwner) {
+            const vehiculoConPropietario = vehiculosFromBackend.find((v) => v.propietario);
+            if (vehiculoConPropietario?.propietario) {
+              setForm((prev) => ({
+                ...prev,
+                vehiculo: {
+                  ...prev.vehiculo,
+                  propietario: prev.vehiculo.propietario?.dni
+                    ? prev.vehiculo.propietario
+                    : vehiculoConPropietario.propietario,
+                },
+              }));
+            }
+          }
         }else{
           clearInfractor();
+          setSelectedVehicle(null);
+          setVehiculos([]);
         }
-        // Si el backend también devuelve los vehículos del infractor
-        setVehiculos(data.vehiculos || []);
       } catch (error) {
         SnackbarUtilities.info('Infractor no encontrado, continue completando los datos')
       }
@@ -560,7 +857,6 @@ export default function ActaForm() {
             idInfrac: null,
             nombre: "",
             apellido: "",
-            lugar: "",
             propietario: false,
           }
         }));
@@ -579,15 +875,52 @@ export default function ActaForm() {
       const articulos = actaSeleccionada.articulos.map(a => a.idArt)
       setSelectedTipoActa(actaSeleccionada.idTipo);
       setSelectedGrupo(actaSeleccionada.idGrupo)
-      setForm(actaResumenToActaRequest(actaSeleccionada));
+      setSelectedPuesto(actaSeleccionada.idPuesto ?? '');
+      const mappedActa = actaResumenToActaRequest(actaSeleccionada);
+
+      setForm({
+        ...mappedActa,
+        ubicacionRequest: {
+          ...mappedActa.ubicacionRequest,
+          localidad:
+            actaSeleccionada.ubicacionResponse.localidad ?? mappedActa.ubicacionRequest.localidad,
+          descripcion:
+            actaSeleccionada.ubicacionResponse.descripcion ?? mappedActa.ubicacionRequest.descripcion,
+        },
+        infractor: {
+          ...mappedActa.infractor,
+          fechaNacimiento:
+            actaSeleccionada.infractor.fechaNacimiento ??
+            mappedActa.infractor.fechaNacimiento ??
+            "",
+          localidad:
+            actaSeleccionada.infractor.localidad ?? mappedActa.infractor.localidad ?? "",
+        },
+        vehiculo: {
+          ...mappedActa.vehiculo,
+          tipoRodado:
+            actaSeleccionada.vehiculo.tipoRodado ?? mappedActa.vehiculo.tipoRodado ?? "",
+        },
+      });
       setArticulosSeleccionados(articulos);
       setSelectedLey(1);
       fetchArticulosPorLey(1);
+      const unidadRegional = actaSeleccionada.ubicacionResponse.urId ?? actaSeleccionada.ubicacionResponse.idUr;
+      const unidadRegionalText = String(actaSeleccionada.ubicacionResponse.unidadRegional ?? "");
+      const unidadRegionalNumberMatch = unidadRegionalText.match(/\d+/);
+      const unidadRegionalParsed = unidadRegionalNumberMatch ? Number(unidadRegionalNumberMatch[0]) : NaN;
+      console.log('ur seteada ', unidadRegional, '   ' , unidadRegionalParsed)
       const ubicacion : UbicacionRequest = {
         departamento: actaSeleccionada.ubicacionResponse.departamento,
         lat: actaSeleccionada.ubicacionResponse.lat,
         lng: actaSeleccionada.ubicacionResponse.lng,
-        //unidadRegional: actaSeleccionada.ubicacionResponse.unidadRegional
+        descripcion: actaSeleccionada.ubicacionResponse.descripcion,
+        localidad: actaSeleccionada.ubicacionResponse.localidad,
+        unidadRegional: typeof unidadRegional === "number"
+          ? unidadRegional
+          : Number.isFinite(unidadRegionalParsed)
+            ? unidadRegionalParsed
+            : undefined,
       }
 
       handleMapSelect(ubicacion);
@@ -607,7 +940,6 @@ export default function ActaForm() {
     fetchLeyes();
     fetchPuestos();
   }, [])
-
   return (
     <Container maxWidth="md" sx={{ px: { xs: 1.5, sm: 2 } }}>
       <Paper sx={{ p: { xs: 2, sm: 3, md: 4 }, mt: { xs: 2, sm: 4 }, borderRadius: 3 }}>
@@ -617,10 +949,24 @@ export default function ActaForm() {
         <Typography variant="h6" sx={{ mt: 3 }}>Los campos con (*) son obligatorios</Typography>
 
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+          <Stepper
+            activeStep={activeTab}
+            alternativeLabel
+            sx={{
+              mb: 1.5,
+              '& .MuiStepConnector-line': { borderTopWidth: 3 },
+            }}
+          >
+            <Step><StepLabel StepIconComponent={ProgressStepIcon} /></Step>
+            <Step><StepLabel StepIconComponent={ProgressStepIcon} /></Step>
+            <Step><StepLabel StepIconComponent={ProgressStepIcon} /></Step>
+            <Step><StepLabel StepIconComponent={ProgressStepIcon} /></Step>
+          </Stepper>
           <Tabs value={activeTab} onChange={handleTabChange} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile sx={{ mb: 2, borderBottom: 1, borderColor: "divider" }}>
-            <Tab label="Acta" />
-            <Tab label="Infractor" />
-            <Tab label="Vehiculo" disabled={!hasValidInfractorDni} />
+            <Tab label="Acta" sx={activeTab !== 0 ? tabPulseSx : undefined} />
+            <Tab label="Infractor" sx={activeTab !== 1 ? tabPulseSx : undefined} />
+            <Tab label="Vehiculo" disabled={!hasValidInfractorDni} sx={activeTab !== 2 && hasValidInfractorDni ? tabPulseSx : undefined} />
+            <Tab label="Firmas" disabled={!hasValidInfractorDni || isEditingActa} sx={activeTab !== 3 && hasValidInfractorDni ? tabPulseSx : undefined} />
           </Tabs>
 
           {activeTab === 0 && (
@@ -655,7 +1001,7 @@ export default function ActaForm() {
 
               {/* Fecha */}
               <FormControl sx={{ display: 'flex', alignItems: 'flex-start' }} error={!!errors.fecha}>
-                <DateInput type="datetime-local" onChange={(e) => {
+                <DateInput type="datetime-local" value={form.fecha ? form.fecha.slice(0, 16) : ""} onChange={(e) => {
                   handleFechaChange(e.target.value);
                   setErrors(({ fecha: _, ...rest }) => rest);
                 }}
@@ -722,10 +1068,11 @@ export default function ActaForm() {
                 
               <FormControl sx={{ display: 'flex', alignItems: 'flex-start' }} error={!!errors.nro}>
                 <TextField
-                  label="Número de Acta *"
+                  label="Nº de Acta *"
                   fullWidth
                   margin="normal"
                   value={form.nro}
+                  disabled={isTipoActaAutomatico}
                   onChange={(e) => {
                     handleChange("nro", e.target.value);
 
@@ -735,13 +1082,13 @@ export default function ActaForm() {
                       return c;
                     });
                   }}
-                  error={!!errors.nro}
-                  helperText={errors.nro}
+                  error={!!errors.nro && !isTipoActaAutomatico}
+                  helperText={isTipoActaAutomatico ? "Se asigna automáticamente" : errors.nro}
                   />
               </FormControl>
 
                 <TextField
-                label="Número de Acta de retencion"
+                label="Nº de Acta de retencion"
                 fullWidth
                 margin="normal"
                 value={form.retencion}
@@ -749,7 +1096,7 @@ export default function ActaForm() {
                 />
 
               {/*Seleccionar ubicacion */}
-              <Box sx={{ gridColumn: "1 / -1" }}><MapaJujuy onSelect={handleMapSelect} /></Box>
+              <Box sx={{ gridColumn: "1 / -1" }}><MapaJujuy onSelect={handleMapSelect} initialValue={form.ubicacionRequest.lat ? form.ubicacionRequest : null} /></Box>
               {unidadesRegionales ? (
                 <>
                   <FormControl error={!!errors.ubicacionRequest} sx={{ gridColumn: "1 / -1" }}>
@@ -771,17 +1118,64 @@ export default function ActaForm() {
                     </RadioGroup>
                     {!!errors.ubicacionRequest && <FormHelperText>{errors.ubicacionRequest}</FormHelperText>}
                   </FormControl>
-                  
+                  {!!form.ubicacionRequest.unidadRegional && (
+                    <FormControl fullWidth margin="normal" sx={{ gridColumn: "1 / -1" }}>
+                      <InputLabel id="localidad-label">Localidad</InputLabel>
+                      <Select
+                        labelId="localidad-label"
+                        id="localidad"
+                        value={form.ubicacionRequest.localidad ?? ""}
+                        label="Localidad"
+                        onChange={(e) => {
+                          const raw = String(e.target.value ?? "");
+                          const localidadId = raw ? Number(raw) : undefined;
+                          setForm((prev) => ({
+                            ...prev,
+                            ubicacionRequest: {
+                              ...prev.ubicacionRequest,
+                              localidad: localidadId,
+                            },
+                          }));
+                        }}
+                        disabled={!localidades.length}
+                      >
+                        <MenuItem value="">Seleccione una localidad</MenuItem>
+                        {localidades.map((loc) => (
+                          <MenuItem key={loc.id} value={loc.id}>
+                            {loc.nombre}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
+
+                  <TextField
+                    label="Descripcion"
+                    fullWidth
+                    margin="normal"
+                    sx={{ gridColumn: "1 / -1" }}
+                    value={form.ubicacionRequest.descripcion ?? ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setForm((prev) => ({
+                        ...prev,
+                        ubicacionRequest: {
+                          ...prev.ubicacionRequest,
+                          descripcion: value,
+                        },
+                      }));
+                    }}
+                  />
                 </>
               ) : (
-                <Typography variant="h6" sx={{ gridColumn: "1 / -1" }}>No se ha seleccionado ninguna ubicación</Typography>
+                <Typography variant="h6" sx={{ gridColumn: "1 / -1" }}>No se ha seleccionado ninguna ubicacion</Typography>
               )}
 
               {/* Ley */}
                 <FormControl fullWidth margin="normal" error={!!errors.ley}>
                 <InputLabel id="ley-select-label">Seleccione una Ley *</InputLabel>
                 <Select labelId="ley-select-label" id="ley-select" value={selectedLey.toString()} label="Seleccione una Ley" onChange={(e) => handleLeyChange(e as any)}>
-                <MenuItem value="">Seleccione una opción</MenuItem>
+                <MenuItem value="">Seleccione una opcion</MenuItem>
                 {leyes.map((ley) => (
                 <MenuItem key={ley.idLey} value={ley.idLey}>
                 {ley.nro}
@@ -794,10 +1188,10 @@ export default function ActaForm() {
                 {articulos.length > 0 && (
                 <Grid size={{ xs: 12, md: 6, sm: 4 }}>
                   <FullscreenMultiSelect
-                    label="Artículos"
+                    label="Arti­culos"
                     value={articulosSeleccionados}
                     onChange={setArticulosSeleccionados}
-                    placeholder="Seleccionar artículos"
+                    placeholder="Seleccionar arti­culos"
                     options={articulos.map((art) => ({
                       id: art.idArt,
                       label: `${art.nro}: ${art.detalle}`,
@@ -893,6 +1287,22 @@ export default function ActaForm() {
                 helperText={errors["infractor.domicilio"]}
               />
               <TextField
+                label="Fecha de Nacimiento"
+                type="date"
+                fullWidth
+                margin="normal"
+                InputLabelProps={{ shrink: true }}
+                value={form.infractor.fechaNacimiento ?? ""}
+                onChange={(e) => handleChange("infractor.fechaNacimiento", e.target.value)}
+              />
+              <TextField
+                label="Localidad"
+                fullWidth
+                margin="normal"
+                value={form.infractor.localidad ?? ""}
+                onChange={(e) => handleChange("infractor.localidad", e.target.value)}
+              />
+              <TextField
                 label="Clase de licencia"
                 fullWidth
                 margin="normal"
@@ -977,11 +1387,11 @@ export default function ActaForm() {
               label="¿El infractor es propietario del vehiculo?"
               />
             
-            {/* Vehículo */}
+            {/* Vehi­culo */}
             {vehiculos && (
               <FormControl component="fieldset" fullWidth sx={{ gridColumn: "1 / -1" }}>
                 <FormLabel component="legend" sx={{ mb: 2 }}>
-                  Selecciona un vehículo *
+                  Selecciona un vehhiculo *
                 </FormLabel>
 
                 <RadioGroup
@@ -1004,7 +1414,7 @@ export default function ActaForm() {
             )}
             
             
-              <Typography variant="h6" sx={{ mt: 1, gridColumn: "1 / -1" }}>Vehículo</Typography>
+              <Typography variant="h6" sx={{ mt: 1, gridColumn: "1 / -1" }}>Vehi­culo</Typography>
               <Box sx={{ gridColumn: "1 / -1" }}>
                 <DocumentDataCapture titulo="cedula (frente)" tipo="cedulaFrente" onVehiculoDetected={handleVehiculoDetected} />
               </Box>
@@ -1029,7 +1439,6 @@ export default function ActaForm() {
                 ))}
               </Select>
             </FormControl>
-              {/*<TextField label="Año" type="number" fullWidth margin="normal" value={form.vehiculo.año as any} onChange={(e) => handleChange("vehiculo.año", e.target.value ? Number(e.target.value) : "")} error={!!errors["vehiculo.año"]} helperText={errors["vehiculo.año"]} /> */}
               <TextField label="Dominio *" fullWidth margin="normal" value={form.vehiculo.dominio} onChange={(e) => {
                 handleChange("vehiculo.dominio", e.target.value);
                 setErrors(({ ["vehiculo.dominio"]: _, ...rest }) => rest);
@@ -1041,7 +1450,7 @@ export default function ActaForm() {
               <TextField label="Cuadro" fullWidth margin="normal" value={form.vehiculo.cuadro} onChange={(e) => handleChange("vehiculo.cuadro", e.target.value)} error={!!errors["vehiculo.cuadro"]} helperText={errors["vehiculo.cuadro"]} />
             
 
-            {/* Propietario: se muestra sólo si propietario === true */}
+            {/* Propietario: se muestra si propietario === true */}
               {!propietario && (
               <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(3, minmax(0, 1fr))" }, columnGap: 3, rowGap: 2, gridColumn: "1 / -1" }}>
               <Typography variant="h6" sx={{ mt: 3, gridColumn: "1 / -1" }}>Propietario</Typography>
@@ -1051,7 +1460,7 @@ export default function ActaForm() {
               <TextField label="DNI *" fullWidth margin="normal" value={form.vehiculo.propietario?.dni} onChange={(e) => handleChange("vehiculo.propietario.dni", e.target.value)} error={!!errors["vehiculo.propietario.dni"]} helperText={errors["vehiculo.propietario.dni"]} />
               <TextField label="Nombre *" fullWidth margin="normal" value={form.vehiculo.propietario?.nombre} onChange={(e) => handleChange("vehiculo.propietario.nombre", e.target.value)} error={!!errors["vehiculo.propietario.nombre"]} helperText={errors["vehiculo.propietario.nombre"]} />
               <TextField
-                label="Dirección *"
+                label="Direccion *"
                 fullWidth
                 margin="normal"
                 sx={{ gridColumn: "1 / -1" }}
@@ -1064,15 +1473,142 @@ export default function ActaForm() {
               )}
             </Box>
           )}
-          <Button type="submit" variant="contained" color="primary" sx={{ mt: 4, width: { xs: "100%", sm: "auto" } }}>
-            Enviar
-          </Button>
+
+          {activeTab === 3 && (
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" },
+                columnGap: 3,
+                rowGap: 2,
+                gridColumn: "1 / -1",
+              }}
+            >
+              <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                <Typography variant="h6" sx={{ mb: 1 }}>
+                  Firma del infractor
+                </Typography>
+
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={firma.seNegoAFirmar}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setFirma((prev) => ({
+                          ...prev,
+                          seNegoAFirmar: checked,
+                          firmaInfractorBase64: checked ? null : prev.firmaInfractorBase64,
+                        }));
+                      }}
+                    />
+                  }
+                  label="Se negó a firmar"
+                />
+
+                <FirmaCapture
+                  ref={firmaInfractorRef}
+                  value={firma.firmaInfractorBase64}
+                  onChange={(dataUrl) => {
+                    setFirma((prev) => ({ ...prev, firmaInfractorBase64: dataUrl }));
+                  }}
+                  disabled={firma.seNegoAFirmar}
+                />
+              </Paper>
+
+              <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                <Typography variant="h6" sx={{ mb: 1 }}>
+                  Firma del personal
+                </Typography>
+
+                <FirmaCapture
+                  ref={firmaOficialRef}
+                  value={firma.firmaOficialBase64 || null}
+                  onChange={(dataUrl) => {
+                    setFirma((prev) => ({ ...prev, firmaOficialBase64: dataUrl ?? "" }));
+                    setErrors((er) => {
+                      if (!er.firmaOficialBase64) return er;
+                      const c = { ...er };
+                      delete c.firmaOficialBase64;
+                      return c;
+                    });
+                  }}
+                />
+
+                {!!errors.firmaOficialBase64 && (
+                  <FormHelperText error sx={{ mt: 1 }}>
+                    {errors.firmaOficialBase64}
+                  </FormHelperText>
+                )}
+              </Paper>
+            </Box>
+          )}
+                    <Box
+            sx={{
+              mt: 4,
+              display: 'flex',
+              gap: 2,
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'stretch', sm: 'center' },
+              justifyContent: 'space-between',
+            }}
+          >
+            <Button
+              variant="outlined"
+              onClick={goPrevTab}
+              disabled={activeTab === 0}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            >
+              Atras
+            </Button>
+
+            <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+              <Button
+                variant="outlined"
+                onClick={goNextTab}
+                disabled={(isEditingActa ? activeTab === 2 : activeTab === 3) || (activeTab === 1 && !hasValidInfractorDni)}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
+              >
+                Siguiente
+              </Button>
+
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
+              >
+                Enviar
+              </Button>
+            </Box>
+          </Box>
         </Box>
         <ScrollButton />
       </Paper>
     </Container>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
