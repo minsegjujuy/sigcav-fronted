@@ -1,4 +1,4 @@
-import { lazy } from 'react';
+import React, { lazy } from 'react';
 import type { RouteConfig } from '../models/RouteConfig';
 
 const ActaResumenTable = lazy(() => import('../pages/ActaResumenTabla'));
@@ -12,6 +12,9 @@ const HechosVialesTable = lazy(() => import('../pages/HechosVialesTable'));
 const MapaJujuySource = lazy(() => import('../components/containers/MapaJujuySource'));
 const ActaSalienteTable = lazy(() => import('../pages/ActaSalienteTable'));
 const ActaSalienteDetalle = lazy(() => import('../pages/RegistrosActaSaliente'));
+const PrintTestButton = React.lazy(() => 
+  import("../pages/PrintTestButton") as Promise<{ default: React.ComponentType<any> }>
+);
 
 export const protectedRoutes: RouteConfig[] = [
 
@@ -19,6 +22,7 @@ export const protectedRoutes: RouteConfig[] = [
   { path: "/dashboard/mis-actas",                    component: ActaResumenTable,    allowedRoles: ["ADMIN", "REPAT", "SECRETARIO", "JEFE", "PERSONAL", "OFICIAL_DE_GUARDIA"] },
   { path: "/dashboard",                              component: Dashboard,           allowedRoles: ["ADMIN", "REPAT", "SECRETARIO", "JEFE", "PERSONAL", "OFICIAL_DE_GUARDIA", "DICTAMEN"] },
   { path: "/actas-salientes/:id",                    component: ActaSalienteDetalle, allowedRoles: ["ADMIN", "DICTAMEN"] },
+  { path: "/print",                    component: PrintTestButton, allowedRoles: ["ADMIN", "DICTAMEN"] },
 
   // Visualización
   //{ path: "/dashboard/talonarios",                   component: Talonario,           allowedRoles: ["ADMIN", "REPAT", "SECRETARIO", "JEFE"] },
