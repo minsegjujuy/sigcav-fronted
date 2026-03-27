@@ -222,16 +222,16 @@ const Reporte: React.FC = () => {
         />
         
            <BarChart titulo={'PORCENTAJE DE ACTAS REALIZADAS EN LAS DIFERENTES GUARDIAS'}
-          labels={labelsGrupoInformes} series={seriesGruposPorPuesto} height={400} />
-          <BarChart titulo="CANTIDAD DE ACTAS SERIE B/PDA" labels={labelsTipoInformes} series={seriesTiposPorPuesto} height={400} />
-          <LineChart labels={labelsPorcentajes} series={seriesPorcentajes} />
-          <BarChart titulo="CANTIDAD DE ACTAS REALIZADAS POR JERARQUIA" labels={labelsJerarquia} series={seriesJerarquia} height={400} />
+          labels={labelsGrupoInformes ?? []} series={seriesGruposPorPuesto ?? []} height={400} />
+          <BarChart titulo="CANTIDAD DE ACTAS SERIE B/PDA" labels={labelsTipoInformes ?? []} series={seriesTiposPorPuesto ?? []} height={400} />
+          <LineChart labels={labelsPorcentajes ?? []} series={seriesPorcentajes ?? []} />
+          <BarChart titulo="CANTIDAD DE ACTAS REALIZADAS POR JERARQUIA" labels={labelsJerarquia ?? []} series={seriesJerarquia ?? []} height={400} />
           <BarChart titulo={'RESUMEN DE ACTAS POR CATEGORIA DE EVENTO'}
-          labels={labelsObservacion} series={seriesObservacion} height={400} />
+          labels={labelsObservacion ?? []} series={seriesObservacion ?? []} height={400} />
           <BarChart titulo={'CLASIFICACION DE INFRACTORES POR PROVINCIA'}
-          labels={labelsProvincia} series={seriesProvincia} height={400} />
+          labels={labelsProvincia ?? []} series={seriesProvincia ?? []} height={400} />
           <BarChart titulo={'CLASIFICACION DE INFRACTORES POR NACIONALIDAD'}
-          labels={labelsNacionalidad} series={seriesNacionalidad} height={400} />
+          labels={labelsNacionalidad ?? []} series={seriesNacionalidad ?? []} height={400} />
         </div>
        
         </>
