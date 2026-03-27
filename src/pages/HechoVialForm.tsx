@@ -199,7 +199,7 @@ const FormularioHechoVial = () => {
           </Grid>
 
           <Grid size={{ xs: 12 }}>
-            <TextField fullWidth label="UbicaciÃ³n (Lugar del hecho - KM/Altura)" {...register("ruta")} />
+            <TextField fullWidth label="Ubicacion (Lugar del hecho - KM/Altura)" {...register("ruta")} />
           </Grid>
           <MapaJujuy onSelect={handleMapSelect} initialValue={hechoVial?.ubicacionReq} />
 
@@ -356,7 +356,7 @@ const FormularioHechoVial = () => {
                     <TextField
                     select
                     fullWidth
-                    label="Tipo de VehÃ­culo/Persona"
+                    label="Tipo de Vehi­culo/Persona"
                     defaultValue={field.id}
                     {...register(`involucrados.${index}.tipo`)}
                     >
@@ -479,7 +479,7 @@ const FormularioHechoVial = () => {
             fullWidth
             label="Especificar Estado (si corresponde)"
             {...register("estadoFisicoCalzada")}
-            helperText="Completar solo si seleccionÃ³ OTRO"
+            helperText="Completar solo si selecciona OTRO"
         />
         </Grid>
 
@@ -500,7 +500,7 @@ const FormularioHechoVial = () => {
               {...field}
               select
               fullWidth
-              label="CondiciÃ³n de superficie"
+              label="Condicion de superficie"
               error={!!fieldState.error}
               helperText={fieldState.error?.message}
             >
@@ -519,7 +519,7 @@ const FormularioHechoVial = () => {
         <Grid size={{ xs: 12, md: 6 }}>
         <TextField
             fullWidth
-            label="Especificar CondiciÃ³n (si corresponde)"
+            label="Especificar Condicion (si corresponde)"
             {...register("estadoCalzada")}
         />
         </Grid>
@@ -565,7 +565,7 @@ const FormularioHechoVial = () => {
                 {...field}
                 select
                 fullWidth
-                label="SemÃ¡foro"
+                label="Semaforo"
                 error={!!fieldState.error}
                 helperText={fieldState.error?.message}
               >
@@ -778,8 +778,8 @@ const FormularioHechoVial = () => {
               fullWidth 
               multiline 
               rows={5} 
-              label="SÃ­ntesis del Hecho" 
-              placeholder="Ej. En fecha 09/12/2025 a hora 00:00 por comunicacion SAME/911/BASE OPERACIONAL/JEFE SUPERIOR/ AUTORIDADâ€¦/ (EJ. SGTO AYTE VILTE DE BASE OPERACIONAL), se toma conocimiento de un hecho de vial en SOBRE RUTA NAC 9 ALT INGRESO AV FORESTAL, se dirige mÃ³vil K45 a cargo de SGTO AYTE ESCALERA con personal de servicio."
+              label="Sintesis del Hecho" 
+              placeholder="Ej. En fecha 09/12/2025 a hora 00:00 por comunicacion SAME/911/BASE OPERACIONAL/JEFE SUPERIOR/ AUTORIDAD/ (EJ. SGTO AYTE VILTE DE BASE OPERACIONAL), se toma conocimiento de un hecho de vial en SOBRE RUTA NAC 9 ALT INGRESO AV FORESTAL, se dirige movil K45 a cargo de SGTO AYTE ESCALERA con personal de servicio."
               {...register("sintesis")} 
             />
           </Grid>
