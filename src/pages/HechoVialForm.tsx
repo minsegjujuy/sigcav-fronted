@@ -197,10 +197,6 @@ const FormularioHechoVial = () => {
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField fullWidth type="time" label="Hora" InputLabelProps={{ shrink: true }} {...register("hora")} />
           </Grid>
-
-          <Grid size={{ xs: 12 }}>
-            <TextField fullWidth label="Ubicacion (Lugar del hecho - KM/Altura)" {...register("ruta")} />
-          </Grid>
           <MapaJujuy onSelect={handleMapSelect} initialValue={hechoVial?.ubicacionReq} />
 
           <Grid size={{ xs: 12, md: 4 }}>
@@ -239,6 +235,10 @@ const FormularioHechoVial = () => {
             </Select>
             </FormControl>
           </Grid>}
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField fullWidth type="text" label="Ruta" InputLabelProps={{ shrink: true }} {...register("ubicacionReq.descripcion")} />
+          </Grid>
 
           <Grid size={{ xs: 12 }}><Divider /></Grid>
 

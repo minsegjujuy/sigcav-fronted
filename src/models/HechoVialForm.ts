@@ -7,8 +7,6 @@ export interface HechoVialForm {
   grupo: number;
   fecha: string; //obligatorio
   hora: string; //obligatorio
-  ruta: string; //obligatorio
-  dependencia: string; //obligatorio
   ubicacionReq: UbicacionRequest; //obligatorio
   victimaFatal: string;
   danosMateriales: string;

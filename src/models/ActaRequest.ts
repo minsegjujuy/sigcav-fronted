@@ -19,4 +19,8 @@ export interface ActaRequest {
   retencion: string,
   ubicacionRequest: UbicacionRequest,
   firma?: FirmaDTO,
+  juzgado: number,
+  graduacionAlcoholica: number,
+  infractorFugado: boolean,
+  retencionVehiculo: boolean,
 }

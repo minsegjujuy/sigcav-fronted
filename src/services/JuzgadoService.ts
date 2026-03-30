@@ -8,3 +8,8 @@ export const obtenerJuzgados = async (): Promise<Juzgado[]> => {
   const response = await axios.get<Juzgado[]>(`${baseURL}/juzgados`, getAuthHeader());
   return response.data;
 }
+
+export const obtenerJuzgadosParaActa = async (): Promise<Juzgado[]> => {
+  const response = await axios.get<Juzgado[]>(`${baseURL}/juzgados/actas`, getAuthHeader());
+  return response.data;
+}

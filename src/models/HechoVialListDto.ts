@@ -5,8 +5,6 @@ import type { UbicacionDto } from "./UbicacionDto";
 export interface HechoVialListDto {
   id: number;
   fecha: string;
-  ruta: string;
-  dependencia: string;
   victimaFatal: string;
   danosMateriales: 'SI' | 'NO';
   zona: string;

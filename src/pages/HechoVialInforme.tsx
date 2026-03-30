@@ -48,7 +48,7 @@ export const HechoVialDetalle = ({ hecho }: Props) => {
       <Typography variant="subtitle2">UBICACIÓN DEL HECHO</Typography>
       <Grid container spacing={1}>
         <Grid size={12}>
-          <Label label="Lugar" value={hecho.ruta} />
+          <Label label="Lugar" value={hecho.ubicacionReq.descripcion} />
         </Grid>
         <Grid size={6}>
           <Label

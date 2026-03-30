@@ -19,4 +19,7 @@ export interface ActaResumenDto {
   nombre: string;
   adjunta: string;
   ubicacionResponse: UbicacionRsponse;
+  juzgado: number,
+  retencionVehiculo: boolean;
+  infractorFugado: boolean;
 }
