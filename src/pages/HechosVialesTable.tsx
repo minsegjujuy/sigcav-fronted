@@ -216,7 +216,6 @@ export default function HechosVialesTable() {
               <TableCell>ID</TableCell>
               <TableCell>Fecha</TableCell>
               <TableCell>Ruta</TableCell>
-              <TableCell>Dependencia</TableCell>
               <TableCell>Zona</TableCell>
               <TableCell>Tipo Siniestro</TableCell>
               <TableCell>Víctima Fatal</TableCell>
@@ -232,8 +231,7 @@ export default function HechosVialesTable() {
                 <TableCell>
                   {new Date(row.fecha).toLocaleString()}
                 </TableCell>
-                <TableCell>{row.ruta}</TableCell>
-                <TableCell>{row.dependencia}</TableCell>
+                <TableCell>{row.ubicacionReq.descripcion}</TableCell>
                 <TableCell>{row.zona}</TableCell>
                 <TableCell>{row.tipoSiniestro}</TableCell>
                 <TableCell>{row.victimaFatal}</TableCell>
