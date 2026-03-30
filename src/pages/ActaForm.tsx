@@ -44,7 +44,9 @@ import type { Propietario } from "../models/Propietario";
 import type { OcrDocumentType } from "../services/OcrService";
 import DocumentDataCapture from "../components/modules/DocumentDataCapture";
 import FirmaCapture, { type FirmaCaptureHandle } from "../components/modules/FirmaCapture";
-import type { FirmaDTO } from "../models/FirmaDTO";
+import type { FirmaDTO, TestigoRequest } from "../models/FirmaDTO";
+import { obtenerJuzgadosParaActa } from "../services/JuzgadoService";
+import type { Juzgado } from "../models/Juzgado";
 const tabPulse = keyframes`
   0%, 100% {
     opacity: 1;
@@ -127,6 +129,10 @@ const initialState: ActaRequest = {
   nro: "",
   adjunta:"",
   retencion:"",
+  graduacionAlcoholica: 0,
+  infractorFugado: false,
+  juzgado: 0,
+  retencionVehiculo: false,
   ubicacionRequest: {lat:0,lng:0,departamento:'', unidadRegional:0, descripcion:'', localidad: 0},
   articulos: [],
   infractor: {
@@ -179,10 +185,48 @@ export default function ActaForm() {
   const [selectedVehicle, setSelectedVehicle] = useState<Vehiculo | null>(null);
   const [unidadesRegionales, setUnidadesRegionales] = useState<UnidadRegional[]>();
   const [localidades, setLocalidades] = useState<Localidad[]>([]);
+  const [juzgados, setJuzgados] = useState<Juzgado[]>();
   const { actaSeleccionada, limpiarActa } = useActa();
   const isEditingActa = Boolean(actaSeleccionada?.idActa);
   const firmaInfractorRef = useRef<FirmaCaptureHandle | null>(null);
   const firmaOficialRef = useRef<FirmaCaptureHandle | null>(null);
+  const createEmptyTestigo = (): TestigoRequest => ({
+    nombre: "",
+    apellido: "",
+    dni: "",
+    domicilio: "",
+  });
+
+  const ensureTwoTestigos = (
+    value: TestigoRequest[] | null | undefined,
+  ): TestigoRequest[] => {
+    const next = Array.isArray(value) ? [...value] : [];
+    while (next.length < 2) next.push(createEmptyTestigo());
+    return next.slice(0, 2);
+  };
+
+  const handleTestigoChange = (
+    index: number,
+    field: keyof TestigoRequest,
+    value: string,
+  ) => {
+    setFirma((prev) => {
+      const nextTestigos = ensureTwoTestigos(prev.testigos);
+      nextTestigos[index] = {
+        ...nextTestigos[index],
+        [field]: value,
+      };
+      return { ...prev, testigos: nextTestigos };
+    });
+
+    setErrors((er) => {
+      const key = `testigos.${index}.${String(field)}`;
+      if (!er[key]) return er;
+      const c = { ...er };
+      delete c[key];
+      return c;
+    });
+  };
   const [firma, setFirma] = useState<FirmaDTO>(() => ({
     actaId: actaSeleccionada?.idActa ?? 0,
     firmaInfractorBase64: null,
@@ -191,6 +235,7 @@ export default function ActaForm() {
     longitud: "",
     deviceId: getOrCreateDeviceId(),
     seNegoAFirmar: false,
+    testigos: [],
   }));
   const [selected, setSelected] = useState<string[]>([]);
   const [otroTexto, setOtroTexto] = useState("");
@@ -395,6 +440,11 @@ export default function ActaForm() {
     setUnidadesRegionales(data);
   }
 
+  const fetchJuzgados = async () => {
+    const data = await obtenerJuzgadosParaActa();
+    setJuzgados(data);
+  }
+
 
   const refreshLocalidadesForUr = (
     unidadRegionalId: number | null | undefined,
@@ -493,6 +543,27 @@ export default function ActaForm() {
             firmaOficialBase64: capturedFirmaOficialBase64,
           };
 
+          if (firmaToSend.seNegoAFirmar) {
+            const nextTestigos = ensureTwoTestigos(firmaToSend.testigos);
+            const witnessErrors: Record<string, string> = {};
+            nextTestigos.forEach((t, i) => {
+              if (!t.nombre || t.nombre.trim() === "") witnessErrors[`testigos.${i}.nombre`] = "Nombre obligatorio";
+              if (!t.apellido || t.apellido.trim() === "") witnessErrors[`testigos.${i}.apellido`] = "Apellido obligatorio";
+              if (!/^[0-9]{8}$/.test(t.dni || "")) witnessErrors[`testigos.${i}.dni`] = "DNI debe tener 8 digitos";
+            });
+
+            if (Object.keys(witnessErrors).length > 0) {
+              setErrors((prev) => ({ ...prev, ...witnessErrors }));
+              setActiveTab(3);
+              SnackbarUtilities.error("Debe completar los 2 testigos");
+              return;
+            }
+
+            firmaToSend.testigos = nextTestigos;
+          } else {
+            firmaToSend.testigos = [];
+          }
+
           actaToSend.firma = firmaToSend;
         } else {
           delete (actaToSend as any).firma;
@@ -573,6 +644,7 @@ export default function ActaForm() {
       if (!selectedTipoActa) e.tipoActa = "El tipo de acta es obligatorio";
       if (!selectedGrupo) e.grupo = "El grupo es obligatorio";
       if (!selectedPuesto) e.puesto = "El puesto es obligatorio";
+      if (!form.juzgado || form.juzgado <= 0) e.juzgado = "Debe seleccionar un juzgado";
 
 
       // campos generales
@@ -939,6 +1011,7 @@ export default function ActaForm() {
     fetchGrupo();
     fetchLeyes();
     fetchPuestos();
+    fetchJuzgados();
   }, [])
   return (
     <Container maxWidth="md" sx={{ px: { xs: 1.5, sm: 2 } }}>
@@ -1094,6 +1167,77 @@ export default function ActaForm() {
                 value={form.retencion}
                 onChange={(e) => handleChange("retencion", e.target.value)}
                 />
+
+              {/* Juzgado */}
+              <FormControl fullWidth margin="normal" error={!!errors.juzgado}>
+                <InputLabel id="juzgado-label">Juzgado *</InputLabel>
+                <Select
+                  labelId="juzgado-label"
+                  id="juzgado"
+                  value={form.juzgado ? String(form.juzgado) : ""}
+                  label="Juzgado"
+                  onChange={(e) => {
+                    const raw = String(e.target.value ?? "");
+                    const juzgadoId = raw ? Number(raw) : 0;
+                    handleChange("juzgado", juzgadoId);
+                    setErrors((er) => {
+                      const c = { ...er };
+                      delete c.juzgado;
+                      return c;
+                    });
+                  }}
+                >
+                  <MenuItem value="">Seleccione un juzgado</MenuItem>
+                  {(juzgados ?? [])
+                    .filter((j): j is Juzgado & { id: number } => typeof j.id === "number" && Number.isFinite(j.id))
+                    .map((j) => (
+                      <MenuItem key={j.id} value={String(j.id)}>
+                        {j.nombre}
+                      </MenuItem>
+                    ))}
+                </Select>
+                {!!errors.juzgado && <FormHelperText>{errors.juzgado}</FormHelperText>}
+              </FormControl>
+
+              {/* Graduación alcohólica */}
+              <TextField
+                label="Graduación alcohólica"
+                fullWidth
+                margin="normal"
+                type="number"
+                inputProps={{ min: 0, step: "0.01" }}
+                value={Number.isFinite(form.graduacionAlcoholica) ? form.graduacionAlcoholica : 0}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  const next = raw === "" ? 0 : Number(raw);
+                  handleChange("graduacionAlcoholica", Number.isFinite(next) ? next : 0);
+                }}
+              />
+
+              {/* Checks */}
+              <FormControl component="fieldset" sx={{ gridColumn: "1 / -1" }}>
+                <FormLabel component="legend">Opciones</FormLabel>
+                <FormGroup row>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={Boolean(form.retencionVehiculo)}
+                        onChange={(e) => handleChange("retencionVehiculo", e.target.checked)}
+                      />
+                    }
+                    label="Retención de vehículo"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={Boolean(form.infractorFugado)}
+                        onChange={(e) => handleChange("infractorFugado", e.target.checked)}
+                      />
+                    }
+                    label="Infractor fugado"
+                  />
+                </FormGroup>
+              </FormControl>
 
               {/*Seleccionar ubicacion */}
               <Box sx={{ gridColumn: "1 / -1" }}><MapaJujuy onSelect={handleMapSelect} initialValue={form.ubicacionRequest.lat ? form.ubicacionRequest : null} /></Box>
@@ -1499,6 +1643,7 @@ export default function ActaForm() {
                           ...prev,
                           seNegoAFirmar: checked,
                           firmaInfractorBase64: checked ? null : prev.firmaInfractorBase64,
+                          testigos: checked ? ensureTwoTestigos(prev.testigos) : [],
                         }));
                       }}
                     />
@@ -1514,6 +1659,84 @@ export default function ActaForm() {
                   }}
                   disabled={firma.seNegoAFirmar}
                 />
+
+                {firma.seNegoAFirmar && (
+                  <Box sx={{ mt: 2, display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" }, gap: 2 }}>
+                    <Typography variant="subtitle1" sx={{ gridColumn: "1 / -1" }}>
+                      Testigos (obligatorio 2)
+                    </Typography>
+
+                    <Box sx={{ gridColumn: "1 / -1", p: 1.5, border: 1, borderColor: "divider", borderRadius: 2 }}>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                        Testigo 1
+                      </Typography>
+                      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" }, gap: 2 }}>
+                        <TextField
+                          label="Nombre *"
+                          value={firma.testigos?.[0]?.nombre ?? ""}
+                          onChange={(e) => handleTestigoChange(0, "nombre", e.target.value)}
+                          error={!!errors["testigos.0.nombre"]}
+                          helperText={errors["testigos.0.nombre"]}
+                        />
+                        <TextField
+                          label="Apellido *"
+                          value={firma.testigos?.[0]?.apellido ?? ""}
+                          onChange={(e) => handleTestigoChange(0, "apellido", e.target.value)}
+                          error={!!errors["testigos.0.apellido"]}
+                          helperText={errors["testigos.0.apellido"]}
+                        />
+                        <TextField
+                          label="DNI *"
+                          value={firma.testigos?.[0]?.dni ?? ""}
+                          onChange={(e) => handleTestigoChange(0, "dni", e.target.value)}
+                          error={!!errors["testigos.0.dni"]}
+                          helperText={errors["testigos.0.dni"]}
+                        />
+                        <TextField
+                          label="Domicilio"
+                          sx={{ gridColumn: "1 / -1" }}
+                          value={firma.testigos?.[0]?.domicilio ?? ""}
+                          onChange={(e) => handleTestigoChange(0, "domicilio", e.target.value)}
+                        />
+                      </Box>
+                    </Box>
+
+                    <Box sx={{ gridColumn: "1 / -1", p: 1.5, border: 1, borderColor: "divider", borderRadius: 2 }}>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                        Testigo 2
+                      </Typography>
+                      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" }, gap: 2 }}>
+                        <TextField
+                          label="Nombre *"
+                          value={firma.testigos?.[1]?.nombre ?? ""}
+                          onChange={(e) => handleTestigoChange(1, "nombre", e.target.value)}
+                          error={!!errors["testigos.1.nombre"]}
+                          helperText={errors["testigos.1.nombre"]}
+                        />
+                        <TextField
+                          label="Apellido *"
+                          value={firma.testigos?.[1]?.apellido ?? ""}
+                          onChange={(e) => handleTestigoChange(1, "apellido", e.target.value)}
+                          error={!!errors["testigos.1.apellido"]}
+                          helperText={errors["testigos.1.apellido"]}
+                        />
+                        <TextField
+                          label="DNI *"
+                          value={firma.testigos?.[1]?.dni ?? ""}
+                          onChange={(e) => handleTestigoChange(1, "dni", e.target.value)}
+                          error={!!errors["testigos.1.dni"]}
+                          helperText={errors["testigos.1.dni"]}
+                        />
+                        <TextField
+                          label="Domicilio"
+                          sx={{ gridColumn: "1 / -1" }}
+                          value={firma.testigos?.[1]?.domicilio ?? ""}
+                          onChange={(e) => handleTestigoChange(1, "domicilio", e.target.value)}
+                        />
+                      </Box>
+                    </Box>
+                  </Box>
+                )}
               </Paper>
 
               <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>

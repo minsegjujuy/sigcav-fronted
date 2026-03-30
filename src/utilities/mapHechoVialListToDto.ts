@@ -16,9 +16,6 @@ export function mapHechoVialListDtoToForm(
     fecha: fecha ?? '',
     hora: horaCompleta ? horaCompleta.substring(0, 5) : '',
 
-    ruta: dto.ruta,
-    dependencia: dto.dependencia,
-
     ubicacionReq: {
       lat: dto.ubicacionReq.lat,
       lng: dto.ubicacionReq.lng,

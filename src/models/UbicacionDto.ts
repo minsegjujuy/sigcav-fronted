@@ -4,4 +4,5 @@ export interface UbicacionDto {
   departamento: string;
   localidad: number;
   unidadRegional: number;
+  descripcion: string
 }

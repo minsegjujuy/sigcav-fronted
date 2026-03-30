@@ -23,5 +23,12 @@ export interface FirmaDTO {
    * Es obligatoria para la validez legal del acta.
    */
   firmaOficialBase64: string;
+  testigos: TestigoRequest[];
 }
 
+export interface TestigoRequest {
+  nombre: string;
+  apellido: string;
+  dni: string;
+  domicilio?: string;
+}

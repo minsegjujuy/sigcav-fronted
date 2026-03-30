@@ -58,6 +58,10 @@ export const actaResumenToActaRequest = (
     vehiculo: acta.vehiculo,
     adjunta: acta.adjunta,
     retencion: acta.retencion,
+    juzgado: acta.juzgado,
+    graduacionAlcoholica: 0,
+    infractorFugado: acta.infractorFugado,
+    retencionVehiculo: acta.retencionVehiculo,
     ubicacionRequest: {
       departamento: acta.ubicacionResponse.departamento,
       lat: acta.ubicacionResponse.lat,
