@@ -1,8 +1,8 @@
-export interface UbicacionDto {
+﻿export interface UbicacionDto {
   lat: number;
   lng: number;
   departamento: string;
-  localidad: number;
-  unidadRegional: number;
-  descripcion: string
+  localidad: number | string;
+  unidadRegional: number | string;
+  descripcion: string;
 }

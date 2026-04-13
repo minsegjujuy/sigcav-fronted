@@ -1,4 +1,4 @@
-import { Grid, TextField, IconButton, Button, Typography, Box, FormControlLabel, MenuItem, FormControl, FormLabel, RadioGroup, Radio } from '@mui/material';
+﻿import { Grid, TextField, IconButton, Button, Typography, Box, FormControlLabel, MenuItem, FormControl, FormLabel, RadioGroup, Radio } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { Controller, useFieldArray, type Control, type UseFormRegister } from 'react-hook-form';
@@ -31,6 +31,7 @@ export const SeccionAcompanantes = ({ pIndex, control, register }: AcompanantesP
             <Controller
               name={`protagonistas.${pIndex}.acompanantes.${aIndex}.tipo`}
               control={control}
+              defaultValue="DNI"
               render={({ field, fieldState }) => (
                 <TextField
                   {...field}
@@ -95,22 +96,22 @@ export const SeccionAcompanantes = ({ pIndex, control, register }: AcompanantesP
                 >
                   <MenuItem value="BUENOS_AIRES">Buenos Aires</MenuItem>
                   <MenuItem value="CIUDAD_AUTONOMA_DE_BUENOS_AIRES">
-                    Ciudad Autónoma de Buenos Aires
+                    Ciudad Autonoma de Buenos Aires
                   </MenuItem>
                   <MenuItem value="CATAMARCA">Catamarca</MenuItem>
                   <MenuItem value="CHACO">Chaco</MenuItem>
                   <MenuItem value="CHUBUT">Chubut</MenuItem>
-                  <MenuItem value="CORDOBA">Córdoba</MenuItem>
+                  <MenuItem value="CORDOBA">Cordoba</MenuItem>
                   <MenuItem value="CORRIENTES">Corrientes</MenuItem>
-                  <MenuItem value="ENTRE_RIOS">Entre Ríos</MenuItem>
+                  <MenuItem value="ENTRE_RIOS">Entre Ri­os</MenuItem>
                   <MenuItem value="FORMOSA">Formosa</MenuItem>
                   <MenuItem value="JUJUY">Jujuy</MenuItem>
                   <MenuItem value="LA_PAMPA">La Pampa</MenuItem>
                   <MenuItem value="LA_RIOJA">La Rioja</MenuItem>
                   <MenuItem value="MENDOZA">Mendoza</MenuItem>
                   <MenuItem value="MISIONES">Misiones</MenuItem>
-                  <MenuItem value="NEUQUEN">Neuquén</MenuItem>
-                  <MenuItem value="RIO_NEGRO">Río Negro</MenuItem>
+                  <MenuItem value="NEUQUEN">Neuquen</MenuItem>
+                  <MenuItem value="RIO_NEGRO">Ri­o Negro</MenuItem>
                   <MenuItem value="SALTA">Salta</MenuItem>
                   <MenuItem value="SAN_JUAN">San Juan</MenuItem>
                   <MenuItem value="SAN_LUIS">San Luis</MenuItem>
@@ -118,7 +119,7 @@ export const SeccionAcompanantes = ({ pIndex, control, register }: AcompanantesP
                   <MenuItem value="SANTA_FE">Santa Fe</MenuItem>
                   <MenuItem value="SANTIAGO_DEL_ESTERO">Santiago del Estero</MenuItem>
                   <MenuItem value="TIERRA_DEL_FUEGO">Tierra del Fuego</MenuItem>
-                  <MenuItem value="TUCUMAN">Tucumán</MenuItem>
+                  <MenuItem value="TUCUMAN">Tucuman</MenuItem>
                   <MenuItem value="N/A">N/A</MenuItem>
                 </TextField>
               )}
@@ -139,7 +140,7 @@ export const SeccionAcompanantes = ({ pIndex, control, register }: AcompanantesP
             <TextField fullWidth size="small" label="Edad" {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.edad`)} />
           </Grid>
 
-          {/* Seguridad (Cinturón/Casco) */}
+          {/* Seguridad (CinturÃ³n/Casco) */}
           <Grid size={{ xs: 12, md: 4 }}>
                 <FormControl component="fieldset">
                 <FormLabel component="legend">¿Uso cinturon de seguridad/casco?</FormLabel>
@@ -182,7 +183,7 @@ export const SeccionAcompanantes = ({ pIndex, control, register }: AcompanantesP
                   {...field}
                   select
                   fullWidth
-                  label="Género"
+                  label="Genero"
                   error={!!fieldState.error}
                   helperText={fieldState.error?.message}
                 >
@@ -197,7 +198,7 @@ export const SeccionAcompanantes = ({ pIndex, control, register }: AcompanantesP
             <TextField
                 fullWidth
                 label="Traslado (Hospital/SAME)"
-                placeholder="Ej. Sí, al hospital Pablo Soria por personal de SAME (interno Nro. – Enfermero / Chofer). Estado de salud: herido leve / herido grave."
+                placeholder="Ej. Si­, al hospital Pablo Soria por personal de SAME (interno Nro. Enfermero / Chofer). Estado de salud: herido leve / herido grave."
                 multiline
                 minRows={3}
                 {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.trasladado`)}
@@ -238,3 +239,4 @@ export const SeccionAcompanantes = ({ pIndex, control, register }: AcompanantesP
     </Box>
   );
 };
+

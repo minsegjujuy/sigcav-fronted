@@ -1,5 +1,4 @@
-// BarChartExample.tsx
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -10,100 +9,143 @@ import {
   Legend,
   Title,
   ArcElement,
+  type ChartData,
+  type ChartOptions,
 } from "chart.js";
 import type { DiasCantidad } from "../models/DiasCantidad";
 import { obtenerActasPorDia } from "../services/ActaService";
 import { Typography } from "@mui/material";
 
-// Registramos los componentes que usaremos
 ChartJS.register(BarElement, CategoryScale, LinearScale, ArcElement, Tooltip, Legend, Title);
 
 export interface RangoDeFechas {
   fechaInicio: string;
   fechaFin: string;
-  //onToggle: () => void;
 }
+
+const BAR_BLUE_BG = "rgba(37, 99, 235, 0.50)";
+const BAR_BLUE_BORDER = "rgba(37, 99, 235, 1)";
 
 const ReportePorDia: React.FC<RangoDeFechas> = ({ fechaInicio, fechaFin }) => {
   const [actasCantidad, setActasCantidad] = useState<DiasCantidad[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const top2 = [...actasCantidad]
-  .sort((a, b) => b.cantidad - a.cantidad)
-  .slice(0, 2);
 
-  const fetchData = async (fi: string, ff: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      // Si tu API espera null en vez de "", deberías adaptarlo.
-      const res = await obtenerActasPorDia(fi, ff); // se asume que retorna DiasCantidad[]
-      setActasCantidad(res);
-    } catch (err: any) {
-      console.error("Error al obtener actas:", err);
-      setError(err?.message ?? "Error desconocido");
-      setActasCantidad([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const top2 = useMemo(
+    () =>
+      [...actasCantidad]
+        .sort((a, b) => b.cantidad - a.cantidad)
+        .slice(0, 2),
+    [actasCantidad]
+  );
 
   useEffect(() => {
-    // Solo ejecutar si ambas fechas están presentes
-    if (!fechaInicio || !fechaFin) {
-      return;
-    }
-    fetchData(fechaInicio, fechaFin);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!fechaInicio || !fechaFin) return;
+
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await obtenerActasPorDia(fechaInicio, fechaFin);
+        if (cancelled) return;
+        setActasCantidad(res ?? []);
+      } catch (err: unknown) {
+        if (cancelled) return;
+        console.error("Error al obtener actas:", err);
+        setError(err instanceof Error ? err.message : "Error desconocido");
+        setActasCantidad([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
   }, [fechaInicio, fechaFin]);
 
-  // Preparar datos del gráfico basados en actasCantidad
-  const labels = actasCantidad.map((d) => d.dia);
-  const values = actasCantidad.map((d) => d.cantidad);
+  const labels = useMemo(() => actasCantidad.map((d) => d.dia), [actasCantidad]);
+  const values = useMemo(() => actasCantidad.map((d) => d.cantidad), [actasCantidad]);
 
-  const data = {
-    labels,
-    datasets: [
-      {
-        label: "Actas",
-        data: values,
-        borderColor: "rgba(0,0,0,0.2)",
-        borderWidth: 1,
+  const data: ChartData<"bar", number[], string> = useMemo(
+    () => ({
+      labels,
+      datasets: [
+        {
+          label: "Actas",
+          data: values,
+          backgroundColor: BAR_BLUE_BG,
+          borderColor: BAR_BLUE_BORDER,
+          borderWidth: 1,
+          borderRadius: 6,
+        },
+      ],
+    }),
+    [labels, values]
+  );
+
+  const options: ChartOptions<"bar"> = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      animation: {
+        duration: 500,
+        easing: "easeOutQuart",
       },
-    ],
-  };
+      animations: {
+        y: {
+          from: (ctx) => {
+            if (ctx.type !== "data") return undefined;
+            const yScale = ctx.chart.scales.y;
+            return yScale.getPixelForValue(0);
+          },
+        },
+      },
+      plugins: {
+        legend: { position: "top" },
+        title: { display: true, text: "Actas por día" },
+        tooltip: { mode: "index", intersect: false },
+      },
+      scales: {
+        x: {
+          ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 },
+          grid: { display: false },
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { precision: 0 },
+          grid: { color: "rgba(148, 163, 184, 0.25)" },
+        },
+      },
+    }),
+    []
+  );
 
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: { position: "top" as const },
-      title: { display: true, text: "Actas por día" },
-    },
-    scales: { y: { beginAtZero: true } },
-  };
-
-  const textoTop2 = top2
-  .map((a) => `${a.dia}`)
-  .join(" y ");
+  const textoTop2 = useMemo(() => top2.map((a) => `${a.dia}`).join(" y "), [top2]);
 
   return (
-      <div style={{ width: "90%", margin: "1rem auto" }}>
-        {loading && <p>Cargando actas...</p>}
-        {error && <p style={{ color: "red" }}>Error: {error}</p>}
-        {!loading && !error && actasCantidad.length === 0 && (
-          <p>No hay actas para el rango seleccionado.</p>
-        )}
+    <div style={{ width: "90%", margin: "1rem auto" }}>
+      {loading && <p>Cargando actas...</p>}
+      {error && <p style={{ color: "red" }}>Error: {error}</p>}
+      {!loading && !error && actasCantidad.length === 0 && <p>No hay actas para el rango seleccionado.</p>}
 
-        {!loading && !error && actasCantidad.length > 0 && (
-          <>
+      {!loading && !error && actasCantidad.length > 0 && (
+        <>
           <Typography variant="h6">Resumen semanal de actas realizadas</Typography>
-          <Bar data={data} options={options} />
-          <p>NOTA: El análisis de la tabla permite concluir que, 
-            en el periodo del {fechaInicio} hasta el {fechaFin}, el labrado de actas se realizó 
-            con mayor frecuencia los días {textoTop2}.</p>
-          </>
-        )}
-      </div>
+          <div style={{ height: 320, width: "100%", maxWidth: "100%", overflow: "hidden" }}>
+            <Bar data={data} options={options} />
+          </div>
+          <p>
+            NOTA: El análisis de la tabla permite concluir que, en el periodo del {fechaInicio} hasta el {fechaFin}, el labrado de actas se
+            realizó con mayor frecuencia los días {textoTop2}.
+          </p>
+        </>
+      )}
+    </div>
   );
 };
 

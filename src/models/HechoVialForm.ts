@@ -1,4 +1,4 @@
-import type { UnidadInterviniente } from "./PersonalInterviniente";
+﻿import type { UnidadInterviniente } from "./PersonalInterviniente";
 import type { UbicacionRequest } from "./UbicacionRequest";
 
 export interface HechoVialForm {
@@ -73,7 +73,7 @@ export interface Protagonista {
   licenciaNro: string;
   municipio: string;
   licenciaClase: string;
-  licenciaEstado: 'VIGENTE' | 'VENCIDA' | 'NO POSEE' | 'SD';
+  licenciaEstado: 'VIGENTE' | 'VENCIDA' | 'NO_POSEE' | 'NO POSEE' | 'SD';
   // Personal de Seguridad (Opcional)
   esFuerzaSeguridad: boolean;
   situacion: string;
@@ -81,7 +81,7 @@ export interface Protagonista {
   legajo?: string;
   // Salud y Alcohol
   trasladoConductor: string;
-  graduacionAlcoholica: number | null; // si es null no se realizó ningun test
+  graduacionAlcoholica: number | null; // si es null no se realizÃ³ ningun test
   estadoSalud: string;
   actaRef: string;
   actaRetencionRef: string;

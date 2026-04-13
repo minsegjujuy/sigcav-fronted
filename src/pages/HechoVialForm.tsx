@@ -1,12 +1,22 @@
-import { 
-  TextField, MenuItem, FormControlLabel, Radio, RadioGroup, 
-  FormControl, FormLabel, Button, Typography, Paper, Divider,
+﻿import {
+  TextField,
+  MenuItem,
+  FormControlLabel,
+  Radio,
+  RadioGroup,
+  FormControl,
+  FormLabel,
+  Button,
+  Typography,
+  Paper,
+  Divider,
   Grid,
   Box,
   IconButton,
   InputLabel,
   Select,
-} from '@mui/material';
+} from "@mui/material";
+import type { SelectChangeEvent } from "@mui/material/Select";
 import { useForm, Controller, useWatch, useFieldArray } from 'react-hook-form';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
@@ -49,9 +59,13 @@ const FormularioHechoVial = () => {
     }
   });
   
-  const { fields, append, remove } = useFieldArray<HechoVialForm>({
+  const {
+    fields: involucradosFields,
+    append: appendInvolucrado,
+    remove: removeInvolucrado,
+  } = useFieldArray<HechoVialForm, "involucrados">({
     control,
-    name: "involucrados"
+    name: "involucrados",
   });
 
   // FieldArray de UNIDADES
@@ -71,7 +85,7 @@ const FormularioHechoVial = () => {
   const [ubicacion, setUbicacion] = useState<UbicacionRequest>({
     lat: 0,
     lng: 0,
-    unidadRegional: 0,
+    unidadRegional: undefined,
     departamento: '',
     localidad: undefined,
     descripcion:'',
@@ -95,40 +109,131 @@ const FormularioHechoVial = () => {
     //danosMateriales, zona, y victimaFatal  son undefined si no los selcciono explicitamente
     console.log("Datos capturados:", payload);
     await guardarhechoVial(payload);
-    SnackbarUtilities.success('Se guardÃ³ correctamente el hecho vial');
+    SnackbarUtilities.success('Se guardÃƒÂ³ correctamente el hecho vial');
     limpiarHechoVial();
   };
+  const handleMapSelect = async (point: UbicacionRequest) => {
+    console.log("ubicacion ", point);
 
-   const handleMapSelect = async (point: UbicacionRequest) => {
-    console.log('ubicacion ', point);
-    setUbicacion(point)
+    // Persistimos lo mínimo (incluye descripción) mientras resolvemos ids
+    setUbicacion({
+      lat: point.lat,
+      lng: point.lng,
+      departamento: point.departamento,
+      descripcion: point.descripcion ?? "",
+      unidadRegional: point.unidadRegional,
+      unidadRegionalNombre: point.unidadRegionalNombre,
+      localidad: point.localidad,
+      localidadNombre: point.localidadNombre,
+    });
+
     const data = await obtenerUnidadesRegionalesPorDepartamento(point.departamento);
-    console.log('unidad regional ', data)
+    console.log("unidad regional ", data);
     setUnidadesRegionales(data);
+
+    const unidadRId = (() => {
+      if (typeof point.unidadRegional === "number" && Number.isFinite(point.unidadRegional) && point.unidadRegional > 0) {
+        return point.unidadRegional;
+      }
+
+      const nombre = (point.unidadRegionalNombre ?? "").trim();
+      if (!nombre) return 0;
+
+      const byName = data.find((u) => u.nombre?.toLowerCase() === nombre.toLowerCase())?.idUr;
+      if (byName) return byName;
+
+      const digits = Number(nombre.match(/(\\d+)/)?.[1]);
+      return Number.isFinite(digits) ? digits : 0;
+    })();
+
+    if (unidadRId) {
+      const depto = data
+        .find((u) => u.idUr === unidadRId)
+        ?.departamentos.find((d) => d.nombre === point.departamento);
+
+      const localidadesDepto = depto?.localidades ?? [];
+      setLocalidades(localidadesDepto);
+
+      const localidadId = (() => {
+        if (typeof point.localidad === "number" && Number.isFinite(point.localidad) && point.localidad > 0) {
+          return point.localidad;
+        }
+
+        const nombreLoc = (point.localidadNombre ?? "").trim();
+        if (!nombreLoc) return undefined;
+
+        return localidadesDepto.find((l) => l.nombre?.toLowerCase() === nombreLoc.toLowerCase())?.id;
+      })();
+
+      setUbicacion((prevData) => ({
+        ...prevData,
+        unidadRegional: unidadRId,
+        localidad: localidadId,
+      }));
+    } else {
+      setLocalidades([]);
+    }
   }
 
-  const handleSelectedUR = (event : any) => {
+  const handleSelectedUR = (event: SelectChangeEvent<number>) => {
     const unidadRId = Number(event.target.value);
-    const depto = unidadesRegionales.find(u => u.idUr === unidadRId)?.departamentos.find(d => d.nombre === ubicacion?.departamento );
-    console.log('ur', depto)
-    setLocalidades(depto?.localidades!);
-    setUbicacion(prevData => ({...prevData, unidadRegional: unidadRId}))
+
+    if (!unidadRId) {
+      setLocalidades([]);
+      setUbicacion((prevData) => ({
+        ...prevData,
+        unidadRegional: undefined,
+        unidadRegionalNombre: undefined,
+        localidad: undefined,
+        localidadNombre: undefined,
+      }));
+      return;
+    }
+
+    const depto = unidadesRegionales
+      .find((u) => u.idUr === unidadRId)
+      ?.departamentos.find((d) => d.nombre === ubicacion?.departamento);
+
+    setLocalidades(depto?.localidades ?? []);
+    setUbicacion((prevData) => ({
+      ...prevData,
+      unidadRegional: unidadRId,
+      unidadRegionalNombre: undefined,
+      localidad: undefined,
+      localidadNombre: undefined,
+    }));
   }
 
-  const handleLocalidadChange = (event : any) => {
+  const handleLocalidadChange = (event: SelectChangeEvent<number>) => {
     const localidadId = Number(event.target.value);
-    setUbicacion(prevData => ({...prevData, localidad: localidadId}));
+    setUbicacion((prevData) => ({
+      ...prevData,
+      localidad: localidadId ? localidadId : undefined,
+      localidadNombre: undefined,
+    }));
   }
   
+
   useEffect(() => {
     fetchPuestos();
     if (modo === 'edit' && hechoVial) {
       console.log('hv edit ', hechoVial.ubicacionReq);
       reset(hechoVial);
-      handleMapSelect(hechoVial.ubicacionReq)
+      setUbicacion(hechoVial.ubicacionReq);
+      handleMapSelect(hechoVial.ubicacionReq);
     }
     return () => {
       reset();
+      setUbicacion({
+        lat: 0,
+        lng: 0,
+        unidadRegional: undefined,
+        departamento: '',
+        localidad: undefined,
+        descripcion: '',
+      });
+      setLocalidades([]);
+      setUnidadesRegionales([]);
     };
   }, [hechoVial, modo, reset]);
 
@@ -142,26 +247,37 @@ const FormularioHechoVial = () => {
       <form onSubmit={handleSubmit(onSubmit)}>
         <Grid container spacing={3}>
           
-          {/* --- ENCABEZADO Y UBICACIÃ“N --- */}
+          {/* --- ENCABEZADO Y UBICACIÃƒâ€œN --- */}
           <Grid size={{ xs: 12 }}>
-            <Typography variant="h6" color="secondary">Datos de Identificación</Typography>
+            <Typography variant="h6" color="secondary">Datos de Identificacion</Typography>
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-                select
-                fullWidth
-                label="Destacamento"
-                defaultValue=""
-                {...register("destacamento")}
-            >
-                {puestos.map((puesto) => (
-                <MenuItem key={puesto.idPuesto} value={puesto.idPuesto}>
-                    {puesto.nombre}
-                </MenuItem>
-                ))}
-            </TextField>
-            </Grid>
+            <Controller
+              name="destacamento"
+              control={control}
+              defaultValue={0}
+              render={({ field: { onChange, value, ...field }, fieldState }) => (
+                <TextField
+                  {...field}
+                  value={value ?? 0}
+                  onChange={(e) => onChange(Number(e.target.value))}
+                  select
+                  fullWidth
+                  label="Destacamento"
+                  error={!!fieldState.error}
+                  helperText={fieldState.error?.message}
+                >
+                  <MenuItem value={0}>Seleccionar</MenuItem>
+                  {puestos.map((puesto) => (
+                    <MenuItem key={puesto.idPuesto} value={puesto.idPuesto}>
+                      {puesto.nombre}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+            />
+          </Grid>
 
           <Controller
             name="grupo"
@@ -204,10 +320,11 @@ const FormularioHechoVial = () => {
             <InputLabel id="unidad-label">Unidad Regional</InputLabel>
             <Select
                 labelId="unidad-label"
-                value={ubicacion.unidadRegional}
+                value={ubicacion.unidadRegional ?? 0}
                 label="Unidad Regional"
                 onChange={handleSelectedUR}
             >
+                <MenuItem value={0}>Seleccionar</MenuItem>
                 {unidadesRegionales.map((unidad) => (
                 <MenuItem key={unidad.idUr} value={unidad.idUr}>
                     {unidad.nombre}
@@ -220,13 +337,14 @@ const FormularioHechoVial = () => {
           {localidades.length > 0 && 
           <Grid size={{ xs: 12, md: 4 }}>
             <FormControl fullWidth size="small">
-            <InputLabel id="unidad-label">Localidad</InputLabel>
+            <InputLabel id="localidad-label">Localidad</InputLabel>
             <Select
-                labelId="localidad"
-                {...register("ubicacionReq.localidad")} 
+                labelId="localidad-label"
+                value={ubicacion.localidad ?? 0}
                 label="Localidad"
                 onChange={handleLocalidadChange}
             >
+                <MenuItem value={0}>Seleccionar</MenuItem>
                 {localidades.map((localidad) => (
                 <MenuItem key={localidad.id} value={localidad.id}>
                     {localidad.nombre}
@@ -237,12 +355,12 @@ const FormularioHechoVial = () => {
           </Grid>}
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <TextField fullWidth type="text" label="Ruta" InputLabelProps={{ shrink: true }} {...register("ubicacionReq.descripcion")} />
+            <TextField fullWidth type="text" label="Ruta" InputLabelProps={{ shrink: true }} value={ubicacion.descripcion} onChange={(e) => setUbicacion((prev) => ({ ...prev, descripcion: e.target.value }))} />
           </Grid>
 
           <Grid size={{ xs: 12 }}><Divider /></Grid>
 
-          {/* --- CLASIFICACIÃ“N DEL HECHO --- */}
+          {/* --- CLASIFICACIÃƒâ€œN DEL HECHO --- */}
           <Grid size={{ xs: 12, md: 4 }}>
             <FormControl component="fieldset">
               <FormLabel component="legend">¿Vi­ctima Fatal?</FormLabel>
@@ -303,7 +421,7 @@ const FormularioHechoVial = () => {
                   {...field}
                   select
                   fullWidth
-                  label="Tipo de VÃ­a"
+                  label="Tipo de Vi­a"
                   error={!!fieldState.error}
                   helperText={fieldState.error?.message}
                 >
@@ -332,13 +450,13 @@ const FormularioHechoVial = () => {
                 <Button 
                 startIcon={<AddCircleOutlineIcon />} 
                 variant="outlined" 
-                onClick={() => append({ tipo: '', cantidad: 1 })}
+                onClick={() => appendInvolucrado({ tipo: '', cantidad: 1 })}
                 >
                 Agregar Involucrado
                 </Button>
             </Box>
 
-            {fields.map((field, index) => (
+            {involucradosFields.map((field, index) => (
                 <Grid container spacing={2} key={field.id} sx={{ mb: 2, alignItems: 'center' }}>
                 {/* Cantidad */}
                 <Grid size={{ xs: 3, md: 2 }}>
@@ -346,6 +464,7 @@ const FormularioHechoVial = () => {
                     fullWidth
                     type="number"
                     label="Cant."
+                    defaultValue={field.cantidad ?? 1}
                     {...register(`involucrados.${index}.cantidad`)}
                     inputProps={{ min: 1 }}
                     />
@@ -357,7 +476,7 @@ const FormularioHechoVial = () => {
                     select
                     fullWidth
                     label="Tipo de Vehi­culo/Persona"
-                    defaultValue={field.id}
+                    defaultValue={field.tipo ?? ''}
                     {...register(`involucrados.${index}.tipo`)}
                     >
                     {TIPOS_INVOLUCRADOS.map((option) => (
@@ -377,9 +496,9 @@ const FormularioHechoVial = () => {
                     </Grid>
                 )}
 
-                {/* BotÃ³n Eliminar Fila */}
+                {/* BotÃƒÂ³n Eliminar Fila */}
                 <Grid size={{ xs: 2, md: 1 }}>
-                    <IconButton color="error" onClick={() => remove(index)}>
+                    <IconButton color="error" onClick={() => removeInvolucrado(index)}>
                     <DeleteIcon />
                     </IconButton>
                 </Grid>
@@ -390,7 +509,7 @@ const FormularioHechoVial = () => {
                 </Grid>
             ))}
 
-            {fields.length === 0 && (
+            {involucradosFields.length === 0 && (
                 <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'gray', textAlign: 'center' }}>
                 No hay involucrados agregados.
                 </Typography>
@@ -399,7 +518,7 @@ const FormularioHechoVial = () => {
 
           <Grid size={{ xs: 12 }}><Divider /></Grid>
 
-          {/* --- CONDICIONES DE LA VÃA --- */}
+          {/* --- CONDICIONES DE LA VÃƒÂA --- */}
           <Grid size={{ xs: 12 }}>
             <Typography variant="h6" color="secondary">Caracteri­sticas de la Escena</Typography>
           </Grid>
@@ -414,7 +533,7 @@ const FormularioHechoVial = () => {
                   {...field}
                   select
                   fullWidth
-                  label="ConfiguraciÃ³n de la VÃ­a"
+                  label="Configuracion de la Vi­a"
                   error={!!fieldState.error}
                   helperText={fieldState.error?.message}
                 >
@@ -444,14 +563,14 @@ const FormularioHechoVial = () => {
             />
           </Grid>
 
-          {/* --- SECCIÃ“N: ESTADO DE LA CALZADA --- */}
+          {/* --- SECCIÃƒâ€œN: ESTADO DE LA CALZADA --- */}
         <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>
             ESTADO DE LA CALZADA
         </Typography>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
           <Controller
             name="estadoFisicoCalzada"
             control={control}
@@ -468,13 +587,14 @@ const FormularioHechoVial = () => {
                 <MenuItem value="APTO">APTO</MenuItem>
                 <MenuItem value="CON BACHES">CON BACHES</MenuItem>
                 <MenuItem value="AHUELLAMIENTO">AHUELLAMIENTO</MenuItem>
-                <MenuItem value="EN REPARACION">EN REPARACIÃ“N</MenuItem>
+                <MenuItem value="EN REPARACION">EN REPARACIÃƒâ€œN</MenuItem>
                 <MenuItem value="OTRO">OTRO (ESPECIFICAR)</MenuItem>
               </TextField>
             )}
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
+
+          <Grid size={{ xs: 12, md: 6 }}>
         <TextField
             fullWidth
             label="Especificar Estado (si corresponde)"
@@ -483,14 +603,14 @@ const FormularioHechoVial = () => {
         />
         </Grid>
 
-        {/* --- SECCIÃ“N: ESTADO FÃSICO / AMBIENTAL DE LA CALZADA --- */}
+        {/* --- SECCIÃƒâ€œN: ESTADO FÃƒÂSICO / AMBIENTAL DE LA CALZADA --- */}
         <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>
-            ESTADO FÃSICO / AMBIENTAL DE LA CALZADA
+            ESTADO FiSICO / AMBIENTAL DE LA CALZADA
         </Typography>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
         <Controller
           name="estadoCalzada"
           control={control}
@@ -516,7 +636,7 @@ const FormularioHechoVial = () => {
         />
         </Grid>
 
-        <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
         <TextField
             fullWidth
             label="Especificar Condicion (si corresponde)"
@@ -547,15 +667,16 @@ const FormularioHechoVial = () => {
             )}
           />
         </Grid>
-          {/* --- SECCIÃ“N: SEMÃFORO Y LUZ ARTIFICIAL --- */}
+          {/* --- SECCIÃƒâ€œN: SEMÃƒÂFORO Y LUZ ARTIFICIAL --- */}
         <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>
             ILUMINACION Y SEÑALIZACION LUMINOSA
         </Typography>
         </Grid>
 
-        {/* SemÃ¡foro */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        {/* SemÃƒÂ¡foro */}
+
+          <Grid size={{ xs: 12, md: 6 }}>
           <Controller
             name="semaforo"
             control={control}
@@ -579,7 +700,8 @@ const FormularioHechoVial = () => {
 
 
             {/* Luz Artificial */}
-            <Grid size={{ xs: 12, md: 6 }}>
+
+          <Grid size={{ xs: 12, md: 6 }}>
             <Controller
               name="luzArtificial"
               control={control}
@@ -600,14 +722,14 @@ const FormularioHechoVial = () => {
               )}
             />
           </Grid>
-            {/* --- SECCIÃ“N: MATERIAL DE LA CALZADA --- */}
+            {/* --- SECCIÃƒâ€œN: MATERIAL DE LA CALZADA --- */}
             <Grid size={{ xs: 12 }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>
                 MATERIAL DE LA CALZADA
             </Typography>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
               <Controller
                 name="materialCalzada"
                 control={control}
@@ -631,6 +753,7 @@ const FormularioHechoVial = () => {
             </Grid>
           <Grid size={{ xs: 12 }}><Divider /></Grid>
           {/* --- TIPO DE SINIESTRO --- */}
+
           <Grid size={{ xs: 12, md: 6 }}>
             <Controller
               name="tipoSiniestro"
@@ -659,7 +782,8 @@ const FormularioHechoVial = () => {
             />
           </Grid>
           {tipoSiniestro === "COLISION" && (
-            <Grid size={{ xs: 12, md: 6 }}>
+
+          <Grid size={{ xs: 12, md: 6 }}>
               <Controller
                 name="tipoColision"
                 control={control}
@@ -669,21 +793,21 @@ const FormularioHechoVial = () => {
                     {...field}
                     select
                     fullWidth
-                    label="Tipo de ColisiÃ³n"
+                    label="Tipo de Colision"
                     error={!!fieldState.error}
                     helperText={fieldState.error?.message}
                   >
                     <MenuItem value="FRONTAL">FRONTAL</MenuItem>
                     <MenuItem value="ALCANCE">POR ALCANCE</MenuItem>
                     <MenuItem value="LATERAL">LATERAL</MenuItem>
-                    <MenuItem value="ANGULO">EN ÃNGULO</MenuItem>
+                    <MenuItem value="ANGULO">EN ANGULO</MenuItem>
                   </TextField>
                 )}
               />
             </Grid>
           )}
 
-        {/* --- SECCIÃ“N: POSIBLES CAUSAS DEL SINIESTRO --- */}
+        {/* --- SECCIÃƒâ€œN: POSIBLES CAUSAS DEL SINIESTRO --- */}
         <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2 }}>
             POSIBLES CAUSAS DEL SINIESTRO VIAL
@@ -704,13 +828,13 @@ const FormularioHechoVial = () => {
               options={[
                 { id: "EXCESO DE VELOCIDAD", label: "EXCESO DE VELOCIDAD" },
                 { id: "MANIOBRA RIESGOSA", label: "MANIOBRA RIESGOSA" },
-                { id: "VIOLACION DEL SEMAFORO", label: "VIOLACIÃ“N DEL SEMAFORO" },
+                { id: "VIOLACION DEL SEMAFORO", label: "VIOLACION DEL SEMAFORO" },
                 { id: "NO RESPETO DE LA PRIORIDAD", label: "NO RESPETO DE LA PRIORIDAD" },
                 { id: "GIRO A LA IZQUIERDA/DERECHA", label: "GIRO A LA IZQUIERDA/DERECHA" },
-                { id: "INVASION DE CARRIL CONTRARIO", label: "INVASIÃ“N DE CARRIL CONTRARIO" },
-                { id: "PERDIDA DE CONTROL", label: "PÃ‰RDIDA DE CONTROL" },
+                { id: "INVASION DE CARRIL CONTRARIO", label: "INVASION DE CARRIL CONTRARIO" },
+                { id: "PERDIDA DE CONTROL", label: "PERDIDA DE CONTROL" },
                 { id: "PRESENCIA DE ALCOHOL Y/O DROGAS", label: "PRESENCIA DE ALCOHOL Y/O DROGAS" },
-                { id: "CANSANCIO/FATIGA/SUEÃ‘O", label: "CANSANCIO / FATIGA / SUEÃ‘O" },
+                { id: "CANSANCIO/FATIGA/SUEÑO", label: "CANSANCIO / FATIGA / SUEÑO" },
                 { id: "DISTRACCION", label: "DISTRACCION" },
                 { id: "PEATON IMPRUDENTE", label: "PEATON IMPRUDENTE" },
                 { id: "FALLA EN LA VIA", label: "FALLA EN LA VIA" },
@@ -772,7 +896,7 @@ const FormularioHechoVial = () => {
             Agregar otra unidad
           </Button>
 
-          {/* --- SÃNTESIS FINAL --- */}
+          {/* --- SÃƒÂNTESIS FINAL --- */}
           <Grid size={{ xs: 12 }}>
             <TextField 
               fullWidth 
@@ -805,3 +929,31 @@ const FormularioHechoVial = () => {
 };
 
 export default FormularioHechoVial;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
