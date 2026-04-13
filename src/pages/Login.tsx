@@ -29,6 +29,8 @@ import { loginAction } from "../redux/slice/AuthSlice";
 export default function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+  const TWO_FACTOR_CHALLENGE_STORAGE_KEY = "sv_2fa_challenge_id";
+  const TWO_FACTOR_MESSAGE_STORAGE_KEY = "sv_2fa_message";
 
   const [data, setData] = useState<AuthenticationRequest>({
     username: "",
@@ -54,6 +56,28 @@ export default function Login() {
 
     try {
       const authResponse = await login(data);
+
+      if (authResponse.requiresTwoFactor) {
+        const challengeId = authResponse.challengeId ?? "";
+        if (!challengeId) {
+          setErrorMessage("No se pudo iniciar la verificación en dos pasos. Intenta nuevamente.");
+          return;
+        }
+
+        sessionStorage.setItem(TWO_FACTOR_CHALLENGE_STORAGE_KEY, challengeId);
+        sessionStorage.setItem(TWO_FACTOR_MESSAGE_STORAGE_KEY, authResponse.message ?? "");
+        navigate("/verify", {
+          state: { challengeId, message: authResponse.message ?? "" },
+          replace: true,
+        });
+        return;
+      }
+
+      if (!authResponse.jwt) {
+        setErrorMessage("No se recibió el token de autenticación. Intenta nuevamente.");
+        return;
+      }
+
       dispatch(loginAction(authResponse.jwt));
       navigate("/dashboard");
     } catch (error) {

@@ -17,6 +17,7 @@ import { protectedRoutes } from './routes/ProtectedRoutes'
 
 // 1. Carga diferida de componentes (Lazy Imports)
 const Login = lazy(() => import('./pages/Login'));
+const Verify = lazy(() => import('./pages/Verify'));
 const ForbiddenPage = lazy(() => import('./pages/Forbidden'));
 /*const ActaResumenTable = lazy(() => import('./pages/ActaResumenTabla'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -98,6 +99,7 @@ function App() {
             <Suspense fallback={<PageLoader />}>
                 <Routes>
                   <Route path="/" element={<Login />} />
+                  <Route path="/verify" element={<Verify />} />
                   <Route path="/forbidden" element={<ForbiddenPage />} />
 
                   {Object.entries(groupedRoutes).map(([key, routes]) => (
