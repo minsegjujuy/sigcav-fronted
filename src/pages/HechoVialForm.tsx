@@ -109,7 +109,7 @@ const FormularioHechoVial = () => {
     //danosMateriales, zona, y victimaFatal  son undefined si no los selcciono explicitamente
     console.log("Datos capturados:", payload);
     await guardarhechoVial(payload);
-    SnackbarUtilities.success('Se guardÃƒÂ³ correctamente el hecho vial');
+    SnackbarUtilities.success('Hecho vial guardado correctamente');
     limpiarHechoVial();
   };
   const handleMapSelect = async (point: UbicacionRequest) => {
