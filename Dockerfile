@@ -1,5 +1,5 @@
 # Etapa 1: Build de la aplicación React
-FROM node:18-alpine as build
+FROM node:22-alpine as build
 
 # Es mejor usar /app para evitar conflictos en la raíz
 WORKDIR /app
