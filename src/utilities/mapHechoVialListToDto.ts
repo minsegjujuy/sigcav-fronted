@@ -117,6 +117,7 @@ const mapProtagonista = (p: Protagonista | AnyRecord): Protagonista => {
     ),
 
     licenciaNro: str(raw["licenciaNro"]),
+    licenciaTipo: str(raw["licenciaTipo"]),
     municipio: str(raw["municipio"]),
     licenciaClase: str(
       raw["licenciaClase"] ?? raw["tipoLiciencia"] ?? raw["tipoLicencia"] ?? raw["tipo_licencia"]
@@ -177,6 +178,7 @@ export function mapHechoVialListDtoToForm(dto: HechoVialListDto): HechoVialForm 
     grupo: dto.grupo,
     fecha: fecha ?? "",
     hora: horaCompleta ? horaCompleta.substring(0, 5) : "",
+    comisaria: dto.comisaria,
 
     ubicacionReq: buildUbicacionReq(dto),
 
