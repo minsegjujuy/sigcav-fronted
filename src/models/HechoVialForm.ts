@@ -7,6 +7,7 @@ export interface HechoVialForm {
   grupo: number;
   fecha: string; //obligatorio
   hora: string; //obligatorio
+  comisaria: string;
   ubicacionReq: UbicacionRequest; //obligatorio
   victimaFatal: string;
   danosMateriales: string;
@@ -72,6 +73,7 @@ export interface Protagonista {
   conductorFechaNacimiento: string;
   licenciaNro: string;
   municipio: string;
+  licenciaTipo: string;
   licenciaClase: string;
   licenciaEstado: 'VIGENTE' | 'VENCIDA' | 'NO_POSEE' | 'NO POSEE' | 'SD';
   // Personal de Seguridad (Opcional)

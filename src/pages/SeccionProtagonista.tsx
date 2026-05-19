@@ -46,7 +46,7 @@ export const SeccionProtagonistas = ({ control, register, watch }: { control: an
 
       {fields.map((field, index) => {
         const esFuerza = watch(`protagonistas.${index}.esFuerzaSeguridad`);
-        const licenciaClase = watch(`protagonistas.${index}.licenciaClase`);
+        const licenciaTipo = watch(`protagonistas.${index}.licenciaTipo`);
         return (
           <Paper key={field.id} sx={{ p: 3, mb: 4, borderLeft: '6px solid', borderColor: 'primary.main' }} elevation={2}>
           <Grid container spacing={3}>
@@ -303,9 +303,9 @@ export const SeccionProtagonistas = ({ control, register, watch }: { control: an
             />
           </Grid>
             {/* Licencia */}
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Controller
-                name={`protagonistas.${index}.licenciaClase`}
+                name={`protagonistas.${index}.licenciaTipo`}
                 control={control}
                 defaultValue=""
                 render={({ field, fieldState }) => (
@@ -317,10 +317,38 @@ export const SeccionProtagonistas = ({ control, register, watch }: { control: an
                     error={!!fieldState.error}
                     helperText={fieldState.error?.message}
                   >
-                    <MenuItem value="MUNICIPAL">MUNICIPAL</MenuItem>
-                    <MenuItem value="PROVINCIAL">PROVINCIAL</MenuItem>
                     <MenuItem value="NACIONAL">NACIONAL</MenuItem>
-                    <MenuItem value="EXTRANJERA">EXTRANJERA</MenuItem>
+                    <MenuItem value="MUNICIPAL">MUNICIPAL</MenuItem>
+                  </TextField>
+                )}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Controller
+                name={`protagonistas.${index}.licenciaClase`}
+                control={control}
+                defaultValue=""
+                render={({ field, fieldState }) => (
+                  <TextField
+                    {...field}
+                    select
+                    fullWidth
+                    label="Clase de licencia"
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                  >
+                    <MenuItem value="A">A</MenuItem>
+                    <MenuItem value="A.1">A.1</MenuItem>
+                    <MenuItem value="B">B</MenuItem>
+                    <MenuItem value="B.1">B.1</MenuItem>
+                    <MenuItem value="B.2">B.2</MenuItem>
+                    <MenuItem value="C">C</MenuItem>
+                    <MenuItem value="D">D</MenuItem>
+                    <MenuItem value="D.1">D.1</MenuItem>
+                    <MenuItem value="D.2">D.2</MenuItem>
+                    <MenuItem value="E">E</MenuItem>
+                    <MenuItem value="F">F</MenuItem>
+                    <MenuItem value="G">G</MenuItem>
                   </TextField>
                 )}
               />
@@ -328,10 +356,10 @@ export const SeccionProtagonistas = ({ control, register, watch }: { control: an
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField fullWidth label="Licencia Nro" {...register(`protagonistas.${index}.licenciaNro`)} />
             </Grid>
-            {licenciaClase === 'MUNICIPAL' && (
+            {licenciaTipo === 'MUNICIPAL' && (
               <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth label="Municipio" {...register(`protagonistas.${index}.municipio`)} />
-            </Grid>
+                <TextField fullWidth label="Municipio" {...register(`protagonistas.${index}.municipio`)} />
+              </Grid>
             )}
             <Grid size={{ xs: 12, md: 4 }}>
               <Controller
