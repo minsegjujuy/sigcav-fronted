@@ -50,6 +50,7 @@ const FormularioHechoVial = () => {
       victimaFatal: "NO",
       zona: "URBANA",
       danosMateriales: "SI",
+      comisaria: "",
       unidades: [
         {
           unidad: "",
@@ -312,6 +313,10 @@ const FormularioHechoVial = () => {
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField fullWidth type="time" label="Hora" InputLabelProps={{ shrink: true }} {...register("hora")} />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField fullWidth label="Comisaría" {...register("comisaria")} />
           </Grid>
           <MapaJujuy onSelect={handleMapSelect} initialValue={hechoVial?.ubicacionReq} />
 
