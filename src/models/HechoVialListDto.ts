@@ -28,4 +28,5 @@ export interface HechoVialListDto {
   puesto: string;
   unidades: UnidadInterviniente[];
   usuario: string;
+  comisaria: string;
 }
