@@ -12,14 +12,13 @@ import {
   Typography,
 } from "@mui/material";
 import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
-import ReplayOutlinedIcon from "@mui/icons-material/ReplayOutlined";
 import ArrowBackOutlinedIcon from "@mui/icons-material/ArrowBackOutlined";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { AppDispatch } from "../redux/store/Store";
 import { useDispatch } from "react-redux";
 import { loginAction } from "../redux/slice/AuthSlice";
-import { resend, verify } from "../services/AuthService";
+import { verify } from "../services/AuthService";
 import type { TwoFactorVerifyRequest } from "../models/AuthenticationResponse";
 
 type VerifyLocationState = {
@@ -36,18 +35,18 @@ export default function Verify() {
   const TWO_FACTOR_MESSAGE_STORAGE_KEY = "sv_2fa_message";
   const TWO_FACTOR_RESEND_UNTIL_STORAGE_KEY = "sv_2fa_resend_until";
   const OTP_LENGTH = 6;
-  const RESEND_COOLDOWN_SECONDS = 60;
+  //const RESEND_COOLDOWN_SECONDS = 60;
 
   const state = (location.state as VerifyLocationState | null) ?? null;
 
   const [challengeId, setChallengeId] = useState<string>("");
   const [otp, setOtp] = useState<string[]>(() => Array.from({ length: OTP_LENGTH }, () => ""));
   const [isVerifying, setIsVerifying] = useState(false);
-  const [isResending, setIsResending] = useState(false);
+  //const [isResending, setIsResending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
-  const [resendUntilMs, setResendUntilMs] = useState<number | null>(null);
-  const [resendSecondsLeft, setResendSecondsLeft] = useState(0);
+  //const [resendUntilMs, setResendUntilMs] = useState<number | null>(null);
+  //const [resendSecondsLeft, setResendSecondsLeft] = useState(0);
   const otpRefs = useRef<Array<HTMLInputElement | null>>([]);
 
   const code = useMemo(() => otp.join(""), [otp]);
@@ -103,20 +102,20 @@ export default function Verify() {
       return;
     }
 
-    const storedResendUntilRaw = sessionStorage.getItem(TWO_FACTOR_RESEND_UNTIL_STORAGE_KEY);
+    /*const storedResendUntilRaw = sessionStorage.getItem(TWO_FACTOR_RESEND_UNTIL_STORAGE_KEY);
     const storedResendUntilMs = storedResendUntilRaw ? Number(storedResendUntilRaw) : NaN;
     if (Number.isFinite(storedResendUntilMs) && storedResendUntilMs > Date.now()) {
       setResendUntilMs(storedResendUntilMs);
     } else {
       sessionStorage.removeItem(TWO_FACTOR_RESEND_UNTIL_STORAGE_KEY);
-    }
+    }*/
 
     setChallengeId(nextChallengeId);
     setInfoMessage(initialInfoMessage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
+  /*useEffect(() => {
     if (!resendUntilMs) {
       setResendSecondsLeft(0);
       return;
@@ -136,7 +135,7 @@ export default function Verify() {
     tick();
     const id = window.setInterval(tick, 250);
     return () => window.clearInterval(id);
-  }, [resendUntilMs]);
+  }, [resendUntilMs]);*/
 
   const handleBackToLogin = () => {
     sessionStorage.removeItem(TWO_FACTOR_CHALLENGE_STORAGE_KEY);
@@ -187,7 +186,7 @@ export default function Verify() {
     }
   };
 
-  const handleResend = async () => {
+  /*const handleResend = async () => {
     setErrorMessage(null);
     setInfoMessage(null);
 
@@ -220,7 +219,7 @@ export default function Verify() {
     } finally {
       setIsResending(false);
     }
-  };
+  };*/
 
   return (
     <Box
@@ -355,27 +354,6 @@ export default function Verify() {
                           </Box>
                         ) : (
                           "Verificar"
-                        )}
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="outlined"
-                        fullWidth
-                        disabled={isResending || isVerifying || resendSecondsLeft > 0}
-                        startIcon={!isResending ? <ReplayOutlinedIcon /> : undefined}
-                        onClick={handleResend}
-                        sx={{ py: 1.1, fontWeight: 700, borderRadius: 2 }}
-                      >
-                        {isResending ? (
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <CircularProgress size={18} color="inherit" />
-                            Reenviando...
-                          </Box>
-                        ) : resendSecondsLeft > 0 ? (
-                          `Reenviar código (${resendSecondsLeft}s)`
-                        ) : (
-                          "Reenviar código"
                         )}
                       </Button>
 
