@@ -20,6 +20,7 @@ import { useDispatch } from "react-redux";
 import { loginAction } from "../redux/slice/AuthSlice";
 import { verify } from "../services/AuthService";
 import type { TwoFactorVerifyRequest } from "../models/AuthenticationResponse";
+import { setAccessToken } from "../utilities/tokenStore";
 
 type VerifyLocationState = {
   challengeId?: string;
@@ -176,6 +177,7 @@ export default function Verify() {
       sessionStorage.removeItem(TWO_FACTOR_CHALLENGE_STORAGE_KEY);
       sessionStorage.removeItem(TWO_FACTOR_MESSAGE_STORAGE_KEY);
       sessionStorage.removeItem(TWO_FACTOR_RESEND_UNTIL_STORAGE_KEY);
+      setAccessToken(response.jwt);
       dispatch(loginAction(response.jwt));
       navigate("/dashboard", { replace: true });
     } catch (err) {

@@ -25,6 +25,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../redux/store/Store";
 import { logout } from "../redux/slice/AuthSlice";
+import { clearAccessToken } from "../utilities/tokenStore";
 
 type NavbarProps = {
   mode: "light" | "dark";
@@ -53,6 +54,7 @@ const Navbar: React.FC<NavbarProps> = ({ mode, onModeChange }) => {
   };
 
   const handleLogout = () => {
+    clearAccessToken();
     dispatch(logout());
     navigate("/");
   };

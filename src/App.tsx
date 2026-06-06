@@ -6,7 +6,7 @@ import { ArticuloProvider } from './context/ArticuloContext'
 import { RequireAuth } from './guards/RequireGuard'
 import Navbar from './components/Navbar'
 import BackgroundFX from './components/ui/BackgroundFX'
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Box, CircularProgress, createTheme, CssBaseline, ThemeProvider } from '@mui/material'
 import { ActaProvider } from './context/ActaResumenContext'
 import ReloadPrompt from './components/ui/modal/ReloadPrompt'
@@ -14,6 +14,9 @@ import { HechoVialProvider } from './context/HechoVialContext'
 //import ActaSalienteDetalle from './pages/RegistrosActaSaliente'
 import { ActaSalienteProvider } from './context/ActaSalienteContext'
 import { protectedRoutes } from './routes/ProtectedRoutes'
+import { useAuth } from './hooks/useAuth'
+import { useDispatch } from 'react-redux'
+import { setAuthInitialized } from './redux/slice/AuthSlice'
 
 // 1. Carga diferida de componentes (Lazy Imports)
 const Login = lazy(() => import('./pages/Login'));
@@ -32,6 +35,9 @@ const ActaSalienteTable = lazy(() => import('./pages/ActaSalienteTable'));*/
 
 function App() {
   const THEME_MODE_STORAGE_KEY = 'themeMode';
+  const { initAuth, isInitialized } = useAuth();
+  const dispatch = useDispatch();
+  const bootstrappedRef = useRef(false);
 
   const [mode, setMode] = useState<"light" | "dark">(() => {
     const saved = localStorage.getItem(THEME_MODE_STORAGE_KEY);
@@ -41,6 +47,18 @@ function App() {
   useEffect(() => {
     localStorage.setItem(THEME_MODE_STORAGE_KEY, mode);
   }, [mode]);
+
+  useEffect(() => {
+    if (bootstrappedRef.current) return;
+    bootstrappedRef.current = true;
+
+    const initialize = async () => {
+      dispatch(setAuthInitialized(false));
+      await initAuth();
+    };
+
+    initialize();
+  }, [dispatch, initAuth]);
 
   // useMemo para evitar recrear el tema en cada render
   const theme = useMemo(
@@ -88,6 +106,12 @@ function App() {
         <Box sx={{ position: 'relative', zIndex: 1, minHeight: '100vh' }}>
           <ReloadPrompt />
           <SnackbarProvider>
+        {!isInitialized ? (
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+            <CircularProgress />
+          </Box>
+        ) : (
+        <>
         <SnackbarUtilitiesConfigurator />
         <ArticuloProvider>
           <Navbar mode={mode} onModeChange={setMode} />
@@ -118,6 +142,8 @@ function App() {
             </HechoVialProvider>
           </ActaProvider>
         </ArticuloProvider>
+        </>
+        )}
       </SnackbarProvider>
         </Box>
       </ThemeProvider>

@@ -1,8 +1,7 @@
-import { store, type RootState } from "../redux/store/Store";
+import { getAccessToken } from "./tokenStore";
 
-export function getAuthHeader(){
-    const state: RootState = store.getState();
-    const token = state.auth.token ?? localStorage.getItem("token");
+export function getAuthHeader() {
+    const token = getAccessToken();
 
     if (token) {
         return {
