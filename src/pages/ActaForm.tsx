@@ -240,6 +240,7 @@ export default function ActaForm() {
   const [selected, setSelected] = useState<string[]>([]);
   const [otroTexto, setOtroTexto] = useState("");
   const [activeTab, setActiveTab] = useState(0);
+  const usesTestigosOnly = Boolean(form.infractorFugado);
   const hasValidInfractorDni = /^[0-9]{8}$/.test(form.infractor.dni || "");
   const tipoRodadoActual = form.vehiculo.tipoRodado ?? "";
   const tipoRodadoFueraDeLista = Boolean(tipoRodadoActual) && !TIPO_RODADO.includes(tipoRodadoActual);
@@ -515,7 +516,26 @@ export default function ActaForm() {
         actaToSend.idPuesto = Number(selectedPuesto);
         actaToSend.articulos = articulosSeleccionados;
 
-        if (!isEditingActa) {
+        if (actaToSend.infractorFugado) {
+          const nextTestigos = ensureTwoTestigos(firma.testigos);
+          const witnessErrors: Record<string, string> = {};
+
+          nextTestigos.forEach((t, i) => {
+            if (!t.nombre || t.nombre.trim() === "") witnessErrors[`testigos.${i}.nombre`] = "Nombre obligatorio";
+            if (!t.apellido || t.apellido.trim() === "") witnessErrors[`testigos.${i}.apellido`] = "Apellido obligatorio";
+            if (!/^[0-9]{8}$/.test(t.dni || "")) witnessErrors[`testigos.${i}.dni`] = "DNI debe tener 8 digitos";
+          });
+
+          if (Object.keys(witnessErrors).length > 0) {
+            setErrors((prev) => ({ ...prev, ...witnessErrors }));
+            setActiveTab(3);
+            SnackbarUtilities.error("Debe completar los 2 testigos");
+            return;
+          }
+
+          actaToSend.testigos = nextTestigos;
+          delete (actaToSend as Partial<ActaRequest>).firma;
+        } else if (!isEditingActa) {
           const capturedFirmaInfractorBase64 =
             firmaInfractorRef.current?.getDataUrl() ?? firma.firmaInfractorBase64;
           const capturedFirmaOficialBase64 =
@@ -566,7 +586,7 @@ export default function ActaForm() {
 
           actaToSend.firma = firmaToSend;
         } else {
-          delete (actaToSend as any).firma;
+          delete (actaToSend as Partial<ActaRequest>).firma;
         }
         
         console.log('acta ', actaToSend);
@@ -1039,7 +1059,7 @@ export default function ActaForm() {
             <Tab label="Acta" sx={activeTab !== 0 ? tabPulseSx : undefined} />
             <Tab label="Infractor" sx={activeTab !== 1 ? tabPulseSx : undefined} />
             <Tab label="Vehiculo" disabled={!hasValidInfractorDni} sx={activeTab !== 2 && hasValidInfractorDni ? tabPulseSx : undefined} />
-            <Tab label="Firmas" disabled={!hasValidInfractorDni || isEditingActa} sx={activeTab !== 3 && hasValidInfractorDni ? tabPulseSx : undefined} />
+            <Tab label={usesTestigosOnly ? "Testigos" : "Firmas"} disabled={!hasValidInfractorDni || isEditingActa} sx={activeTab !== 3 && hasValidInfractorDni ? tabPulseSx : undefined} />
           </Tabs>
 
           {activeTab === 0 && (
@@ -1628,6 +1648,101 @@ export default function ActaForm() {
                 gridColumn: "1 / -1",
               }}
             >
+              {usesTestigosOnly ? (
+                <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, gridColumn: "1 / -1" }}>
+                  <Typography variant="h6" sx={{ mb: 1 }}>
+                    Testigos
+                  </Typography>
+
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    El infractor se fug&oacute;, por lo que no se cargan firmas. Completa los dos testigos obligatorios.
+                  </Typography>
+
+                  <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" }, gap: 2 }}>
+                    <Box sx={{ p: 1.5, border: 1, borderColor: "divider", borderRadius: 2 }}>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                        Testigo 1
+                      </Typography>
+                      <TextField
+                        label="Nombre *"
+                        fullWidth
+                        margin="normal"
+                        value={firma.testigos?.[0]?.nombre ?? ""}
+                        onChange={(e) => handleTestigoChange(0, "nombre", e.target.value)}
+                        error={!!errors["testigos.0.nombre"]}
+                        helperText={errors["testigos.0.nombre"]}
+                      />
+                      <TextField
+                        label="Apellido *"
+                        fullWidth
+                        margin="normal"
+                        value={firma.testigos?.[0]?.apellido ?? ""}
+                        onChange={(e) => handleTestigoChange(0, "apellido", e.target.value)}
+                        error={!!errors["testigos.0.apellido"]}
+                        helperText={errors["testigos.0.apellido"]}
+                      />
+                      <TextField
+                        label="DNI *"
+                        fullWidth
+                        margin="normal"
+                        value={firma.testigos?.[0]?.dni ?? ""}
+                        onChange={(e) => handleTestigoChange(0, "dni", e.target.value)}
+                        error={!!errors["testigos.0.dni"]}
+                        helperText={errors["testigos.0.dni"]}
+                      />
+                      <TextField
+                        label="Domicilio"
+                        fullWidth
+                        margin="normal"
+                        value={firma.testigos?.[0]?.domicilio ?? ""}
+                        onChange={(e) => handleTestigoChange(0, "domicilio", e.target.value)}
+                      />
+                    </Box>
+
+                    <Box sx={{ p: 1.5, border: 1, borderColor: "divider", borderRadius: 2 }}>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                        Testigo 2
+                      </Typography>
+                      <TextField
+                        label="Nombre *"
+                        fullWidth
+                        margin="normal"
+                        value={firma.testigos?.[1]?.nombre ?? ""}
+                        onChange={(e) => handleTestigoChange(1, "nombre", e.target.value)}
+                        error={!!errors["testigos.1.nombre"]}
+                        helperText={errors["testigos.1.nombre"]}
+                      />
+                      <TextField
+                        label="Apellido *"
+                        fullWidth
+                        margin="normal"
+                        value={firma.testigos?.[1]?.apellido ?? ""}
+                        onChange={(e) => handleTestigoChange(1, "apellido", e.target.value)}
+                        error={!!errors["testigos.1.apellido"]}
+                        helperText={errors["testigos.1.apellido"]}
+                      />
+                      <TextField
+                        label="DNI *"
+                        fullWidth
+                        margin="normal"
+                        value={firma.testigos?.[1]?.dni ?? ""}
+                        onChange={(e) => handleTestigoChange(1, "dni", e.target.value)}
+                        error={!!errors["testigos.1.dni"]}
+                        helperText={errors["testigos.1.dni"]}
+                      />
+                      <TextField
+                        label="Domicilio"
+                        fullWidth
+                        margin="normal"
+                        value={firma.testigos?.[1]?.domicilio ?? ""}
+                        onChange={(e) => handleTestigoChange(1, "domicilio", e.target.value)}
+                      />
+                    </Box>
+                  </Box>
+                </Paper>
+              ) : (
+                <>
+                  {/* Bloque original de firmas, se conserva para actas sin infractor fugado */}
               <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
                 <Typography variant="h6" sx={{ mb: 1 }}>
                   Firma del infractor
@@ -1764,6 +1879,8 @@ export default function ActaForm() {
                   </FormHelperText>
                 )}
               </Paper>
+                </>
+              )}
             </Box>
           )}
                     <Box
