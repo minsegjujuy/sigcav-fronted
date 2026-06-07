@@ -56,3 +56,13 @@ export const refresh = async (): Promise<AuthenticationResponse> => {
 
   return response.data;
 };
+
+export const logout = async (): Promise<void> => {
+  await axios.post(
+    `${baseURL}/logout`,
+    {},
+    {
+      withCredentials: true,
+    }
+  );
+};

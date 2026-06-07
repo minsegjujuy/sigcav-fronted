@@ -3,6 +3,8 @@ import { SnackbarUtilities } from "../utilities/SnackbarUtilities";
 import { getValidationError } from "./GetValidationErrors";
 import { refresh } from "../services/AuthService";
 import { clearAccessToken, getAccessToken, setAccessToken } from "../utilities/tokenStore";
+import { store } from "../redux/store/Store";
+import { logout as logoutAction, setAuthInitialized } from "../redux/slice/AuthSlice";
 
 /*export const api = axios.create({
   headers: { "Content-Type": "application/json" },
@@ -43,6 +45,7 @@ export const api = axios.create({
 });
 
 type RetriableRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+let refreshTokenPromise: Promise<string> | null = null;
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = getAccessToken();
@@ -57,13 +60,19 @@ api.interceptors.response.use(
   (res) => res,
   async (error: AxiosError<{ message?: string }>) => {
     const originalRequest = error.config as RetriableRequestConfig | undefined;
-
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
-        const response = await refresh();
-        const newAccessToken = response.jwt;
+        if (!refreshTokenPromise) {
+          refreshTokenPromise = refresh()
+            .then((response) => response.jwt)
+            .finally(() => {
+              refreshTokenPromise = null;
+            });
+        }
+
+        const newAccessToken = await refreshTokenPromise;
 
         setAccessToken(newAccessToken);
 
@@ -72,7 +81,9 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         clearAccessToken();
-        window.location.href = "/";
+        store.dispatch(logoutAction());
+        store.dispatch(setAuthInitialized(true));
+        window.location.replace("/");
         return Promise.reject(refreshError);
       }
     }

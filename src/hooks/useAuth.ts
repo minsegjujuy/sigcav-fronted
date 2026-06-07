@@ -2,8 +2,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { useCallback } from "react";
 import type { RootState } from "../redux/store/Store";
 import type { AuthenticationRequest } from "../models/AuthenticationRequest";
-import { login, refresh, verify } from "../services/AuthService";
-import { loginAction, logout, setAuthInitialized } from "../redux/slice/AuthSlice";
+import { login, logout as logoutRequest, refresh, verify } from "../services/AuthService";
+import { loginAction, logout as logoutAction, setAuthInitialized } from "../redux/slice/AuthSlice";
 import type { AuthenticationResponse, TwoFactorVerifyRequest } from "../models/AuthenticationResponse";
 import { clearAccessToken, setAccessToken } from "../utilities/tokenStore";
 
@@ -46,33 +46,32 @@ export const useAuth = () => {
 
     } catch {
       clearAccessToken();
-      dispatch(logout());
+      dispatch(logoutAction());
     } finally {
       dispatch(setAuthInitialized(true));
     }
   }, [dispatch]);
 
-  // LOGOUT
-  /*const logout = async () => {
+  const logoutUser = useCallback(async () => {
     try {
-      await axios.post(
-        "http://localhost:8080/auth/logout",
-        {},
-        { withCredentials: true }
-      );
+      await logoutRequest();
     } catch {
-      // incluso si falla, limpiamos todo
+      // si el backend ya invalidó la cookie, seguimos limpiando localmente
     }
 
+    sessionStorage.removeItem("sv_2fa_challenge_id");
+    sessionStorage.removeItem("sv_2fa_message");
+    sessionStorage.removeItem("sv_2fa_resend_until");
     clearAccessToken();
     dispatch(logoutAction());
-  };*/
+    dispatch(setAuthInitialized(true));
+  }, [dispatch]);
 
   return {
     ...auth,
     loginUser,
     verify2FA,
-    //logout,
-    initAuth
+    logoutUser,
+    initAuth,
   };
 };
