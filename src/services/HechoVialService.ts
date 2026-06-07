@@ -28,7 +28,7 @@ export const listarHechosViales = async (params: {
   victimaFatal?:string,
   soloLesionados?:boolean
 }) => {
-  const { data } = await axios.get<PageResponse<HechoVialListDto>>(
+  const { data } = await api.get<PageResponse<HechoVialListDto>>(
     `${baseURL}/hechos-viales`,
     {params, ...getAuthHeader()}
   );

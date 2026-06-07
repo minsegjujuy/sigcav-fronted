@@ -3,7 +3,7 @@ import type { PayloadAction } from "@reduxjs/toolkit";
 import { parseJwt2 } from "../../utilities/jwt";
 
 
-interface AuthState {
+/*interface AuthState {
   name: string | null;
   rol: string | null;
   token: string | null;
@@ -32,4 +32,44 @@ const authSlice = createSlice({
 });
 
 export const { loginAction, logout } = authSlice.actions;
+export default authSlice.reducer;*/
+interface AuthState {
+  name: string | null;
+  rol: string | null;
+  isAuthenticated: boolean;
+  isInitialized: boolean;
+}
+
+const initialState: AuthState = {
+  name: null,
+  rol: null,
+  isAuthenticated: false,
+  isInitialized: false,
+};
+
+const authSlice = createSlice({
+  name: "auth",
+  initialState,
+  reducers: {
+    loginAction(state, action: PayloadAction<string>) {
+      const payload = parseJwt2<any>(action.payload);
+
+      state.name = payload?.name ?? null;
+      state.rol = payload?.rol ?? null;
+      state.isAuthenticated = true;
+      state.isInitialized = true;
+    },
+    logout(state) {
+      state.name = null;
+      state.rol = null;
+      state.isAuthenticated = false;
+      state.isInitialized = true;
+    },
+    setAuthInitialized(state, action: PayloadAction<boolean>) {
+      state.isInitialized = action.payload;
+    },
+  },
+});
+
+export const { loginAction, logout, setAuthInitialized } = authSlice.actions;
 export default authSlice.reducer;

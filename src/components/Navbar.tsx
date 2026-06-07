@@ -22,9 +22,7 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import NoteAddIcon from "@mui/icons-material/NoteAdd";
 import LocalPoliceIcon from "@mui/icons-material/LocalPolice";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import type { AppDispatch } from "../redux/store/Store";
-import { logout } from "../redux/slice/AuthSlice";
+import { useAuth } from "../hooks/useAuth";
 
 type NavbarProps = {
   mode: "light" | "dark";
@@ -45,15 +43,15 @@ const menuItems: MenuItem[] = [
 
 const Navbar: React.FC<NavbarProps> = ({ mode, onModeChange }) => {
   const [openDrawer, setOpenDrawer] = useState(false);
-  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const { logoutUser } = useAuth();
 
   const handleModeToggle = (_event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
     onModeChange(checked ? "dark" : "light");
   };
 
-  const handleLogout = () => {
-    dispatch(logout());
+  const handleLogout = async () => {
+    await logoutUser();
     navigate("/");
   };
 

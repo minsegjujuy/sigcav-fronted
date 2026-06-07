@@ -18,17 +18,13 @@ import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { login } from "../services/AuthService";
 import type { AuthenticationRequest } from "../models/AuthenticationRequest";
-import type { AppDispatch } from "../redux/store/Store";
-import { useDispatch } from "react-redux";
-import { loginAction } from "../redux/slice/AuthSlice";
+import { useAuth } from "../hooks/useAuth";
 
 export default function Login() {
   const navigate = useNavigate();
-  const dispatch = useDispatch<AppDispatch>();
   const TWO_FACTOR_CHALLENGE_STORAGE_KEY = "sv_2fa_challenge_id";
   const TWO_FACTOR_MESSAGE_STORAGE_KEY = "sv_2fa_message";
 
@@ -40,6 +36,13 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { loginUser, isAuthenticated, isInitialized } = useAuth();
+
+  useEffect(() => {
+    if (isInitialized && isAuthenticated) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, isInitialized, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -55,8 +58,7 @@ export default function Login() {
     setIsSubmitting(true);
 
     try {
-      const authResponse = await login(data);
-
+      const authResponse = await loginUser(data);
       if (authResponse.requiresTwoFactor) {
         const challengeId = authResponse.challengeId ?? "";
         if (!challengeId) {
@@ -77,8 +79,6 @@ export default function Login() {
         setErrorMessage("No se recibió el token de autenticación. Intenta nuevamente.");
         return;
       }
-
-      dispatch(loginAction(authResponse.jwt));
       navigate("/dashboard");
     } catch (error) {
       console.error(error);
