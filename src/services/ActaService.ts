@@ -1,4 +1,3 @@
-import axios from "axios";
 import { getAuthHeader } from "../utilities/getAuthHeader";
 import type { ActaRequest } from "../models/ActaRequest";
 import type { ActaResumenDto } from "../models/ActaResumenDto";
@@ -34,7 +33,7 @@ export const actualizarActa = async (acta: ActaRequest): Promise<ActaRequest> =>
 
 export const getResumenActas = async (params:Record<string, any>): Promise<PageResponse<ActaResumenDto>> => {
   const newUrl = buildUrl(`${baseURL}/acta/private`, params);
-  const response = await axios.get<PageResponse<ActaResumenDto>>(newUrl, getAuthHeader());
+  const response = await api.get<PageResponse<ActaResumenDto>>(newUrl, getAuthHeader());
   return response.data;
 };
 
@@ -42,7 +41,7 @@ export const getResumenActasPdf = async (params: Record<string, any>) => {
   // Aseguramos que la URL se construya con tus parámetros (filtros y sort)
   const newUrl = buildUrl(`${baseURL}/acta/private/exportacion-pdf`, params);
 
-  const response = await axios({
+  const response = await api({
     url: newUrl,
     method: 'GET',
     ...getAuthHeader(), // Expandimos los headers de autenticación
@@ -54,7 +53,7 @@ export const getResumenActasPdf = async (params: Record<string, any>) => {
 
 export const getResumenActasPersonal = async (params:Record<string, any>): Promise<PageResponse<ActaResumenDto>> => {
   const newUrl = buildUrl(`${baseURL}/acta/private/user`, params);
-  const response = await axios.get<PageResponse<ActaResumenDto>>(newUrl, getAuthHeader());
+  const response = await api.get<PageResponse<ActaResumenDto>>(newUrl, getAuthHeader());
   return response.data;
 };
 
@@ -64,12 +63,12 @@ export const obtenerActasPorDia = async (fi: string, ff: string): Promise<DiasCa
     fechaFin:ff
   }
   const newUrl = buildUrl(`${baseURL}/acta/private/dias`, params);
-  const response = await axios.get<DiasCantidad[]>(newUrl, getAuthHeader());
+  const response = await api.get<DiasCantidad[]>(newUrl, getAuthHeader());
   return response.data;
 }
 
 export const descargarPdfActa = async (nro: string): Promise<Blob> => {
-  const response = await axios.get(`${baseURL}/acta/${nro}/pdf`, {
+  const response = await api.get(`${baseURL}/acta/${nro}/pdf`, {
     responseType: "blob",
     ...getAuthHeader()
   });
@@ -83,7 +82,7 @@ export const obtenerPorcentajeDeActasPorDia = async (fi: string, ff: string): Pr
     fechaFin:ff
   }
   const newUrl = buildUrl(`${baseURL}/acta/private/dias-porcentaje`, params);
-  const response = await axios.get<DiasCantidad[]>(newUrl, getAuthHeader());
+  const response = await api.get<DiasCantidad[]>(newUrl, getAuthHeader());
   return response.data;
 }
 
@@ -93,7 +92,7 @@ export const obtenerActasPorArticulo = async (fi: string, ff: string): Promise<A
     fechaFin:ff
   }
   const newUrl = buildUrl(`${baseURL}/acta/private/articulo`, params);
-  const response = await axios.get<ArticuloCantidad[]>(newUrl, getAuthHeader());
+  const response = await api.get<ArticuloCantidad[]>(newUrl, getAuthHeader());
   return response.data;
 }
 
@@ -103,7 +102,7 @@ export const obtenerActasPorGrupo = async (fi: string, ff: string): Promise<Acta
     fechaFin:ff
   }
   const newUrl = buildUrl(`${baseURL}/acta/private/por-grupo`, params);
-  const response = await axios.get<ActaGrupo[]>(newUrl, getAuthHeader());
+  const response = await api.get<ActaGrupo[]>(newUrl, getAuthHeader());
   return response.data;
 }
 
@@ -113,7 +112,7 @@ export const obtenerActasPorGrupoPorPuesto = async (fi: string, ff: string): Pro
     fechaFin:ff
   }
   const newUrl = buildUrl(`${baseURL}/acta/private/grupos-por-puesto`, params);
-  const response = await axios.get<GrupoInforme[]>(newUrl, getAuthHeader());
+  const response = await api.get<GrupoInforme[]>(newUrl, getAuthHeader());
   return response.data;
 }
 
@@ -123,7 +122,7 @@ export const obtenerTipoDeActasPorPuesto = async (fi: string, ff: string): Promi
     fechaFin:ff
   }
   const newUrl = buildUrl(`${baseURL}/acta/private/tipos-por-puesto`, params);
-  const response = await axios.get<TipoInformeList[]>(newUrl, getAuthHeader());
+  const response = await api.get<TipoInformeList[]>(newUrl, getAuthHeader());
   return response.data;
 }
 
@@ -133,7 +132,7 @@ export const obtenerActasPorNacionalidad = async (fi: string, ff: string): Promi
     fechaFin:ff
   }
   const newUrl = buildUrl(`${baseURL}/acta/private/cantidad-nacionalidad`, params);
-  const response = await axios.get<ReporteActas[]>(newUrl, getAuthHeader());
+  const response = await api.get<ReporteActas[]>(newUrl, getAuthHeader());
   return response.data;
 }
 
@@ -143,7 +142,7 @@ export const obtenerActasPorMotivo = async (fi: string, ff: string): Promise<Rep
     fechaFin:ff
   }
   const newUrl = buildUrl(`${baseURL}/acta/private/cantidad-motivo`, params);
-  const response = await axios.get<ReporteActas[]>(newUrl, getAuthHeader());
+  const response = await api.get<ReporteActas[]>(newUrl, getAuthHeader());
   return response.data;
 }
 
@@ -153,7 +152,7 @@ export const obtenerActasPorProvincia = async (fi: string, ff: string): Promise<
     fechaFin:ff
   }
   const newUrl = buildUrl(`${baseURL}/acta/private/cantidad-provincia`, params);
-  const response = await axios.get<ReporteActas[]>(newUrl, getAuthHeader());
+  const response = await api.get<ReporteActas[]>(newUrl, getAuthHeader());
   return response.data;
 }
 
@@ -163,6 +162,6 @@ export const obtenerActasPorJerarquia = async (fi: string, ff: string): Promise<
     fechaFin:ff
   }
   const newUrl = buildUrl(`${baseURL}/acta/private/cantidad-jerarquia`, params);
-  const response = await axios.get<ReporteActas[]>(newUrl, getAuthHeader());
+  const response = await api.get<ReporteActas[]>(newUrl, getAuthHeader());
   return response.data;
 }
