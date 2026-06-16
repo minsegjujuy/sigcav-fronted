@@ -59,7 +59,7 @@ export const refresh = async (): Promise<AuthenticationResponse> => {
 
 export const logout = async (): Promise<void> => {
   await axios.post(
-    `${baseURL}/logout`,
+    `${baseURL}/auth/logout`,
     {},
     {
       withCredentials: true,

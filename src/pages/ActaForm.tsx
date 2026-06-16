@@ -9,16 +9,8 @@ import BorderColorOutlinedIcon from "@mui/icons-material/BorderColorOutlined";
 import type { ActaRequest } from "../models/ActaRequest";
 import { Box, Button, Checkbox, Container, FormControl, FormControlLabel, FormGroup, FormHelperText, FormLabel, Grid, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, Step, StepLabel, Stepper, Tab, Tabs, TextField, Typography, type SelectChangeEvent } from "@mui/material";
 import type { Articulo } from "../models/Articulo";
-import type { Tipo } from "../models/Tipo";
-import type { Grupo } from "../models/Grupo";
-import type { Ley } from "../models/Ley";
-import { getAllTipoActas } from "../services/TipoActaService";
-import { getGrupos } from "../services/GrupoService";
-import { getLeyes } from "../services/LeyService";
 import { getArticulosByLey } from "../services/ArticuloService";
 import { SnackbarUtilities } from "../utilities/SnackbarUtilities";
-import type { Puesto } from "../models/Puesto";
-import { getPuestos } from "../services/PuestoService";
 import ScrollButton from "../components/ScrollFilter";
 import { findByDni } from "../services/InfractorService";
 import type { Vehiculo } from "../models/Vehiculo";
@@ -45,8 +37,8 @@ import type { OcrDocumentType } from "../services/OcrService";
 import DocumentDataCapture from "../components/modules/DocumentDataCapture";
 import FirmaCapture, { type FirmaCaptureHandle } from "../components/modules/FirmaCapture";
 import type { FirmaDTO, TestigoRequest } from "../models/FirmaDTO";
-import { obtenerJuzgadosParaActa } from "../services/JuzgadoService";
 import type { Juzgado } from "../models/Juzgado";
+import { useGetGruposQuery, useGetjuzgadosQuery, useGetLeyesQuery, useGetPuestosQuery, useGetTiposQuery } from "../redux/api/puestoApi";
 const tabPulse = keyframes`
   0%, 100% {
     opacity: 1;
@@ -170,23 +162,23 @@ const initialState: ActaRequest = {
 export default function ActaForm() {
   const [form, setForm] = useState<ActaRequest>(initialState);
   const [articulos, setArticulos] = useState<Articulo[]>([]);
-  const [puestos, setPuestos] = useState<Puesto[]>([]);
-  const [tipoActa, setTipoActa] = useState<Tipo[]>([]);
   const [selectedPuesto, setSelectedPuesto] = useState<number | ''>('');
   const [selectedTipoActa, setSelectedTipoActa] = useState<number | ''>('');
   const [selectedGrupo, setSelectedGrupo] = useState<number | ''>('');
-  const [grupos, setGrupos] = useState<Grupo[]>([]);
   const [selectedLey, setSelectedLey] = useState<number | ''>('');
   const [articulosSeleccionados, setArticulosSeleccionados] = useState<number[]>([]);
-  const [leyes, setLeyes] = useState<Ley[]>([]);
   const [propietario, setPropietario] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehiculo | null>(null);
   const [unidadesRegionales, setUnidadesRegionales] = useState<UnidadRegional[]>();
   const [localidades, setLocalidades] = useState<Localidad[]>([]);
-  const [juzgados, setJuzgados] = useState<Juzgado[]>();
   const { actaSeleccionada, limpiarActa } = useActa();
+  const { data: puesto = []} = useGetPuestosQuery();
+  const { data: grupo = []} = useGetGruposQuery();
+  const { data: ley = []} = useGetLeyesQuery();
+  const { data: juzgado = []} = useGetjuzgadosQuery();
+  const { data: tipoActa = []} = useGetTiposQuery();
   const isEditingActa = Boolean(actaSeleccionada?.idActa);
   const firmaInfractorRef = useRef<FirmaCaptureHandle | null>(null);
   const firmaOficialRef = useRef<FirmaCaptureHandle | null>(null);
@@ -439,11 +431,6 @@ export default function ActaForm() {
     const data = await obtenerUnidadesRegionalesPorDepartamento(departamento);
     console.log('unidades regionales ', data);
     setUnidadesRegionales(data);
-  }
-
-  const fetchJuzgados = async () => {
-    const data = await obtenerJuzgadosParaActa();
-    setJuzgados(data);
   }
 
 
@@ -711,38 +698,11 @@ export default function ActaForm() {
       return Object.keys(e).length === 0;
       };
 
-  const fetchTipo = async () => {
-    const data = await getAllTipoActas();
-    setTipoActa(data);
-    console.log('tipo acta ', data)
-  }
-
-  const fetchGrupo = async () => {
-    const data = await getGrupos();
-    setGrupos(data);
-    console.log('grupos ', data);
-  }
-
-  const fetchLeyes = async () => {
-    const data = await getLeyes();
-    setLeyes(data);
-    console.log('leyes ', data)
-  }
-
   const fetchArticulosPorLey = async (ley: number) => {
     const data = await getArticulosByLey(ley);
     setArticulos(data);
     console.log('articulo por ley ', data)
   }
-
-  const fetchPuestos = async () => {
-    try {
-      const data = await getPuestos();
-      setPuestos(data);
-    } catch (error) {
-      console.error('Error al obtener puestos', error);
-    }
-  };
 
   const handleMapSelect = async (point: UbicacionRequest) => {
     console.log('ubicacion ', point);
@@ -1027,11 +987,6 @@ export default function ActaForm() {
         setPropietario(true);
       }
     }
-    fetchTipo();
-    fetchGrupo();
-    fetchLeyes();
-    fetchPuestos();
-    fetchJuzgados();
   }, [])
   return (
     <Container maxWidth="md" sx={{ px: { xs: 1.5, sm: 2 } }}>
@@ -1112,7 +1067,7 @@ export default function ActaForm() {
                   label="Puesto"
                   onChange={(e) => {setSelectedPuesto(e.target.value as any); setErrors((er) => { const c = { ...er }; delete c.puesto; return c; }); }}
                   >
-                  {puestos.map((puesto) => (
+                  {puesto.map((puesto) => (
                   <MenuItem key={puesto.idPuesto} value={puesto.idPuesto}>
                   {puesto.nombre}
                   </MenuItem>
@@ -1150,9 +1105,9 @@ export default function ActaForm() {
                     onChange={(e) => { setSelectedGrupo(e.target.value as any); setErrors((er) => { const c = { ...er }; delete c.grupo; return c; }); }}
                     >
                     <MenuItem value="">Seleccione un grupo</MenuItem>
-                    {grupos.map((grupo) => (
-                    <MenuItem key={grupo.idGrupo} value={grupo.idGrupo}>
-                    {grupo.nombre}
+                    {grupo.map((g) => (
+                    <MenuItem key={g.idGrupo} value={g.idGrupo}>
+                    {g.nombre}
                     </MenuItem>
                     ))}
                   </Select>
@@ -1208,7 +1163,7 @@ export default function ActaForm() {
                   }}
                 >
                   <MenuItem value="">Seleccione un juzgado</MenuItem>
-                  {(juzgados ?? [])
+                  {(juzgado ?? [])
                     .filter((j): j is Juzgado & { id: number } => typeof j.id === "number" && Number.isFinite(j.id))
                     .map((j) => (
                       <MenuItem key={j.id} value={String(j.id)}>
@@ -1340,9 +1295,9 @@ export default function ActaForm() {
                 <InputLabel id="ley-select-label">Seleccione una Ley *</InputLabel>
                 <Select labelId="ley-select-label" id="ley-select" value={selectedLey.toString()} label="Seleccione una Ley" onChange={(e) => handleLeyChange(e as any)}>
                 <MenuItem value="">Seleccione una opcion</MenuItem>
-                {leyes.map((ley) => (
-                <MenuItem key={ley.idLey} value={ley.idLey}>
-                {ley.nro}
+                {ley.map((l) => (
+                <MenuItem key={l.idLey} value={l.idLey}>
+                {l.nro}
                 </MenuItem>
                 ))}
                 </Select>

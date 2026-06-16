@@ -21,9 +21,7 @@ import { useForm, Controller, useWatch, useFieldArray } from 'react-hook-form';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { SeccionProtagonistas } from './SeccionProtagonista';
-import { getPuestos } from '../services/PuestoService';
 import { useEffect, useState } from 'react';
-import type { Puesto } from '../models/Puesto';
 import MapaJujuy from '../components/containers/MapaJujuy';
 import type { UbicacionRequest } from '../models/UbicacionRequest';
 import { obtenerUnidadesRegionalesPorDepartamento } from '../services/UnidadRegionalService';
@@ -36,6 +34,7 @@ import { useHechoVial } from '../context/HechoVialContext';
 import { TIPOS_INVOLUCRADOS } from '../utilities/tipoRodado';
 import FullscreenMultiSelect from '../components/containers/MultiSelect';
 import { PersonalUnidad } from './PersonalUnidad';
+import { useGetPuestosQuery } from "../redux/api/puestoApi";
 
 const FormularioHechoVial = () => {
   const {
@@ -79,7 +78,7 @@ const FormularioHechoVial = () => {
     name: "unidades",
   });
 
-  const [puestos, setPuestos] = useState<Puesto[]>([]);
+  const { data: puesto = []} = useGetPuestosQuery();
   const { hechoVial, modo, limpiarHechoVial } = useHechoVial();
   const [localidades, setLocalidades] = useState<Localidad[]>([]);
   const [unidadesRegionales, setUnidadesRegionales] = useState<UnidadRegional[]>([]);
@@ -91,11 +90,6 @@ const FormularioHechoVial = () => {
     localidad: undefined,
     descripcion:'',
 });
-
-  const fetchPuestos = async () => {
-    const data = await getPuestos();
-    setPuestos(data);
-  }
 
   // Observamos los tipos para mostrar el campo "Especificar" si eligen "OTRO"
   const watchInvolucrados = useWatch({ control, name: "involucrados" });
@@ -216,7 +210,6 @@ const FormularioHechoVial = () => {
   
 
   useEffect(() => {
-    fetchPuestos();
     if (modo === 'edit' && hechoVial) {
       console.log('hv edit ', hechoVial.ubicacionReq);
       reset(hechoVial);
@@ -248,7 +241,7 @@ const FormularioHechoVial = () => {
       <form onSubmit={handleSubmit(onSubmit)}>
         <Grid container spacing={3}>
           
-          {/* --- ENCABEZADO Y UBICACIÃƒâ€œN --- */}
+          {/* --- ENCABEZADO Y UBICACION --- */}
           <Grid size={{ xs: 12 }}>
             <Typography variant="h6" color="secondary">Datos de Identificacion</Typography>
           </Grid>
@@ -270,9 +263,9 @@ const FormularioHechoVial = () => {
                   helperText={fieldState.error?.message}
                 >
                   <MenuItem value={0}>Seleccionar</MenuItem>
-                  {puestos.map((puesto) => (
-                    <MenuItem key={puesto.idPuesto} value={puesto.idPuesto}>
-                      {puesto.nombre}
+                  {puesto.map((p) => (
+                    <MenuItem key={p.idPuesto} value={p.idPuesto}>
+                      {p.nombre}
                     </MenuItem>
                   ))}
                 </TextField>
