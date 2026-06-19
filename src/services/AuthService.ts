@@ -58,8 +58,8 @@ export const refresh = async (): Promise<AuthenticationResponse> => {
 };
 
 export const logout = async (): Promise<void> => {
-  await axios.post(
-    `${baseURL}/logout`,
+  await api.post(
+    `${baseURL}/auth/logout`,
     {},
     {
       withCredentials: true,
