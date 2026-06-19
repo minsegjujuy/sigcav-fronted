@@ -1,4 +1,3 @@
-import axios from "axios";
 import type { HechoVialListDto } from "../models/HechoVialListDto";
 import type { PageResponse } from "../models/PageResponse";
 import { getAuthHeader } from "../utilities/getAuthHeader";
@@ -42,7 +41,7 @@ export const listarHechosVialesUbicaciones = async (params: {
   victimaFatal?:string,
   soloLesionados?:boolean
 }) => {
-  const { data } = await axios.get<UbicacionPunto[]>(
+  const { data } = await api.get<UbicacionPunto[]>(
     `${baseURL}/hechos-viales/ubicaciones`,
     {params, ...getAuthHeader()}
   );
@@ -53,7 +52,7 @@ export const listarHechosVialesMetricas= async (params: {
   fechaInicio: string;
   fechaFin: string
 }) => {
-  const { data } = await axios.get<MetricasSiniestralidad>(
+  const { data } = await api.get<MetricasSiniestralidad>(
     `${baseURL}/hechos-viales/metricas`,
     {params, ...getAuthHeader()}
   );
@@ -64,7 +63,7 @@ export const listarHechosVialesAlcoholizados= async (params: {
   fechaInicio: string;
   fechaFin: string
 }) => {
-  const { data } = await axios.get<PorcentajeAlcoholizados>(
+  const { data } = await api.get<PorcentajeAlcoholizados>(
     `${baseURL}/hechos-viales/alcoholizados`,
     {params, ...getAuthHeader()}
   );
@@ -75,7 +74,7 @@ export const listarHechosVialesPorTurnos= async (params: {
   fechaInicio: string;
   fechaFin: string
 }) => {
-  const { data } = await axios.get<TurnoData[]>(
+  const { data } = await api.get<TurnoData[]>(
     `${baseURL}/hechos-viales/turnos`,
     {params, ...getAuthHeader()}
   );
@@ -86,7 +85,7 @@ export const listarHechosVialesPorDia= async (params: {
   fechaInicio: string;
   fechaFin: string
 }) => {
-  const { data } = await axios.get<DiasCantidad[]>(
+  const { data } = await api.get<DiasCantidad[]>(
     `${baseURL}/hechos-viales/dias`,
     {params, ...getAuthHeader()}
   );
@@ -97,7 +96,7 @@ export const listarHechosVialesPorTipoRodado= async (params: {
   fechaInicio: string;
   fechaFin: string
 }) => {
-  const { data } = await axios.get<DiasCantidad[]>(
+  const { data } = await api.get<DiasCantidad[]>(
     `${baseURL}/hechos-viales/tipo-rodado`,
     {params, ...getAuthHeader()}
   );
@@ -109,7 +108,7 @@ export const obtenerPorcentajeGeneroPorFechas = async (params: {
   fechaInicio: string;
   fechaFin: string
 }) => {
-  const { data } = await axios.get<GeneroPorcentajeDto[]>(
+  const { data } = await api.get<GeneroPorcentajeDto[]>(
     `${baseURL}/hechos-viales/porcentaje-genero-fechas`,
     {params, ...getAuthHeader()}
   );
@@ -120,7 +119,7 @@ export const obtenerCantidadYPorcentajePorRangoEdad = async (params: {
   fechaInicio: string;
   fechaFin: string
 }) => {
-  const { data } = await axios.get<RangoEdadPorcentajeDto[]>(
+  const { data } = await api.get<RangoEdadPorcentajeDto[]>(
     `${baseURL}/hechos-viales/rango-edad`,
     {params, ...getAuthHeader()}
   );
@@ -131,7 +130,7 @@ export const obtenerCantidadYPorcentajePorDepartamento = async (params: {
   fechaInicio: string;
   fechaFin: string
 }) => {
-  const { data } = await axios.get<DepartamentoPorcentajeDto[]>(
+  const { data } = await api.get<DepartamentoPorcentajeDto[]>(
     `${baseURL}/hechos-viales/por-departamento`,
     {params, ...getAuthHeader()}
   );
@@ -142,7 +141,7 @@ export const obtenerHechosVialesPorDepartamentoYTipoVia = async (params: {
   fechaInicio: string;
   fechaFin: string
 }) => {
-  const { data } = await axios.get<DepartamentoTipoViaDto[]>(
+  const { data } = await api.get<DepartamentoTipoViaDto[]>(
     `${baseURL}/hechos-viales/por-departamento-y-tipo-via`,
     {params, ...getAuthHeader()}
   );
@@ -153,7 +152,7 @@ export const obtenerIndicadorUsoCascoMotocicletaVictimaFatal = async (params: {
   fechaInicio: string;
   fechaFin: string
 }) => {
-  const { data } = await axios.get<IndicadorPorcentajeDto[]>(
+  const { data } = await api.get<IndicadorPorcentajeDto[]>(
     `${baseURL}/hechos-viales/indicador-uso-casco-motocicleta-victima-fatal`,
     {params, ...getAuthHeader()}
   );
@@ -164,7 +163,7 @@ export const obtenerIndicadorUsoSeguridadVehiculosNoMotoNiBicicletaVictimaFatal 
   fechaInicio: string;
   fechaFin: string
 }) => {
-  const { data } = await axios.get<IndicadorPorcentajeDto[]>(
+  const { data } = await api.get<IndicadorPorcentajeDto[]>(
     `${baseURL}/hechos-viales/indicador-uso-seguridad-no-moto-ni-bicicleta-victima-fatal`,
     {params, ...getAuthHeader()}
   );
@@ -175,7 +174,7 @@ export const obtenerCantidadHechosVialesPorUnidadRegional = async (params: {
   fechaInicio: string;
   fechaFin: string
 }) => {
-  const { data } = await axios.get<UnidadRegionalCantidadDto[]>(
+  const { data } = await api.get<UnidadRegionalCantidadDto[]>(
     `${baseURL}/hechos-viales/cantidad-por-unidad-regional`,
     {params, ...getAuthHeader()}
   );
@@ -190,6 +189,6 @@ export const guardarhechoVial = async (hv: HechoVialForm) => {
 };
 
 export const deleteHechoVial = async (id: number): Promise<void> => {
-    await axios.patch(`${baseURL}/hechos-viales/${id}/status`, null, getAuthHeader()
+    await api.patch(`${baseURL}/hechos-viales/${id}/status`, null, getAuthHeader()
     );
 };

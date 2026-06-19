@@ -1,4 +1,3 @@
-import axios from "axios";
 import type { ActaSalienteDto } from "../models/ActaSalienteDto";
 import type { PageResponse } from "../models/PageResponse";
 import buildUrl from "../utilities/BuildUrl";
@@ -29,7 +28,7 @@ export const actualizarActaSaliente = async (acta: ActaSalienteRequest): Promise
 
 export const obtenerActasSalientes = async (params:Record<string, any>): Promise<PageResponse<ActaSalienteDto>> => {
   const newUrl = buildUrl(`${baseURL}/actas-salientes`, params);
-  const response = await axios.get<PageResponse<ActaSalienteDto>>(newUrl, getAuthHeader());
+  const response = await api.get<PageResponse<ActaSalienteDto>>(newUrl, getAuthHeader());
   return response.data;
 };
 
@@ -51,7 +50,7 @@ export const cambiarEstado = async (
 };
 
 export const descargarExcelActas = async (recibo: string): Promise<void> => {
-  const response = await axios.get(
+  const response = await api.get(
     `${baseURL}/actas-salientes/exportar?recibo=${recibo}`,
     {
       responseType: "blob",
