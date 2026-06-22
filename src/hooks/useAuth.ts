@@ -57,6 +57,7 @@ export const useAuth = () => {
       await logoutRequest();
     } catch {
       // si el backend ya invalidó la cookie, seguimos limpiando localmente
+      console.log("cookie ivalida")
     }
 
     sessionStorage.removeItem("sv_2fa_challenge_id");

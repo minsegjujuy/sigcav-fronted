@@ -1,8 +1,8 @@
-import axios from 'axios';
 import type { VehiculoSolicitud } from '../models/VehiculoSolicitud';
 import { getAuthHeader } from '../utilities/getAuthHeader';
 import type { Propietario } from '../models/Propietario';
 import type { InfractorSolicitud } from '../models/InfractorSolicitud';
+import api from '../interceptors/axios.interceptors';
 
 export type OcrDocumentType =
   | 'cedulaFrente'
@@ -27,7 +27,7 @@ const postOcrFile = async <T,>(endpoint: string, file: File): Promise<T> => {
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await axios.post<T>(`${baseURL}${endpoint}`, formData, {
+  const response = await api.post<T>(`${baseURL}${endpoint}`, formData, {
     ...getAuthHeader(),
   });
 

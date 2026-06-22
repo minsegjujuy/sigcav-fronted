@@ -162,19 +162,10 @@ export function mapHechoVialListDtoToForm(dto: HechoVialListDto): HechoVialForm 
   const fechaISO = dto.fecha ?? "";
   const [fecha, horaCompleta] = fechaISO.split("T");
 
-  const destacamento = (() => {
-    const puestoRaw = String(dto.puesto ?? "").trim();
-    const match = puestoRaw.match(/^\s*(\d+)/);
-    if (match) return Number(match[1]);
-
-    const n = Number(puestoRaw);
-    return Number.isFinite(n) ? n : 0;
-  })();
-
   return {
     id: dto.id,
 
-    destacamento,
+    destacamento: dto.destacamento,
     grupo: dto.grupo,
     fecha: fecha ?? "",
     hora: horaCompleta ? horaCompleta.substring(0, 5) : "",

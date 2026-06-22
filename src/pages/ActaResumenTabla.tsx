@@ -17,18 +17,17 @@ import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { FORMAT } from "../utilities/formatDate";
-import type { Puesto } from "../models/Puesto";
-import { getPuestos } from "../services/PuestoService";
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import type { SortDirection, SortItem } from "../models/Sortitem";
 import { TableSkeleton } from "../components/ui/skeletonTable/TableSkeleton";
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { useTheme } from "@mui/material/styles";
+import { useGetPuestosQuery } from "../redux/api/puestoApi";
 
 const ActaResumenTable: React.FC = () => {
   const [actas, setActas] = useState<ActaResumenDto[]>([]);
-  const [puestos, setPuestos] = useState<Puesto[]>([]);
+  const { data: puesto = []} = useGetPuestosQuery();
   //const {articulos} = useArticulo();
   const [totalPages , setTotalPages] = useState(0);
   const [totalElements , setTotalElements] = useState(0);
@@ -95,11 +94,6 @@ const ActaResumenTable: React.FC = () => {
       setDescargando(false);
     }
   };
-
-  const fetchPuestos = async () => {
-    const res = await getPuestos();
-    setPuestos(res);
-  }
 
   const handleFilterChange = (path: string, value: any) => {
     const keys = path.split(".");
@@ -311,7 +305,6 @@ const ActaResumenTable: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-    fetchPuestos();
     limpiarActa();
     console.log('filters ', filters)
     console.log('filters para el personal', filtersPersonal)
@@ -347,9 +340,9 @@ const ActaResumenTable: React.FC = () => {
           label="Puesto"
           onChange={(e) => handleFilterChange("puesto",e.target.value)}
           >
-          {puestos.map((puesto) => (
-          <MenuItem key={puesto.idPuesto} value={puesto.idPuesto}>
-          {puesto.nombre}
+          {puesto.map((p) => (
+          <MenuItem key={p.idPuesto} value={p.idPuesto}>
+          {p.nombre}
           </MenuItem>
           ))}
           </Select>

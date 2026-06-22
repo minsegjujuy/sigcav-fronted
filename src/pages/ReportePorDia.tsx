@@ -13,7 +13,6 @@ import {
   type ChartOptions,
 } from "chart.js";
 import type { DiasCantidad } from "../models/DiasCantidad";
-import { obtenerActasPorDia } from "../services/ActaService";
 import { Typography } from "@mui/material";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, ArcElement, Tooltip, Legend, Title);
@@ -26,8 +25,13 @@ export interface RangoDeFechas {
 const BAR_BLUE_BG = "rgba(37, 99, 235, 0.50)";
 const BAR_BLUE_BORDER = "rgba(37, 99, 235, 1)";
 
-const ReportePorDia: React.FC<RangoDeFechas> = ({ fechaInicio, fechaFin }) => {
-  const [actasCantidad, setActasCantidad] = useState<DiasCantidad[]>([]);
+interface ReportePorDiaProps{
+  actasCantidad: DiasCantidad[];
+}
+
+
+const ReportePorDia: React.FC<ReportePorDiaProps> = ({ actasCantidad }) => {
+  //const [actasCantidad, setActasCantidad] = useState<DiasCantidad[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,7 +43,7 @@ const ReportePorDia: React.FC<RangoDeFechas> = ({ fechaInicio, fechaFin }) => {
     [actasCantidad]
   );
 
-  useEffect(() => {
+  /*useEffect(() => {
     if (!fechaInicio || !fechaFin) return;
 
     let cancelled = false;
@@ -65,7 +69,7 @@ const ReportePorDia: React.FC<RangoDeFechas> = ({ fechaInicio, fechaFin }) => {
     return () => {
       cancelled = true;
     };
-  }, [fechaInicio, fechaFin]);
+  }, [fechaInicio, fechaFin]);*/
 
   const labels = useMemo(() => actasCantidad.map((d) => d.dia), [actasCantidad]);
   const values = useMemo(() => actasCantidad.map((d) => d.cantidad), [actasCantidad]);
@@ -140,7 +144,7 @@ const ReportePorDia: React.FC<RangoDeFechas> = ({ fechaInicio, fechaFin }) => {
             <Bar data={data} options={options} />
           </div>
           <p>
-            NOTA: El análisis de la tabla permite concluir que, en el periodo del {fechaInicio} hasta el {fechaFin}, el labrado de actas se
+            NOTA: El análisis de la tabla permite concluir que, el labrado de actas se
             realizó con mayor frecuencia los días {textoTop2}.
           </p>
         </>

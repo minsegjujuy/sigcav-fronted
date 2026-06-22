@@ -59,8 +59,8 @@ export default function HechosVialesTable() {
       victimaFatal: victimaFatal,
       soloLesionados: soloLesionados
     });
-    console.log('res ', response)
-    console.log('params ', fechaInicio, ' ', fechaFin)
+    //console.log('res ', response)
+    //console.log('params ', fechaInicio, ' ', fechaFin)
     setData(response.content);
     setTotal(response.totalElements);
   };
@@ -71,7 +71,7 @@ export default function HechosVialesTable() {
   }
 
   const editar = (hecho: HechoVialListDto) => {
-    console.log('hv selected ' , hecho)
+    //console.log('hv selected ' , hecho)
     setHechoVial(mapHechoVialListDtoToForm(hecho));
     navigate(`/dashboard/hechos-viales/modificacion/${hecho.id}`);
   };

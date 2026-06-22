@@ -1,7 +1,5 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
-import type { RangoDeFechas } from "./ReportePorDia";
+﻿import React, { useMemo, useState } from "react";
 import type { ArticuloCantidad } from "../models/ArticuloCantidad";
-import { obtenerActasPorArticulo } from "../services/ActaService";
 import { Typography } from "@mui/material";
 import { Bar } from "react-chartjs-2";
 import type { ChartData, ChartOptions } from "chart.js";
@@ -9,8 +7,14 @@ import type { ChartData, ChartOptions } from "chart.js";
 const BAR_GREEN_BG = "rgba(34, 197, 94, 0.50)";
 const BAR_GREEN_BORDER = "rgba(34, 197, 94, 1)";
 
-const ReporteInfracciones: React.FC<RangoDeFechas> = ({ fechaInicio, fechaFin }) => {
-  const [actasCantidad, setActasCantidad] = useState<ArticuloCantidad[]>([]);
+interface ReporteInfraccionesProps{
+  actasCantidad: ArticuloCantidad[];
+}
+
+const ReporteInfracciones: React.FC<ReporteInfraccionesProps> = ({
+  actasCantidad
+}) => {
+  //const [actasCantidad, setActasCantidad] = useState<ArticuloCantidad[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +28,7 @@ const ReporteInfracciones: React.FC<RangoDeFechas> = ({ fechaInicio, fechaFin })
 
   const textoTop = useMemo(() => top5.map((a) => `${a.articulo}`).join(" / "), [top5]);
 
-  useEffect(() => {
+  /*useEffect(() => {
     if (!fechaInicio || !fechaFin) return;
 
     let cancelled = false;
@@ -50,7 +54,7 @@ const ReporteInfracciones: React.FC<RangoDeFechas> = ({ fechaInicio, fechaFin })
     return () => {
       cancelled = true;
     };
-  }, [fechaInicio, fechaFin]);
+  }, [fechaInicio, fechaFin]);*/
 
   const labels = useMemo(() => actasCantidad.map((d) => d.articulo), [actasCantidad]);
   const values = useMemo(() => actasCantidad.map((d) => d.cantActas), [actasCantidad]);
@@ -123,7 +127,7 @@ const ReporteInfracciones: React.FC<RangoDeFechas> = ({ fechaInicio, fechaFin })
             <Bar data={data} options={options} />
           </div>
           <p>
-            NOTA: Del análisis de la tabla se concluye que durante el periodo del {fechaInicio} al {fechaFin}, los articulados que se realizaron con mayor
+            NOTA: Del análisis de la tabla se concluye que durante el periodo del x al x , los articulados que se realizaron con mayor
             frecuencia son {textoTop}.
           </p>
         </>

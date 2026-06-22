@@ -1,6 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
-import type { RangoDeFechas } from "./ReportePorDia";
-import { obtenerActasPorGrupo } from "../services/ActaService";
+﻿import { useMemo, useState } from "react";
 import { Box, CircularProgress, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { Pie } from "react-chartjs-2";
 import type { ActaGrupo } from "../models/ActaGrupo";
@@ -16,14 +14,18 @@ const hashHue = (input: string) => {
 
 const hsla = (h: number, s: number, l: number, a: number) => `hsla(${h}, ${s}%, ${l}%, ${a})`;
 
-const ReportePorGrupo: React.FC<RangoDeFechas> = ({ fechaInicio, fechaFin }) => {
-  const [actasCantidad, setActasCantidad] = useState<ActaGrupo[]>([]);
+interface ReportePorGrupoProps{
+  actasCantidad: ActaGrupo[];
+}
+
+const ReportePorGrupo: React.FC<ReportePorGrupoProps> = ({actasCantidad}) => {
+  //const [actasCantidad, setActasCantidad] = useState<ActaGrupo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const theme = useTheme();
   const isSmUp = useMediaQuery(theme.breakpoints.up("sm"));
 
-  useEffect(() => {
+  /*useEffect(() => {
     if (!fechaInicio || !fechaFin) return;
 
     let cancelled = false;
@@ -49,7 +51,7 @@ const ReportePorGrupo: React.FC<RangoDeFechas> = ({ fechaInicio, fechaFin }) => 
     return () => {
       cancelled = true;
     };
-  }, [fechaInicio, fechaFin]);
+  }, [fechaInicio, fechaFin]);*/
 
   const labels = useMemo(() => actasCantidad.map((d) => `Grupo ${d.grupo}`), [actasCantidad]);
   const values = useMemo(() => actasCantidad.map((d) => d.cantidad), [actasCantidad]);

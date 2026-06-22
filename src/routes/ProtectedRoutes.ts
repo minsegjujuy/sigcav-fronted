@@ -16,11 +16,13 @@ const PrintTestButton = React.lazy(() =>
   import("../pages/PrintTestButton") as Promise<{ default: React.ComponentType<any> }>
 );
 const TwoFactorSetup = lazy(() => import('../pages/TwoFactorSetup'));
+const Talonario = lazy(() => import('../pages/Talonario'));
 
 export const protectedRoutes: RouteConfig[] = [
 
   // Todos
   { path: "/dashboard/mis-actas",                    component: ActaResumenTable,    allowedRoles: ["ADMIN", "REPAT", "SECRETARIO", "JEFE", "PERSONAL", "OFICIAL_DE_GUARDIA"] },
+  { path: "/dashboard/talonarios",                    component: Talonario,    allowedRoles: ["ADMIN", "SECRETARIO"] },
   { path: "/dashboard",                              component: Dashboard,           allowedRoles: ["ADMIN", "REPAT", "SECRETARIO", "JEFE", "PERSONAL", "OFICIAL_DE_GUARDIA", "DICTAMEN"] },
   { path: "/dashboard/2fa-qr",                              component: TwoFactorSetup,           allowedRoles: ["ADMIN", "REPAT", "SECRETARIO", "JEFE", "PERSONAL", "OFICIAL_DE_GUARDIA", "DICTAMEN"] },
   { path: "/actas-salientes/:id",                    component: ActaSalienteDetalle, allowedRoles: ["ADMIN", "DICTAMEN"] },
