@@ -59,7 +59,7 @@ export const actaResumenToActaRequest = (
     adjunta: acta.adjunta,
     retencion: acta.retencion,
     juzgado: acta.juzgado,
-    graduacionAlcoholica: 0,
+    graduacionAlcoholica: acta.graduacionAlcoholica,
     infractorFugado: acta.infractorFugado,
     retencionVehiculo: acta.retencionVehiculo,
     ubicacionRequest: {

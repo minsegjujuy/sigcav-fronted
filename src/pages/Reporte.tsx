@@ -19,21 +19,15 @@ import type { ParamsDate } from "../models/ParamsDate";
 import ReporteInfracciones from "./ReporteInfracciones";
 import ReportePorGrupo from "./ReportePorGrupo";
 import BarChart from "./ReportePorGrupoYPuesto";
-import {
-  obtenerActasPorGrupoPorPuesto,
-  obtenerActasPorJerarquia,
-  obtenerActasPorMotivo,
-  obtenerActasPorNacionalidad,
-  obtenerActasPorProvincia,
-  obtenerPorcentajeDeActasPorDia,
-  obtenerTipoDeActasPorPuesto,
-} from "../services/ActaService";
 import type { GrupoInforme } from "../models/GrupoInforme";
 import type { TipoInformeList } from "../models/TipoInformeList";
 import type { DiasCantidad } from "../models/DiasCantidad";
 import LineChart from "./LineChart";
 import type { ReporteActas } from "../models/Reporte";
 import { generarPDF } from "../utilities/GenerarPdf";
+import type { ActaGrupo } from "../models/ActaGrupo";
+import type { ArticuloCantidad } from "../models/ArticuloCantidad";
+import { obtenerActasDashboard } from "../services/ActaService";
 
 const Reporte: React.FC = () => {
   const [fechaInicio, setFechaInicio] = useState<Dayjs | null>(dayjs().startOf("day"));
@@ -49,6 +43,9 @@ const Reporte: React.FC = () => {
   const [jerarquia, setJerarquia] = useState<ReporteActas[]>([]);
   const [motivo, setMotivo] = useState<ReporteActas[]>([]);
   const [provincia, setProvincia] = useState<ReporteActas[]>([]);
+  const [actasCantidadDias, setActasCantidadDias] = useState<DiasCantidad[]>([]);
+  const [actasCantidadGrupo, setActasCantidadGrupo] = useState<ActaGrupo[]>([]);
+  const [actasCantidadArticulo, setActasCantidadArticulo] = useState<ArticuloCantidad[]>([]);
 
   const contentRef = useRef<HTMLDivElement>(null);
   const [isPending, startTransition] = useTransition();
@@ -56,41 +53,6 @@ const Reporte: React.FC = () => {
   const isSmUp = useMediaQuery(theme.breakpoints.up("sm"));
   const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
   const chartHeight = isMdUp ? 380 : isSmUp ? 320 : 240;
-
-  const fetchGruposPorPuesto = async (inicio: string, fin: string) => {
-    const data = await obtenerActasPorGrupoPorPuesto(inicio, fin);
-    setGrupoInforme(data);
-  };
-
-  const fetchTiposDeActaPorPuesto = async (inicio: string, fin: string) => {
-    const data = await obtenerTipoDeActasPorPuesto(inicio, fin);
-    setTipoInforme(data);
-  };
-
-  const fetchPorcentajePorDia = async (inicio: string, fin: string) => {
-    const data = await obtenerPorcentajeDeActasPorDia(inicio, fin);
-    setPorcentajeDiasInforme(data);
-  };
-
-  const fetchCantidadPorJerarquia = async (inicio: string, fin: string) => {
-    const data = await obtenerActasPorJerarquia(inicio, fin);
-    setJerarquia(data);
-  };
-
-  const fetchCantidadPorObservacion = async (inicio: string, fin: string) => {
-    const data = await obtenerActasPorMotivo(inicio, fin);
-    setMotivo(data);
-  };
-
-  const fetchCantidadPorProvincia = async (inicio: string, fin: string) => {
-    const data = await obtenerActasPorProvincia(inicio, fin);
-    setProvincia(data);
-  };
-
-  const fetchCantidadPorNacionalidad = async (inicio: string, fin: string) => {
-    const data = await obtenerActasPorNacionalidad(inicio, fin);
-    setNacionalidad(data);
-  };
 
   const handleFilter = async () => {
     setFilterError(null);
@@ -110,15 +72,28 @@ const Reporte: React.FC = () => {
 
     setIsLoadingReport(true);
     try {
-      await Promise.all([
-        fetchGruposPorPuesto(fi, ff),
-        fetchTiposDeActaPorPuesto(fi, ff),
-        fetchPorcentajePorDia(fi, ff),
-        fetchCantidadPorJerarquia(fi, ff),
-        fetchCantidadPorObservacion(fi, ff),
-        fetchCantidadPorProvincia(fi, ff),
-        fetchCantidadPorNacionalidad(fi, ff),
-      ]);
+       const {
+        grupos,
+        articulos,
+        dias,
+        porcentajeDias,
+        jerarquia,
+        provincia,
+        motivo,
+        nacionalidad,
+        cantidadGrupo,
+        tipo,
+      } = await obtenerActasDashboard(fi,ff);
+      setGrupoInforme(grupos ?? []);
+      setTipoInforme(tipo ?? []);
+      setPorcentajeDiasInforme(porcentajeDias ?? []);
+      setNacionalidad(nacionalidad ?? []);
+      setJerarquia(jerarquia ?? []);
+      setMotivo(motivo ?? []);
+      setProvincia(provincia ?? []);
+      setActasCantidadDias(dias ?? []);
+      setActasCantidadGrupo(cantidadGrupo ?? []);
+      setActasCantidadArticulo(articulos ?? []);
       setParams({ fechaInicio: fi, fechaFin: ff });
     } catch (error) {
       console.error("Error al cargar el informe:", error);
@@ -309,22 +284,21 @@ const Reporte: React.FC = () => {
             <Box ref={contentRef} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               <Grow in timeout={420}>
                 <Paper sx={cardSx}>
-                  <ReportePorDia fechaInicio={params.fechaInicio} fechaFin={params.fechaFin} />
+                  <ReportePorDia actasCantidad={actasCantidadDias} />
                 </Paper>
               </Grow>
 
               <Grow in timeout={540}>
                 <Paper sx={cardSx}>
                   <ReporteInfracciones
-                    fechaInicio={params.fechaInicio}
-                    fechaFin={params.fechaFin}
+                    actasCantidad={actasCantidadArticulo}
                   />
                 </Paper>
               </Grow>
 
               <Grow in timeout={660}>
                 <Paper sx={cardSx}>
-                  <ReportePorGrupo fechaInicio={params.fechaInicio} fechaFin={params.fechaFin} />
+                  <ReportePorGrupo actasCantidad={actasCantidadGrupo} />
                 </Paper>
               </Grow>
 

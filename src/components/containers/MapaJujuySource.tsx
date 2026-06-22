@@ -2,21 +2,6 @@
 import MapaJujuyHechosViales from "./MapaJujuyHechosViales";
 import type { UbicacionPunto } from "../../models/UbicacionPunto";
 import {
-  listarHechosVialesAlcoholizados,
-  listarHechosVialesMetricas,
-  listarHechosVialesPorDia,
-  listarHechosVialesPorTipoRodado,
-  listarHechosVialesPorTurnos,
-  listarHechosVialesUbicaciones,
-  obtenerCantidadHechosVialesPorUnidadRegional,
-  obtenerCantidadYPorcentajePorDepartamento,
-  obtenerHechosVialesPorDepartamentoYTipoVia,
-  obtenerCantidadYPorcentajePorRangoEdad,
-  obtenerIndicadorUsoCascoMotocicletaVictimaFatal,
-  obtenerIndicadorUsoSeguridadVehiculosNoMotoNiBicicletaVictimaFatal,
-  obtenerPorcentajeGeneroPorFechas,
-} from "../../services/HechoVialService";
-import {
   Alert,
   Box,
   Button,
@@ -58,6 +43,7 @@ import {
   type ChartOptions,
 } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
+import { dashboardHechosViales } from "../../services/HechoVialService";
 
 ChartJS.register(ArcElement, Tooltip, Legend, Title);
 
@@ -250,53 +236,38 @@ const MapaJujuySource = () => {
       const fInicio = fechaInicio.length === 16 ? `${fechaInicio}:00` : fechaInicio;
       const fFin = fechaFin.length === 16 ? `${fechaFin}:00` : fechaFin;
 
-      const [
-        ubicacionesRes,
-        metricasRes,
-        alcoholRes,
-        turnosRes,
-        diasRes,
-        rodadosRes,
-        generosRes,
-        rangosRes,
-        departamentosRes,
-        deptoTipoViaRes,
-        cascoRes,
-        seguridadRes,
-        unidadesRes,
-      ] = await Promise.all([
-        listarHechosVialesUbicaciones({
-          fechaInicio: fInicio,
-          fechaFin: fFin,
-          soloLesionados: false,
-        }),
-        listarHechosVialesMetricas({ fechaInicio: fInicio, fechaFin: fFin }),
-        listarHechosVialesAlcoholizados({ fechaInicio: fInicio, fechaFin: fFin }),
-        listarHechosVialesPorTurnos({ fechaInicio: fInicio, fechaFin: fFin }),
-        listarHechosVialesPorDia({ fechaInicio: fInicio, fechaFin: fFin }),
-        listarHechosVialesPorTipoRodado({ fechaInicio: fInicio, fechaFin: fFin }),
-        obtenerPorcentajeGeneroPorFechas({ fechaInicio: fInicio, fechaFin: fFin }),
-        obtenerCantidadYPorcentajePorRangoEdad({ fechaInicio: fInicio, fechaFin: fFin }),
-        obtenerCantidadYPorcentajePorDepartamento({ fechaInicio: fInicio, fechaFin: fFin }),
-                obtenerHechosVialesPorDepartamentoYTipoVia({ fechaInicio: fInicio, fechaFin: fFin }),
-        obtenerIndicadorUsoCascoMotocicletaVictimaFatal({ fechaInicio: fInicio, fechaFin: fFin }),
-        obtenerIndicadorUsoSeguridadVehiculosNoMotoNiBicicletaVictimaFatal({ fechaInicio: fInicio, fechaFin: fFin }),
-        obtenerCantidadHechosVialesPorUnidadRegional({ fechaInicio: fInicio, fechaFin: fFin }),
-      ]);
+      const {
+        puntos,
+        metricas,
+        porcentajeAlcoholizados,
+        turnos,
+        dias,
+        tipoRodado,
+        generos,
+        rangoEdad,
+        porcentajedepartamentos,
+        departamentoYTipoVia,
+        usoCasco,
+        usoCinturon,
+        unidadRegional,
+      } = await dashboardHechosViales({
+        fechaInicio: fInicio,
+        fechaFin: fFin,
+      });
 
-      setPuntos(ubicacionesRes);
-      setMetricas(metricasRes);
-      setPorcentajeAlcoholizados(alcoholRes);
-      setTurnos(turnosRes);
-      setDias(diasRes);
-      setRodados(rodadosRes);
-      setGeneros(generosRes ?? []);
-      setRangosEdad(rangosRes ?? []);
-      setDepartamentos(departamentosRes ?? []);
-      setDepartamentoTipoVia(deptoTipoViaRes ?? []);
-      setIndicadorCasco(cascoRes ?? []);
-      setIndicadorSeguridad(seguridadRes ?? []);
-      setUnidadesRegionales(unidadesRes ?? []);
+      setPuntos(puntos);
+      setMetricas(metricas);
+      setPorcentajeAlcoholizados(porcentajeAlcoholizados);
+      setTurnos(turnos);
+      setDias(dias);
+      setRodados(tipoRodado);
+      setGeneros(generos ?? []);
+      setRangosEdad(rangoEdad ?? []);
+      setDepartamentos(porcentajedepartamentos ?? []);
+      setDepartamentoTipoVia(departamentoYTipoVia ?? []);
+      setIndicadorCasco(usoCasco ?? []);
+      setIndicadorSeguridad(usoCinturon ?? []);
+      setUnidadesRegionales(unidadRegional ?? []);
     } catch (err) {
       console.error(err);
       setError("Error al conectar con el servidor. Verifique su conexión.");

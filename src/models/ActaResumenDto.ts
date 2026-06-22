@@ -22,4 +22,5 @@ export interface ActaResumenDto {
   juzgado: number,
   retencionVehiculo: boolean;
   infractorFugado: boolean;
+  graduacionAlcoholica: number;
 }

@@ -50,6 +50,8 @@ const FormularioHechoVial = () => {
       zona: "URBANA",
       danosMateriales: "SI",
       comisaria: "",
+      grupo: 0,
+      destacamento: 0,
       unidades: [
         {
           unidad: "",
@@ -99,16 +101,17 @@ const FormularioHechoVial = () => {
   const onSubmit = async (data: HechoVialForm) => {
     const payload: HechoVialForm = {
         ...data,
+        destacamento: hechoVial?.destacamento ?? 0,
         ubicacionReq: ubicacion
     };
     //danosMateriales, zona, y victimaFatal  son undefined si no los selcciono explicitamente
-    console.log("Datos capturados:", payload);
+    //console.log("Datos capturados:", payload);
     await guardarhechoVial(payload);
     SnackbarUtilities.success('Hecho vial guardado correctamente');
     limpiarHechoVial();
   };
   const handleMapSelect = async (point: UbicacionRequest) => {
-    console.log("ubicacion ", point);
+    //console.log("ubicacion ", point);
 
     // Persistimos lo mínimo (incluye descripción) mientras resolvemos ids
     setUbicacion({
@@ -123,7 +126,7 @@ const FormularioHechoVial = () => {
     });
 
     const data = await obtenerUnidadesRegionalesPorDepartamento(point.departamento);
-    console.log("unidad regional ", data);
+    //console.log("unidad regional ", data);
     setUnidadesRegionales(data);
 
     const unidadRId = (() => {
@@ -211,11 +214,13 @@ const FormularioHechoVial = () => {
 
   useEffect(() => {
     if (modo === 'edit' && hechoVial) {
-      console.log('hv edit ', hechoVial.ubicacionReq);
+      //console.log('hv edit ', hechoVial.ubicacionReq);
+      //console.log('destacamento', hechoVial.destacamento);
       reset(hechoVial);
       setUbicacion(hechoVial.ubicacionReq);
       handleMapSelect(hechoVial.ubicacionReq);
     }
+    
     return () => {
       reset();
       setUbicacion({
@@ -358,7 +363,7 @@ const FormularioHechoVial = () => {
 
           <Grid size={{ xs: 12 }}><Divider /></Grid>
 
-          {/* --- CLASIFICACIÃƒâ€œN DEL HECHO --- */}
+          {/* --- CLASIFICACION DEL HECHO --- */}
           <Grid size={{ xs: 12, md: 4 }}>
             <FormControl component="fieldset">
               <FormLabel component="legend">¿Vi­ctima Fatal?</FormLabel>

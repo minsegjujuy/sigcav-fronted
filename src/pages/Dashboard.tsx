@@ -26,7 +26,7 @@ const data: DashboardItem[] = [
   { id: 3, value: "Informes", icon: AssessmentIcon, color: "#ed6c02", path: "/dashboard/informes" },
   { id: 5, value: "Talonarios", icon: MenuBookIcon, color: "#37b027", path: "/dashboard/talonarios" },
   { id: 6, value: "Hechos viales", icon: CarCrashIcon, color: "#9c27b0", path: "/dashboard/hechos-viales" },
-  { id: 7, value: "Ubicaciones", icon: LocationOnIcon, color: "#e04646", path: "/dashboard/hechos-viales/mapa" },
+  { id: 7, value: "Informe hechos viales", icon: LocationOnIcon, color: "#e04646", path: "/dashboard/hechos-viales/mapa" },
   { id: 8, value: "Actas salientes", icon: ForwardToInboxIcon, color: "#85810e", path: "/dashboard/actas-salientes" },
   { id: 8, value: "Activar 2fa", icon: QrCodeScannerIcon, color: "#0ca2a2", path: "/dashboard/2fa-qr" },
 ];

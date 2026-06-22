@@ -1505,7 +1505,7 @@ export default function ActaForm() {
                 || form.adjunta.includes('LICENCIA NACIONAL DE CONDUCIR'))
               ) && (
                 <>
-                    <FormControl fullWidth margin="normal">
+                    {licencias && <FormControl fullWidth margin="normal">
                       <InputLabel id="licencia-label">Licencia</InputLabel>
                       <Select
                         labelId="licencia-label"
@@ -1524,7 +1524,7 @@ export default function ActaForm() {
                           </MenuItem>
                         ))}
                       </Select>
-                    </FormControl>
+                    </FormControl>}
                     <TextField
                       label="Clase de licencia"
                       fullWidth
