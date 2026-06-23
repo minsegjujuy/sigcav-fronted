@@ -14,7 +14,6 @@ import { useNavigate } from "react-router-dom";
 import { useActa } from "../context/ActaResumenContext";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import type { Dayjs } from "dayjs";
-import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { FORMAT } from "../utilities/formatDate";
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
@@ -33,8 +32,8 @@ const ActaResumenTable: React.FC = () => {
   const [totalElements , setTotalElements] = useState(0);
   const { rol } = useSelector((state: RootState) => state.auth);
   const [showFilterUser, setShowFilterUser] = useState(false);
-  const [fechaInicio, setFechaInicio] = useState<Dayjs | null>(dayjs().startOf("day"));
-  const [fechaFin, setFechaFin] = useState<Dayjs | null>(dayjs().startOf("day"));
+  const [fechaInicio, setFechaInicio] = useState<Dayjs | null>(null);
+  const [fechaFin, setFechaFin] = useState<Dayjs | null>(null);
   const [view, setView] = useState<0 | 1>(1);
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
@@ -126,36 +125,40 @@ const ActaResumenTable: React.FC = () => {
   }
 
   const fetchData = () => {
-    // 2. Envolvemos todo en startTransition
-    startTransition(async () => {
-      try {
-        let content: any[] = [];
-        let totalPagesResult = 0;
-        let totalElementsResult = 0;
+  const tieneFechas = (!!fechaInicio && !!fechaFin) ||
+  (!fechaInicio && !fechaFin);
+  if (!tieneFechas) {
+    return;
+  }
 
-        if (rol === 'PERSONAL') {
-          const data = await getResumenActasPersonal(filtersPersonal);
-          content = data.content;
-          totalPagesResult = data.totalPages;
-          totalElementsResult = data.totalElements;
-          setShowFilterUser(true);
-        } else {
-          const data = await getResumenActas(filters);
-          content = data.content;
-          totalPagesResult = data.totalPages;
-          totalElementsResult = data.totalElements;
-        }
+  startTransition(async () => {
+    try {
+      let content: any[] = [];
+      let totalPagesResult = 0;
+      let totalElementsResult = 0;
 
-        // 3. Estas actualizaciones de estado se marcan como "transiciÃ³n"
-        setTotalElements(totalElementsResult);
-        setTotalPages(totalPagesResult);
-        setActas(content);
-
-      } catch (error) {
-        console.error('Error al obtener resumen de actas', error);
+      if (rol === 'PERSONAL') {
+        const data = await getResumenActasPersonal(filtersPersonal);
+        content = data.content;
+        totalPagesResult = data.totalPages;
+        totalElementsResult = data.totalElements;
+        setShowFilterUser(true);
+      } else {
+        const data = await getResumenActas(filters);
+        content = data.content;
+        totalPagesResult = data.totalPages;
+        totalElementsResult = data.totalElements;
       }
-    });
-  };
+
+      setTotalElements(totalElementsResult);
+      setTotalPages(totalPagesResult);
+      setActas(content);
+
+    } catch (error) {
+      console.error('Error al obtener resumen de actas', error);
+    }
+  });
+};
 
   const descargarActa = async (nro: string) => {
     const blob = await descargarPdfActa(nro);
@@ -256,29 +259,38 @@ const ActaResumenTable: React.FC = () => {
     navigate('/dashboard/modificacion');
   }
 
-  const handleChangeDate = (fecha: Dayjs | null, name: "fechaInicio" | "fechaFin") => {
-    if(name === "fechaInicio"){
-        setFechaInicio(fecha)
-      }else{
-        setFechaFin(fecha)
-      }
-    if (!fecha) {
-      // si limpian el datepicker, sacamos el filtro
-      setFilters(prev => {
-        const copy = { ...prev };
-        delete copy[name];
-        return copy;
-      });
-      return;
-    }
+  const handleChangeDate = (
+  fecha: Dayjs | null,
+  name: "fechaInicio" | "fechaFin"
+) => {
+  let nuevaFechaInicio = fechaInicio;
+  let nuevaFechaFin = fechaFin;
 
-    const formattedDate = fecha.format(FORMAT);
+  if (name === "fechaInicio") {
+    setFechaInicio(fecha);
+    nuevaFechaInicio = fecha;
+  } else {
+    setFechaFin(fecha);
+    nuevaFechaFin = fecha;
+  }
 
-    setFilters(prev => ({
-      ...prev,
-      [name]: formattedDate,
-    }));
-  };
+  // Si alguna fecha está vacía, eliminar ambos filtros
+  if (!nuevaFechaInicio || !nuevaFechaFin) {
+    setFilters(prev => {
+      const copy = { ...prev };
+      delete copy.fechaInicio;
+      delete copy.fechaFin;
+      return copy;
+    });
+    return;
+  }
+
+  setFilters(prev => ({
+    ...prev,
+    fechaInicio: nuevaFechaInicio.format(FORMAT),
+    fechaFin: nuevaFechaFin.format(FORMAT),
+  }));
+};
 
 
   useEffect(() => {
@@ -369,7 +381,7 @@ const ActaResumenTable: React.FC = () => {
         <Box display="flex" flexDirection="column" gap={2} sx={{ p: 3, width: 320 }}>
           <DatePicker
             label="Fecha inicio"
-            value={fechaInicio}
+            value={filters.fechaInicio}
             format="DD-MM-YYYY HH:mm:ss"
             name="fechaInicio"
             onChange={(newValue) => handleChangeDate(newValue, "fechaInicio")}
@@ -380,7 +392,7 @@ const ActaResumenTable: React.FC = () => {
             label="Fecha fin"
             name="fechaFin"
             format="DD-MM-YYYY HH:mm:ss"
-            value={fechaFin}
+            value={filters.fechaFin}
             onChange={(newValue) => handleChangeDate(newValue, "fechaFin")}
             slotProps={{ textField: { fullWidth: true, variant: "outlined" } }}
           />

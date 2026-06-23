@@ -28,6 +28,8 @@ import { generarPDF } from "../utilities/GenerarPdf";
 import type { ActaGrupo } from "../models/ActaGrupo";
 import type { ArticuloCantidad } from "../models/ArticuloCantidad";
 import { obtenerActasDashboard } from "../services/ActaService";
+import IndicadoresActas from "../components/modules/IndicadoresActas";
+import type { IndicadoresActaDto } from "../models/IndicadoresActaDto";
 
 const Reporte: React.FC = () => {
   const [fechaInicio, setFechaInicio] = useState<Dayjs | null>(dayjs().startOf("day"));
@@ -46,6 +48,7 @@ const Reporte: React.FC = () => {
   const [actasCantidadDias, setActasCantidadDias] = useState<DiasCantidad[]>([]);
   const [actasCantidadGrupo, setActasCantidadGrupo] = useState<ActaGrupo[]>([]);
   const [actasCantidadArticulo, setActasCantidadArticulo] = useState<ArticuloCantidad[]>([]);
+  const [indicadores, setIndicadores] = useState<IndicadoresActaDto>();
 
   const contentRef = useRef<HTMLDivElement>(null);
   const [isPending, startTransition] = useTransition();
@@ -83,6 +86,7 @@ const Reporte: React.FC = () => {
         nacionalidad,
         cantidadGrupo,
         tipo,
+        indicadores
       } = await obtenerActasDashboard(fi,ff);
       setGrupoInforme(grupos ?? []);
       setTipoInforme(tipo ?? []);
@@ -94,6 +98,7 @@ const Reporte: React.FC = () => {
       setActasCantidadDias(dias ?? []);
       setActasCantidadGrupo(cantidadGrupo ?? []);
       setActasCantidadArticulo(articulos ?? []);
+      setIndicadores(indicadores);
       setParams({ fechaInicio: fi, fechaFin: ff });
     } catch (error) {
       console.error("Error al cargar el informe:", error);
@@ -282,6 +287,9 @@ const Reporte: React.FC = () => {
         {params ? (
           <Fade in timeout={450}>
             <Box ref={contentRef} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <IndicadoresActas
+                indicadores={indicadores!}
+              />
               <Grow in timeout={420}>
                 <Paper sx={cardSx}>
                   <ReportePorDia actasCantidad={actasCantidadDias} />
