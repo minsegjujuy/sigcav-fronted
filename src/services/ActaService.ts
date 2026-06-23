@@ -4,7 +4,6 @@ import type { ActaResumenDto } from "../models/ActaResumenDto";
 import api from "../interceptors/axios.interceptors";
 import type { PageResponse } from "../models/PageResponse";
 import buildUrl from "../utilities/BuildUrl";
-import type { DiasCantidad } from "../models/DiasCantidad";
 import type { DashboardActas } from "../models/ActasDashboard";
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 

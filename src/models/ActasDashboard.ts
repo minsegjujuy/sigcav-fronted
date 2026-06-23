@@ -4,6 +4,7 @@ import type { DiasCantidad } from "./DiasCantidad";
 import type { GrupoInforme } from "./GrupoInforme";
 import type { TipoInformeList } from "./TipoInformeList";
 import type { ReporteActas } from "./Reporte";
+import type { IndicadoresActaDto } from "./IndicadoresActaDto";
 
 export interface DashboardActas {
   grupos: GrupoInforme[];
@@ -16,4 +17,5 @@ export interface DashboardActas {
   nacionalidad: ReporteActas[];
   cantidadGrupo: ActaGrupo[];
   tipo: TipoInformeList[];
+  indicadores: IndicadoresActaDto;
 }

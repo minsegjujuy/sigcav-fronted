@@ -20,8 +20,8 @@ interface ReportePorGrupoProps{
 
 const ReportePorGrupo: React.FC<ReportePorGrupoProps> = ({actasCantidad}) => {
   //const [actasCantidad, setActasCantidad] = useState<ActaGrupo[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, ] = useState(false);
+  const [error, ] = useState<string | null>(null);
   const theme = useTheme();
   const isSmUp = useMediaQuery(theme.breakpoints.up("sm"));
 

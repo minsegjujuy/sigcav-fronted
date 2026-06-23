@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useMemo, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -32,8 +32,8 @@ interface ReportePorDiaProps{
 
 const ReportePorDia: React.FC<ReportePorDiaProps> = ({ actasCantidad }) => {
   //const [actasCantidad, setActasCantidad] = useState<DiasCantidad[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, ] = useState(false);
+  const [error, ] = useState<string | null>(null);
 
   const top2 = useMemo(
     () =>
