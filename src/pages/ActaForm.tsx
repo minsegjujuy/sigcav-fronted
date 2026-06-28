@@ -206,14 +206,7 @@ export default function ActaForm() {
         ...prev,
         infractor: {
           ...prev.infractor,
-          licencia: {
-            id: undefined,
-            clase: "",
-            numero: "",
-            autoridadExpedicion: "",
-            fechaExpedicion: "",
-            fechaVencimiento: "",
-          },
+          licencia: null,
         },
       }));
       return;
@@ -1500,73 +1493,68 @@ export default function ActaForm() {
               </FormControl>
             )}
               {/*Licencias*/}
-              {( 
-                (form.adjunta.includes('LICENCIA EXTRANJERA') || form.adjunta.includes('LICENCIA MUNICIPAL DE CONDUCIR')
-                || form.adjunta.includes('LICENCIA NACIONAL DE CONDUCIR'))
-              ) && (
-                <>
-                    {licencias && <FormControl fullWidth margin="normal">
-                      <InputLabel id="licencia-label">Licencia</InputLabel>
-                      <Select
-                        labelId="licencia-label"
-                        value={form.infractor.licencia.id?.toString() || "0"}
-                        onChange={(e) => handleLicenciaChange(Number(e.target.value))}
-                        label="Licencia"
-                      >
-                        <MenuItem value={0}>
-                          <em>Nueva licencia</em>
-                        </MenuItem>
+              <>
+                {licencias && <FormControl fullWidth margin="normal">
+                  <InputLabel id="licencia-label">Licencia</InputLabel>
+                  <Select
+                    labelId="licencia-label"
+                    value={form.infractor.licencia?.id?.toString() || "0"}
+                    onChange={(e) => handleLicenciaChange(Number(e.target.value))}
+                    label="Licencia"
+                  >
+                    <MenuItem value={0}>
+                      <em>Nueva licencia</em>
+                    </MenuItem>
 
-                        {licencias.map((licencia) => (
-                          <MenuItem key={licencia.id} value={licencia.id}>
-                            {licencia.numero} - Clase {licencia.clase} - Vto.{" "}
-                            {licencia.fechaVencimiento}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>}
-                    <TextField
-                      label="Clase de licencia"
-                      fullWidth
-                      margin="normal"
-                      value={form.infractor.licencia.clase ?? ""}
-                      onChange={(e) => handleChange("infractor.licencia.clase", e.target.value)}
-                    />
-                    <TextField
-                      label="Numero de licencia"
-                      fullWidth
-                      margin="normal"
-                      value={form.infractor.licencia.numero ?? ""}
-                      onChange={(e) => handleChange("infractor.licencia.numero", e.target.value)}
-                    />
-                    <TextField
-                      label="Autoridad de expedicion"
-                      fullWidth
-                      margin="normal"
-                      sx={{ gridColumn: "1 / -1" }}
-                      value={form.infractor.licencia.autoridadExpedicion ?? ""}
-                      onChange={(e) => handleChange("infractor.licencia.autoridadExpedicion", e.target.value)}
-                    />
-                    <TextField
-                      label="Fecha de expedicion"
-                      type="date"
-                      fullWidth
-                      margin="normal"
-                      InputLabelProps={{ shrink: true }}
-                      value={form.infractor.licencia.fechaExpedicion ?? ""}
-                      onChange={(e) => handleChange("infractor.licencia.fechaExpedicion", e.target.value)}
-                    />
-                    <TextField
-                      label="Fecha de vencimiento"
-                      type="date"
-                      fullWidth
-                      margin="normal"
-                      InputLabelProps={{ shrink: true }}
-                      value={form.infractor.licencia.fechaVencimiento ?? ""}
-                      onChange={(e) => handleChange("infractor.licencia.fechaVencimiento", e.target.value)}
-                    />
-                </>
-              )}
+                    {licencias.map((licencia) => (
+                      <MenuItem key={licencia.id} value={licencia.id}>
+                        {licencia.numero} - Clase {licencia.clase} - Vto.{" "}
+                        {licencia.fechaVencimiento}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>}
+                  <TextField
+                  label="Clase de licencia"
+                  fullWidth
+                  margin="normal"
+                  value={form.infractor.licencia?.clase ?? ""}
+                  onChange={(e) => handleChange("infractor.licencia.clase", e.target.value)}
+                />
+                <TextField
+                  label="Numero de licencia"
+                  fullWidth
+                  margin="normal"
+                  value={form.infractor.licencia?.numero ?? ""}
+                  onChange={(e) => handleChange("infractor.licencia.numero", e.target.value)}
+                />
+                <TextField
+                  label="Autoridad de expedicion"
+                  fullWidth
+                  margin="normal"
+                  sx={{ gridColumn: "1 / -1" }}
+                  value={form.infractor.licencia?.autoridadExpedicion ?? ""}
+                  onChange={(e) => handleChange("infractor.licencia.autoridadExpedicion", e.target.value)}
+                />
+                <TextField
+                  label="Fecha de expedicion"
+                  type="date"
+                  fullWidth
+                  margin="normal"
+                  InputLabelProps={{ shrink: true }}
+                  value={form.infractor.licencia?.fechaExpedicion ?? ""}
+                  onChange={(e) => handleChange("infractor.licencia.fechaExpedicion", e.target.value)}
+                />
+                <TextField
+                  label="Fecha de vencimiento"
+                  type="date"
+                  fullWidth
+                  margin="normal"
+                  InputLabelProps={{ shrink: true }}
+                  value={form.infractor.licencia?.fechaVencimiento ?? ""}
+                  onChange={(e) => handleChange("infractor.licencia.fechaVencimiento", e.target.value)}
+                />
+              </>
             </Box>
           )}
 
