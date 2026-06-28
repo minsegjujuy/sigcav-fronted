@@ -1,4 +1,5 @@
 import { Typography, Divider, Grid, Paper, Box } from "@mui/material";
+import type { ReactNode } from "react";
 import type { HechoVialListDto } from "../models/HechoVialListDto";
 import { ProtagonistaDetalle } from "./ProtagonistaDetalle";
 import { BotonCopiarHechoVial } from "../components/containers/BotonCopiar";
@@ -7,7 +8,7 @@ interface Props {
   hecho: HechoVialListDto;
 }
 
-const Label = ({ label, value }: { label: string; value?: any }) => (
+const Label = ({ label, value }: { label: string; value?: ReactNode }) => (
   <Typography variant="body2">
     <b>{label}:</b> {value ?? "—"}
   </Typography>
@@ -155,14 +156,46 @@ export const HechoVialDetalle = ({ hecho }: Props) => {
       <Divider sx={{ my: 2 }} />
 
       {/* PROTAGONISTAS */}
-      {/* PROTAGONISTAS */}
       <Typography variant="h5" gutterBottom>
         Protagonistas
       </Typography>
 
-      {hecho.protagonistas.map((p, index) => (
+      {hecho.protagonistas?.map((p, index) => (
         <ProtagonistaDetalle key={index} protagonista={p} nro={index + 1} />
       ))}
+
+      {hecho.peatones?.length ? (
+        <>
+          <Divider sx={{ my: 3 }} />
+          <Typography variant="h5" gutterBottom>
+            Peatones
+          </Typography>
+
+          {hecho.peatones.map((peaton, index) => (
+            <Paper key={peaton.id ?? index} sx={{ p: 2, mb: 2 }} variant="outlined">
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                {index + 1}º Peatón
+              </Typography>
+
+              <Grid container spacing={1}>
+                <Grid size={6}><Label label="Nombre" value={peaton.nombre} /></Grid>
+                <Grid size={6}><Label label="Género" value={peaton.genero} /></Grid>
+                <Grid size={6}><Label label="Nacionalidad" value={peaton.nacionalidad} /></Grid>
+                <Grid size={6}><Label label="Provincia" value={peaton.provincia} /></Grid>
+                <Grid size={6}><Label label="Domicilio" value={peaton.domicilio} /></Grid>
+                <Grid size={6}><Label label="Localidad" value={peaton.localidad} /></Grid>
+                <Grid size={6}><Label label="Tipo documento" value={peaton.tipo} /></Grid>
+                <Grid size={6}><Label label="Número documento" value={peaton.numeroDocumento} /></Grid>
+                <Grid size={6}><Label label="Fecha de nacimiento" value={peaton.fechaNacimiento} /></Grid>
+                <Grid size={6}><Label label="Edad" value={peaton.edad} /></Grid>
+                <Grid size={6}><Label label="Dispositivo de retención" value={String(peaton.dispositivoRetencion)} /></Grid>
+                <Grid size={6}><Label label="Traslado" value={peaton.trasladado} /></Grid>
+                <Grid size={12}><Label label="Estado de salud" value={peaton.estadoSalud} /></Grid>
+              </Grid>
+            </Paper>
+          ))}
+        </>
+      ) : null}
 
       <Divider sx={{ my: 3 }} />
 

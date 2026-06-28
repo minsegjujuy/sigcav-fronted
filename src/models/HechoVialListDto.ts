@@ -1,4 +1,4 @@
-import type { Protagonista } from "./HechoVialForm";
+import type { Peaton, Protagonista } from "./HechoVialForm";
 import type { UnidadInterviniente } from "./PersonalInterviniente";
 import type { UbicacionDto } from "./UbicacionDto";
 
@@ -30,4 +30,5 @@ export interface HechoVialListDto {
   usuario: string;
   comisaria: string;
   destacamento: number;
+  peatones: Peaton[]
 }

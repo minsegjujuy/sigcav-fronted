@@ -17,11 +17,12 @@
   Select,
 } from "@mui/material";
 import type { SelectChangeEvent } from "@mui/material/Select";
-import { useForm, Controller, useWatch, useFieldArray } from 'react-hook-form';
+import { useForm, Controller, useWatch, useFieldArray, type Resolver } from 'react-hook-form';
+import { zodResolver } from "@hookform/resolvers/zod";
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { SeccionProtagonistas } from './SeccionProtagonista';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import MapaJujuy from '../components/containers/MapaJujuy';
 import type { UbicacionRequest } from '../models/UbicacionRequest';
 import { obtenerUnidadesRegionalesPorDepartamento } from '../services/UnidadRegionalService';
@@ -35,6 +36,7 @@ import { TIPOS_INVOLUCRADOS } from '../utilities/tipoRodado';
 import FullscreenMultiSelect from '../components/containers/MultiSelect';
 import { PersonalUnidad } from './PersonalUnidad';
 import { useGetPuestosQuery } from "../redux/api/puestoApi";
+import { hechoVialFormSchema } from "../validations/validationHechoVial";
 
 const FormularioHechoVial = () => {
   const {
@@ -42,16 +44,29 @@ const FormularioHechoVial = () => {
     control,
     handleSubmit,
     reset,
-    watch
+    watch,
+    setValue,
+    formState: { errors }
   } = useForm<HechoVialForm>({
+    resolver: zodResolver(hechoVialFormSchema) as unknown as Resolver<HechoVialForm>,
     defaultValues: {
       protagonistas: [],
+      peatones: [],
+      involucrados: [],
       victimaFatal: "NO",
       zona: "URBANA",
       danosMateriales: "SI",
       comisaria: "",
       grupo: 0,
       destacamento: 0,
+      fecha: "",
+      hora: "",
+      ubicacionReq: {
+        lat: 0,
+        lng: 0,
+        departamento: "",
+        descripcion: "",
+      } as UbicacionRequest,
       unidades: [
         {
           unidad: "",
@@ -101,16 +116,15 @@ const FormularioHechoVial = () => {
   const onSubmit = async (data: HechoVialForm) => {
     const payload: HechoVialForm = {
         ...data,
-        destacamento: hechoVial?.destacamento ?? 0,
         ubicacionReq: ubicacion
     };
     //danosMateriales, zona, y victimaFatal  son undefined si no los selcciono explicitamente
-    //console.log("Datos capturados:", payload);
+    console.log("Datos capturados:", payload);
     await guardarhechoVial(payload);
     SnackbarUtilities.success('Hecho vial guardado correctamente');
     limpiarHechoVial();
   };
-  const handleMapSelect = async (point: UbicacionRequest) => {
+  const handleMapSelect = useCallback(async (point: UbicacionRequest) => {
     //console.log("ubicacion ", point);
 
     // Persistimos lo mínimo (incluye descripción) mientras resolvemos ids
@@ -124,6 +138,16 @@ const FormularioHechoVial = () => {
       localidad: point.localidad,
       localidadNombre: point.localidadNombre,
     });
+    setValue("ubicacionReq", {
+      lat: point.lat,
+      lng: point.lng,
+      departamento: point.departamento,
+      descripcion: point.descripcion ?? "",
+      unidadRegional: point.unidadRegional,
+      unidadRegionalNombre: point.unidadRegionalNombre,
+      localidad: point.localidad,
+      localidadNombre: point.localidadNombre,
+    } as UbicacionRequest, { shouldDirty: true, shouldTouch: true });
 
     const data = await obtenerUnidadesRegionalesPorDepartamento(point.departamento);
     //console.log("unidad regional ", data);
@@ -171,7 +195,7 @@ const FormularioHechoVial = () => {
     } else {
       setLocalidades([]);
     }
-  }
+  }, [setValue]);
 
   const handleSelectedUR = (event: SelectChangeEvent<number>) => {
     const unidadRId = Number(event.target.value);
@@ -231,10 +255,16 @@ const FormularioHechoVial = () => {
         localidad: undefined,
         descripcion: '',
       });
+      setValue("ubicacionReq", {
+        lat: 0,
+        lng: 0,
+        departamento: "",
+        descripcion: "",
+      } as UbicacionRequest);
       setLocalidades([]);
       setUnidadesRegionales([]);
     };
-  }, [hechoVial, modo, reset]);
+  }, [hechoVial, modo, reset, handleMapSelect, setValue]);
 
 
   return (
@@ -306,11 +336,27 @@ const FormularioHechoVial = () => {
           />
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <TextField fullWidth type="date" label="Fecha" InputLabelProps={{ shrink: true }} {...register("fecha")} />
+            <TextField
+              fullWidth
+              type="date"
+              label="Fecha"
+              InputLabelProps={{ shrink: true }}
+              {...register("fecha")}
+              error={!!errors.fecha}
+              helperText={errors.fecha?.message}
+            />
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <TextField fullWidth type="time" label="Hora" InputLabelProps={{ shrink: true }} {...register("hora")} />
+            <TextField
+              fullWidth
+              type="time"
+              label="Hora"
+              InputLabelProps={{ shrink: true }}
+              {...register("hora")}
+              error={!!errors.hora}
+              helperText={errors.hora?.message}
+            />
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -911,7 +957,7 @@ const FormularioHechoVial = () => {
             />
           </Grid>
 
-          <SeccionProtagonistas control={control} register={register} watch={watch} />
+          <SeccionProtagonistas control={control} register={register} setValue={setValue} watch={watch} errors={errors} />
 
           <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
             <Button 

@@ -61,6 +61,11 @@ export default function MapaJujuyHechosViales({ puntos }: MapaJujuyProps) {
                   ACOMPAÑANTES HERIDOS: {punto.heridosAcompanantes}
                 </span>
               </div>
+              <div>
+                <span style={{ fontSize: '0.85em', color: '#666' }}>
+                  PEATONES HERIDOS: {punto.heridosPeatones}
+                </span>
+              </div>
             </Popup> 
           </CircleMarker>
         ))}

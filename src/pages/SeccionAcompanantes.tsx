@@ -1,16 +1,29 @@
 ﻿import { Grid, TextField, IconButton, Button, Typography, Box, FormControlLabel, MenuItem, FormControl, FormLabel, RadioGroup, Radio } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import { Controller, useFieldArray, type Control, type UseFormRegister } from 'react-hook-form';
+import { Controller, useFieldArray, type Control, type FieldErrors, type UseFormRegister } from 'react-hook-form';
 import type { Acompanante, HechoVialForm } from '../models/HechoVialForm';
 
 interface AcompanantesProps {
   pIndex: number;
   control: Control<HechoVialForm>;
   register: UseFormRegister<HechoVialForm>;
+  errors: FieldErrors<HechoVialForm>;
 }
 
-export const SeccionAcompanantes = ({ pIndex, control, register }: AcompanantesProps) => {
+const getErrorMessage = (errors: FieldErrors<HechoVialForm>, path: string) => {
+  let current: unknown = errors;
+  for (const key of path.split(".")) {
+    if (!current || typeof current !== "object") return undefined;
+    current = (current as Record<string, unknown>)[key];
+  }
+  if (current && typeof current === "object" && "message" in current) {
+    return String((current as { message?: unknown }).message ?? "") || undefined;
+  }
+  return undefined;
+};
+
+export const SeccionAcompanantes = ({ pIndex, control, register, errors }: AcompanantesProps) => {
   const { fields, append, remove } = useFieldArray({
     control,
     name: `protagonistas.${pIndex}.acompanantes` as const
@@ -25,7 +38,14 @@ export const SeccionAcompanantes = ({ pIndex, control, register }: AcompanantesP
       {fields.map((field, aIndex) => (
         <Grid container spacing={2} key={field.id} sx={{ mb: 3, p: 2, bgcolor: '#ffffff', borderRadius: 1 }}>
           <Grid size={{ xs: 12, md: 4 }}>
-            <TextField fullWidth size="small" label="Apellido y Nombre" {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.nombre`)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="Apellido y Nombre"
+              {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.nombre`)}
+              error={!!getErrorMessage(errors, `protagonistas.${pIndex}.acompanantes.${aIndex}.nombre`)}
+              helperText={getErrorMessage(errors, `protagonistas.${pIndex}.acompanantes.${aIndex}.nombre`)}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
             <Controller
@@ -50,8 +70,35 @@ export const SeccionAcompanantes = ({ pIndex, control, register }: AcompanantesP
               )}
             />
           </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Domicilio"
+              {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.domicilio`)}
+              error={!!getErrorMessage(errors, `protagonistas.${pIndex}.acompanantes.${aIndex}.domicilio`)}
+              helperText={getErrorMessage(errors, `protagonistas.${pIndex}.acompanantes.${aIndex}.domicilio`)}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Localidad"
+              {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.localidad`)}
+              error={!!getErrorMessage(errors, `protagonistas.${pIndex}.acompanantes.${aIndex}.localidad`)}
+              helperText={getErrorMessage(errors, `protagonistas.${pIndex}.acompanantes.${aIndex}.localidad`)}
+            />
+          </Grid>
           <Grid size={{ xs: 6, md: 3 }}>
-            <TextField fullWidth size="small" label="Nro" {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.numeroDocumento`)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="Nro"
+              {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.numeroDocumento`)}
+              error={!!getErrorMessage(errors, `protagonistas.${pIndex}.acompanantes.${aIndex}.numeroDocumento`)}
+              helperText={getErrorMessage(errors, `protagonistas.${pIndex}.acompanantes.${aIndex}.numeroDocumento`)}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
             <Controller
@@ -134,10 +181,19 @@ export const SeccionAcompanantes = ({ pIndex, control, register }: AcompanantesP
               label="Fecha de Nacimiento" 
               InputLabelProps={{ shrink: true }} 
               {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.fechaNacimiento`)} 
+              error={!!getErrorMessage(errors, `protagonistas.${pIndex}.acompanantes.${aIndex}.fechaNacimiento`)}
+              helperText={getErrorMessage(errors, `protagonistas.${pIndex}.acompanantes.${aIndex}.fechaNacimiento`)}
             />
           </Grid>
           <Grid size={{ xs: 6, md: 2 }}>
-            <TextField fullWidth size="small" label="Edad" {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.edad`)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="Edad"
+              {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.edad`)}
+              error={!!getErrorMessage(errors, `protagonistas.${pIndex}.acompanantes.${aIndex}.edad`)}
+              helperText={getErrorMessage(errors, `protagonistas.${pIndex}.acompanantes.${aIndex}.edad`)}
+            />
           </Grid>
 
           {/* Seguridad (CinturÃ³n/Casco) */}
@@ -189,7 +245,7 @@ export const SeccionAcompanantes = ({ pIndex, control, register }: AcompanantesP
                 >
                   <MenuItem value="M">M</MenuItem>
                   <MenuItem value="F">F</MenuItem>
-                  <MenuItem value="OTRO">OTRO</MenuItem>
+                  <MenuItem value="X">OTRO</MenuItem>
                 </TextField>
               )}
             />

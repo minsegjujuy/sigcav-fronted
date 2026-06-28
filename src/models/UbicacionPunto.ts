@@ -7,5 +7,6 @@ export interface UbicacionPunto {
   sintesis: string;
   heridosProtagonistas: number;
   heridosAcompanantes: number;
+  heridosPeatones: number;
   color: string; // El color viene definido desde la prop
 }
