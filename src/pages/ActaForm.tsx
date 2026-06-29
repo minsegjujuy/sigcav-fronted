@@ -125,6 +125,7 @@ const initialState: ActaRequest = {
   infractorFugado: false,
   juzgado: 0,
   retencionVehiculo: false,
+  testigos: [],
   ubicacionRequest: {lat:0,lng:0,departamento:'', unidadRegional:0, descripcion:'', localidad: 0},
   articulos: [],
   infractor: {
@@ -277,7 +278,7 @@ export default function ActaForm() {
   const navigate = useNavigate();
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     if (newValue >= 2 && !hasValidInfractorDni) return;
-    if (newValue === 3 && isEditingActa) return;
+    if (newValue === 3 && !usesTestigosOnly && isEditingActa) return;
     setActiveTab(newValue);
   };
 
@@ -287,7 +288,7 @@ export default function ActaForm() {
 
   const goNextTab = () => {
     setActiveTab((prev) => {
-      const maxTab = isEditingActa ? 2 : 3;
+      const maxTab = usesTestigosOnly ? 3 : (isEditingActa ? 2 : 3);
       const next = Math.min(maxTab, prev + 1);
       if (next >= 2 && !hasValidInfractorDni) {
         SnackbarUtilities.error("Ingresa un DNI valido para avanzar");
@@ -328,6 +329,14 @@ export default function ActaForm() {
     if (!actaSeleccionada?.idActa) return;
     setFirma((prev) => ({ ...prev, actaId: actaSeleccionada.idActa }));
   }, [actaSeleccionada?.idActa]);
+
+  useEffect(() => {
+    if (!actaSeleccionada) return;
+    setFirma((prev) => ({
+      ...prev,
+      testigos: ensureTwoTestigos(actaSeleccionada.testigos),
+    }));
+  }, [actaSeleccionada]);
 
   useEffect(() => {
     if (!isEditingActa) return;
@@ -611,7 +620,7 @@ export default function ActaForm() {
           delete (actaToSend as Partial<ActaRequest>).firma;
         }*/
         
-        console.log('acta ', actaToSend);
+        //console.log('acta ', actaToSend);
         let response: ActaRequest | null = null;
         if(actaSeleccionada){
           response = await actualizarActa(actaToSend);
@@ -965,6 +974,7 @@ export default function ActaForm() {
       setSelectedGrupo(actaSeleccionada.idGrupo)
       setSelectedPuesto(actaSeleccionada.idPuesto ?? '');
       const mappedActa = actaResumenToActaRequest(actaSeleccionada);
+      const mappedTestigos = ensureTwoTestigos(mappedActa.testigos ?? actaSeleccionada.testigos);
 
       setForm({
         ...mappedActa,
@@ -989,6 +999,7 @@ export default function ActaForm() {
           tipoRodado:
             actaSeleccionada.vehiculo.tipoRodado ?? mappedActa.vehiculo.tipoRodado ?? "",
         },
+        testigos: mappedTestigos,
       });
       setArticulosSeleccionados(articulos);
       setSelectedLey(1);
@@ -1050,7 +1061,7 @@ export default function ActaForm() {
             <Tab label="Acta" sx={activeTab !== 0 ? tabPulseSx : undefined} />
             <Tab label="Infractor" sx={activeTab !== 1 ? tabPulseSx : undefined} />
             <Tab label="Vehiculo" disabled={!hasValidInfractorDni} sx={activeTab !== 2 && hasValidInfractorDni ? tabPulseSx : undefined} />
-            <Tab label={usesTestigosOnly ? "Testigos" : "Firmas"} disabled={!hasValidInfractorDni || isEditingActa} sx={activeTab !== 3 && hasValidInfractorDni ? tabPulseSx : undefined} />
+            <Tab label={usesTestigosOnly ? "Testigos" : "Firmas"} sx={activeTab !== 3 && hasValidInfractorDni ? tabPulseSx : undefined} />
           </Tabs>
 
           {activeTab === 0 && (
@@ -1669,7 +1680,7 @@ export default function ActaForm() {
                   </Typography>
 
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    El infractor se fug&oacute;, por lo que no se cargan firmas. Completa los dos testigos obligatorios.
+                    El infractor se fugó por lo que no se cargan firmas. Completa los dos testigos obligatorios.
                   </Typography>
 
                   <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" }, gap: 2 }}>

@@ -19,6 +19,7 @@ import {
 import {
   Controller,
   useFieldArray,
+  useWatch,
   type Control,
   type FieldErrors,
   type UseFormRegister,
@@ -27,16 +28,17 @@ import {
 } from "react-hook-form";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getJerarquias } from "../services/JerarquiaService";
 import type { Jerarquia } from "../models/Jerarquia";
 import { SeccionAcompanantes } from "./SeccionAcompanantes";
 import { SeccionPeaton } from "./SeccionPeaton";
-import { useArticulo } from "../context/ArticuloContext";
 import FullscreenMultiSelect from "../components/containers/MultiSelect";
 import type { HechoVialForm } from "../models/HechoVialForm";
 import type { LicenciaRequest } from "../models/LicenciaRequest";
 import { obtenerLicenciasPorNumero } from "../services/LicenciaService";
+import { useGetArticulosQuery } from "../redux/api/puestoApi";
+import { TIPO_RODADO } from "../utilities/tipoRodado";
 
 type SeccionProtagonistasProps = {
   control: Control<HechoVialForm>;
@@ -74,11 +76,23 @@ const BooleanRadioField = ({ field }: { field: { value: boolean; onChange: (valu
 );
 
 const SeccionActasNoCargadas = ({ pIndex, control, register }: ActasNoCargadasProps) => {
-  const { articulos } = useArticulo();
-  const { fields, append, remove } = useFieldArray({
+  const { data :  articulo = [] } = useGetArticulosQuery();
+  const { fields, append, remove, replace } = useFieldArray({
     control,
     name: `protagonistas.${pIndex}.actasNoCargadas` as const,
   });
+  const actasNoCargadas = useWatch({
+    control,
+    name: `protagonistas.${pIndex}.actasNoCargadas` as const,
+  });
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (!hydratedRef.current && Array.isArray(actasNoCargadas) && actasNoCargadas.length > 0) {
+      replace(actasNoCargadas as ActaNoCargadaForm[]);
+      hydratedRef.current = true;
+    }
+  }, [actasNoCargadas, replace]);
 
   return (
     <Box sx={{ mt: 3, p: 2.5, border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
@@ -93,6 +107,7 @@ const SeccionActasNoCargadas = ({ pIndex, control, register }: ActasNoCargadasPr
           startIcon={<AddIcon />}
           onClick={() =>
             append({
+              id: 0,
               nroActa: "",
               articulado: "",
               tipo: "",
@@ -113,6 +128,13 @@ const SeccionActasNoCargadas = ({ pIndex, control, register }: ActasNoCargadasPr
       {fields.map((field, index) => (
         <Paper key={field.id} variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 2 }}>
           <Grid container spacing={2} alignItems="center">
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                type="hidden"
+                sx={{ display: "none" }}
+                {...register(`protagonistas.${pIndex}.actasNoCargadas.${index}.id`)}
+              />
+            </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
               <TextField
                 fullWidth
@@ -138,10 +160,9 @@ const SeccionActasNoCargadas = ({ pIndex, control, register }: ActasNoCargadasPr
                         : []
                     }
                     onChange={(values) => field.onChange(values.join(", "))}
-                    options={articulos.map((articulo) => ({
-                      id: articulo.nro,
-                      label: `Art. ${articulo.nro}`,
-                      description: articulo.detalle,
+                    options={articulo.map((art) => ({
+                      id: art.nro,
+                      label: `Art. ${art.nro}`
                     }))}
                     placeholder="Seleccionar artículos"
                   />
@@ -477,19 +498,9 @@ export const SeccionProtagonistas = ({ control, register, setValue, watch, error
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
                     >
-                      <MenuItem value="AUTOMOVIL">Automóvil</MenuItem>
-                      <MenuItem value="CAMIONETA">Camioneta</MenuItem>
-                      <MenuItem value="MOTOCICLETA">Motocicleta</MenuItem>
-                      <MenuItem value="CAMION">Camión</MenuItem>
-                      <MenuItem value="CAMION CON ACOPLADO">Camión con acoplado</MenuItem>
-                      <MenuItem value="CARGA TRACTOR">Camión tractor</MenuItem>
-                      <MenuItem value="OMNIBUS">Ómnibus</MenuItem>
-                      <MenuItem value="OMNIBUS URBANO">Ómnibus urbano</MenuItem>
-                      <MenuItem value="BICICLETA">Bicicleta</MenuItem>
-                      <MenuItem value="OMNIBUS A LARGA DISTANCIA / ARTICULADO">
-                        Ómnibus a larga distancia / articulado
-                      </MenuItem>
-                      <MenuItem value="MAQUINARIA">Maquinaria</MenuItem>
+                      {TIPO_RODADO.map((option) => (
+                          <MenuItem key={option} value={option}>{option}</MenuItem>
+                      ))}
                     </TextField>
                   )}
                 />
@@ -752,6 +763,7 @@ export const SeccionProtagonistas = ({ control, register, setValue, watch, error
                       <MenuItem value="BRASILERA">Brasilera</MenuItem>
                       <MenuItem value="PERUANA">Peruana</MenuItem>
                       <MenuItem value="VENEZOLANA">Venezolana</MenuItem>
+                      <MenuItem value="OTRO">Otro</MenuItem>
                     </TextField>
                   )}
                 />
@@ -976,7 +988,7 @@ export const SeccionProtagonistas = ({ control, register, setValue, watch, error
         <Typography variant="h5" sx={{ fontWeight: 800, mb: 2 }}>
           Peatones
         </Typography>
-        <SeccionPeaton control={control} register={register} />
+        <SeccionPeaton control={control} register={register} errors={errors} />
       </Box>
     </Box>
   );

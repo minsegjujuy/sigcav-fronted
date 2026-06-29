@@ -1,4 +1,5 @@
 export interface ActaSalienteDetalleRequest {
+    id?: number;
     nroActa: string;
     fechaActa: Date | string; // LocalDateTime en Java
     articulado: string;

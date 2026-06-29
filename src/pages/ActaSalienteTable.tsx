@@ -52,7 +52,7 @@ const ActaSalienteTable: React.FC = () => {
   const fetchData = async () => {
     //setLoading(true);
     try {
-      console.log("ANTES", dniFilter);
+      //console.log("ANTES", dniFilter);
       const params = {
         page: page.toString(),
         size: rowsPerPage.toString(),
@@ -61,7 +61,7 @@ const ActaSalienteTable: React.FC = () => {
         recibo: recibo,
         nombre: nombre
       };
-      console.log('params', params, ' ' , dniFilter)
+      //console.log('params', params, ' ' , dniFilter)
 
       const {content, totalElements} = await obtenerActasSalientes(params);
 

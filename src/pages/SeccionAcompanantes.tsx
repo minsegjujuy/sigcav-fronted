@@ -1,8 +1,9 @@
 ﻿import { Grid, TextField, IconButton, Button, Typography, Box, FormControlLabel, MenuItem, FormControl, FormLabel, RadioGroup, Radio } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import { Controller, useFieldArray, type Control, type FieldErrors, type UseFormRegister } from 'react-hook-form';
+import { Controller, useFieldArray, useWatch, type Control, type FieldErrors, type UseFormRegister } from 'react-hook-form';
 import type { Acompanante, HechoVialForm } from '../models/HechoVialForm';
+import { useEffect } from 'react';
 
 interface AcompanantesProps {
   pIndex: number;
@@ -24,10 +25,20 @@ const getErrorMessage = (errors: FieldErrors<HechoVialForm>, path: string) => {
 };
 
 export const SeccionAcompanantes = ({ pIndex, control, register, errors }: AcompanantesProps) => {
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control,
     name: `protagonistas.${pIndex}.acompanantes` as const
   });
+  const acompanantes = useWatch({
+    control,
+    name: `protagonistas.${pIndex}.acompanantes` as const,
+  });
+
+  useEffect(() => {
+    if (Array.isArray(acompanantes) && fields.length === 0 && acompanantes.length > 0) {
+      replace(acompanantes as Acompanante[]);
+    }
+  }, [acompanantes, fields.length, replace]);
 
   return (
     <Box sx={{ mt: 3, pl: { md: 4 }, borderLeft: '2px solid #e0e0e0' }}>
@@ -122,6 +133,7 @@ export const SeccionAcompanantes = ({ pIndex, control, register, errors }: Acomp
                   <MenuItem value="BRASILERA">BRASILERA</MenuItem>
                   <MenuItem value="PERUANA">PERUANA</MenuItem>
                   <MenuItem value="VENEZOLANA">VENEZOLANA</MenuItem>
+                  <MenuItem value="OTRO">OTRO</MenuItem>
                 </TextField>
               )}
             />
@@ -204,11 +216,22 @@ export const SeccionAcompanantes = ({ pIndex, control, register, errors }: Acomp
                     name={`protagonistas.${pIndex}.acompanantes.${aIndex}.usoCinturonCasco`}
                     control={control}
                     defaultValue={false}
-                    render={({ field }) => (
-                    <RadioGroup row {...field}>
+                    render={({ field, fieldState }) => (
+                    <FormControl error={!!fieldState.error}>
+                      <RadioGroup
+                        row
+                        value={String(Boolean(field.value))}
+                        onChange={(_, value) => field.onChange(value === "true")}
+                      >
                         <FormControlLabel value="true" control={<Radio />} label="SI" />
                         <FormControlLabel value="false" control={<Radio />} label="NO" />
-                    </RadioGroup>
+                      </RadioGroup>
+                      {fieldState.error ? (
+                        <Typography variant="caption" color="error">
+                          {fieldState.error.message}
+                        </Typography>
+                      ) : null}
+                    </FormControl>
                     )}
                 />
                 </FormControl>
@@ -220,11 +243,22 @@ export const SeccionAcompanantes = ({ pIndex, control, register, errors }: Acomp
                     name={`protagonistas.${pIndex}.acompanantes.${aIndex}.dispositivoRetencion`}
                     control={control}
                     defaultValue={false}
-                    render={({ field }) => (
-                    <RadioGroup row {...field}>
+                    render={({ field, fieldState }) => (
+                    <FormControl error={!!fieldState.error}>
+                      <RadioGroup
+                        row
+                        value={String(Boolean(field.value))}
+                        onChange={(_, value) => field.onChange(value === "true")}
+                      >
                         <FormControlLabel value="true" control={<Radio />} label="SI" />
                         <FormControlLabel value="false" control={<Radio />} label="NO" />
-                    </RadioGroup>
+                      </RadioGroup>
+                      {fieldState.error ? (
+                        <Typography variant="caption" color="error">
+                          {fieldState.error.message}
+                        </Typography>
+                      ) : null}
+                    </FormControl>
                     )}
                 />
                 </FormControl>
@@ -289,7 +323,29 @@ export const SeccionAcompanantes = ({ pIndex, control, register, errors }: Acomp
         </Grid>
       ))}
 
-      <Button startIcon={<PersonAddIcon />} onClick={() => append({} as Acompanante)} variant="text" size="small">
+      <Button
+        startIcon={<PersonAddIcon />}
+        onClick={() =>
+          append({
+            nombre: "",
+            genero: "",
+            nacionalidad: "",
+            provincia: "",
+            domicilio: "",
+            localidad: "",
+            tipo: "DNI",
+            numeroDocumento: "",
+            fechaNacimiento: "",
+            edad: "",
+            usoCinturonCasco: false,
+            dispositivoRetencion: false,
+            trasladado: "",
+            estadoSalud: "",
+          } as Acompanante)
+        }
+        variant="text"
+        size="small"
+      >
         Añadir Acompañante
       </Button>
     </Box>

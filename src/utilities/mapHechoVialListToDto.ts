@@ -84,37 +84,45 @@ const mapAcompanante = (a: Acompanante | AnyRecord): Acompanante => {
   };
 };
 
-const mapLicencia = (raw: AnyRecord): LicenciaRequest => {
-  const licencia =
-    (raw["licenciaRequest"] as AnyRecord | undefined) ??
-    (raw["licencia"] as AnyRecord | undefined) ??
-    {};
+const mapLicencia = (raw: AnyRecord): LicenciaRequest | null => {
+  const licencia = raw["licenciaRequest"] ?? raw["licencia"];
+
+  if (licencia === null || licencia === undefined || typeof licencia !== "object") {
+    return null;
+  }
+
+  const licenciaRecord = licencia as AnyRecord;
+  const tieneDatos = Object.values(licenciaRecord).some((value) => value !== null && value !== undefined && String(value).trim() !== "");
+
+  if (!tieneDatos) {
+    return null;
+  }
 
   return {
     id: numOrNull(
-      licencia["id"] ??
-        licencia["licenciaId"] ??
+      licenciaRecord["id"] ??
+        licenciaRecord["licenciaId"] ??
         raw["licenciaId"] ??
         raw["idLicencia"] ??
         raw["licencia_id"]
     ) ?? undefined,
-    numero: str(licencia["numero"] ?? raw["licenciaNro"] ?? raw["numeroLicencia"] ?? raw["numero"]),
+    numero: str(licenciaRecord["numero"] ?? raw["licenciaNro"] ?? raw["numeroLicencia"] ?? raw["numero"]),
     clase: str(
-      licencia["clase"] ??
+      licenciaRecord["clase"] ??
         raw["licenciaClase"] ??
         raw["tipoLiciencia"] ??
         raw["tipoLicencia"] ??
         raw["tipo_licencia"]
     ),
     autoridadExpedicion: str(
-      licencia["autoridadExpedicion"] ??
+      licenciaRecord["autoridadExpedicion"] ??
         raw["autoridadExpedicion"] ??
         raw["autoridad_expedicion"] ??
         raw["expedicion"] ??
         raw["autoridad"]
     ),
     fechaExpedicion: str(
-      licencia["fechaExpedicion"] ??
+      licenciaRecord["fechaExpedicion"] ??
         raw["fechaExpedicion"] ??
         raw["fecha_expedicion"] ??
         raw["fechaExpedicionLicencia"] ??
@@ -123,12 +131,13 @@ const mapLicencia = (raw: AnyRecord): LicenciaRequest => {
         raw["fecha_emision"]
     ),
     fechaVencimiento: str(
-      licencia["fechaVencimiento"] ?? raw["fechaVencimiento"] ?? raw["fecha_vencimiento"]
+      licenciaRecord["fechaVencimiento"] ?? raw["fechaVencimiento"] ?? raw["fecha_vencimiento"]
     ),
   };
 };
 
 const mapActa = (raw: AnyRecord): ActaSalienteDetalleRequest => ({
+  id: raw["id"] as number | undefined,
   nroActa: str(raw["nroActa"]),
   fechaActa: str(raw["fechaActa"]),
   articulado: str(raw["articulado"]),

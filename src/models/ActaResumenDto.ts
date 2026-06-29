@@ -1,4 +1,5 @@
 ﻿import type { ArticuloDto } from "./ArticuloDto";
+import type { TestigoRequest } from "./FirmaDTO";
 import type { InfractorSolicitud } from "./InfractorSolicitud";
 import type { UbicacionRsponse } from "./UbicacionResponse";
 import type { VehiculoSolicitud } from "./VehiculoSolicitud";
@@ -23,4 +24,5 @@ export interface ActaResumenDto {
   retencionVehiculo: boolean;
   infractorFugado: boolean;
   graduacionAlcoholica: number;
+  testigos?: TestigoRequest[]
 }

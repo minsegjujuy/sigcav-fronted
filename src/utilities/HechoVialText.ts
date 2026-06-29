@@ -32,7 +32,7 @@ LUZ ARTIFICIAL: ${hecho.luzArtificial}
 SEMÁFORO: ${hecho.semaforo}
 
 TIPO SINIESTRO: ${hecho.tipoSiniestro}
-TIPO COLISIÓN: ${hecho.tipoColision}
+TIPO COLISIÓN: ${hecho.tipoColision || 'N/A'}
 
 POSIBLES CAUSAS:
 ${hecho.posiblesCausas.join(" - ")}
@@ -74,10 +74,16 @@ ${p.licenciaRequest ? `
 Licencia: ${p.licenciaRequest.numero} clase: ${p.licenciaRequest.clase}
 Expedición: ${p.licenciaRequest.autoridadExpedicion}
 Vencimiento: ${p.licenciaRequest.fechaVencimiento}`
-: `NO CUENTA PRESENTÓ LICENCIA O NO APLICA` }
+: `NO PRESENTÓ LICENCIA O NO APLICA` }
 
 Traslado: ${p.trasladoConductor}
-Alcohol: ${p.graduacionAlcoholica}
+Alcohol: ${p.graduacionAlcoholica || 'N/A'}
+Fuerza de seguridad: ${siNo(p.esFuerzaSeguridad)}
+${p.esFuerzaSeguridad && `
+Legajo: ${p.legajo}
+Situación de revista: ${p.situacion}
+Jerarquía: ${p.jerarquia}
+  `}
 
 `;
 
@@ -95,6 +101,11 @@ Alcohol: ${p.graduacionAlcoholica}
 ${i + 1}º Acompañante
 Nombre: ${a.nombre}
 Documento: ${a.tipo} ${a.numeroDocumento}
+Nacionalidad: ${a.nacionalidad}
+Provincia: ${a.provincia}
+Localidad: ${a.localidad}
+Domicilio: ${a.domicilio}
+Fecha de nacimiento: ${a.fechaNacimiento}
 Edad: ${a.edad}
 Cinturón/Casco: ${siNo(a.usoCinturonCasco)}
 Traslado: ${a.trasladado}

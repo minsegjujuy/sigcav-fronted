@@ -14,26 +14,35 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import { Controller, useFieldArray, type Control, type UseFormRegister } from "react-hook-form";
+import { Controller, useFieldArray, type Control, type FieldErrors, type UseFormRegister } from "react-hook-form";
 import type { HechoVialForm, Peaton } from "../models/HechoVialForm";
 
 type SeccionPeatonProps = {
   control: Control<HechoVialForm>;
   register: UseFormRegister<HechoVialForm>;
+  errors: FieldErrors<HechoVialForm>;
 };
 
 const BooleanRadioField = ({ field }: { field: { value: boolean; onChange: (value: boolean) => void } }) => (
-  <RadioGroup
-    row
-    value={String(Boolean(field.value))}
-    onChange={(_, value) => field.onChange(value === "true")}
-  >
+  <RadioGroup row value={String(Boolean(field.value))} onChange={(_, value) => field.onChange(value === "true")}>
     <FormControlLabel value="true" control={<Radio />} label="Sí" />
     <FormControlLabel value="false" control={<Radio />} label="No" />
   </RadioGroup>
 );
 
-export const SeccionPeaton = ({ control, register }: SeccionPeatonProps) => {
+const getErrorMessage = (errors: FieldErrors<HechoVialForm>, path: string) => {
+  let current: unknown = errors;
+  for (const key of path.split(".")) {
+    if (!current || typeof current !== "object") return undefined;
+    current = (current as Record<string, unknown>)[key];
+  }
+  if (current && typeof current === "object" && "message" in current) {
+    return String((current as { message?: unknown }).message ?? "") || undefined;
+  }
+  return undefined;
+};
+
+export const SeccionPeaton = ({ control, register, errors }: SeccionPeatonProps) => {
   const { fields, append, remove } = useFieldArray({
     control,
     name: "peatones",
@@ -95,6 +104,8 @@ export const SeccionPeaton = ({ control, register }: SeccionPeatonProps) => {
                 fullWidth
                 label="Nombre y apellido"
                 {...register(`peatones.${index}.nombre`)}
+                error={!!getErrorMessage(errors, `peatones.${index}.nombre`)}
+                helperText={getErrorMessage(errors, `peatones.${index}.nombre`)}
               />
             </Grid>
 
@@ -103,11 +114,11 @@ export const SeccionPeaton = ({ control, register }: SeccionPeatonProps) => {
                 name={`peatones.${index}.genero`}
                 control={control}
                 defaultValue=""
-                render={({ field }) => (
-                  <TextField {...field} select fullWidth label="Género">
+                render={({ field, fieldState }) => (
+                  <TextField {...field} select fullWidth label="Género" error={!!fieldState.error} helperText={fieldState.error?.message}>
                     <MenuItem value="M">M</MenuItem>
                     <MenuItem value="F">F</MenuItem>
-                    <MenuItem value="OTRO">OTRO</MenuItem>
+                    <MenuItem value="X">OTRO</MenuItem>
                   </TextField>
                 )}
               />
@@ -118,8 +129,8 @@ export const SeccionPeaton = ({ control, register }: SeccionPeatonProps) => {
                 name={`peatones.${index}.nacionalidad`}
                 control={control}
                 defaultValue=""
-                render={({ field }) => (
-                  <TextField {...field} select fullWidth label="Nacionalidad">
+                render={({ field, fieldState }) => (
+                  <TextField {...field} select fullWidth label="Nacionalidad" error={!!fieldState.error} helperText={fieldState.error?.message}>
                     <MenuItem value="ARGENTINA">Argentina</MenuItem>
                     <MenuItem value="CHILENA">Chilena</MenuItem>
                     <MenuItem value="BOLIVIANA">Boliviana</MenuItem>
@@ -127,21 +138,40 @@ export const SeccionPeaton = ({ control, register }: SeccionPeatonProps) => {
                     <MenuItem value="BRASILERA">Brasilera</MenuItem>
                     <MenuItem value="PERUANA">Peruana</MenuItem>
                     <MenuItem value="VENEZOLANA">Venezolana</MenuItem>
+                    <MenuItem value="OTRO">Otro</MenuItem>
                   </TextField>
                 )}
               />
             </Grid>
 
             <Grid size={{ xs: 12, md: 3 }}>
-              <TextField fullWidth label="Provincia" {...register(`peatones.${index}.provincia`)} />
+              <TextField
+                fullWidth
+                label="Provincia"
+                {...register(`peatones.${index}.provincia`)}
+                error={!!getErrorMessage(errors, `peatones.${index}.provincia`)}
+                helperText={getErrorMessage(errors, `peatones.${index}.provincia`)}
+              />
             </Grid>
 
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth label="Domicilio" {...register(`peatones.${index}.domicilio`)} />
+              <TextField
+                fullWidth
+                label="Domicilio"
+                {...register(`peatones.${index}.domicilio`)}
+                error={!!getErrorMessage(errors, `peatones.${index}.domicilio`)}
+                helperText={getErrorMessage(errors, `peatones.${index}.domicilio`)}
+              />
             </Grid>
 
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth label="Localidad" {...register(`peatones.${index}.localidad`)} />
+              <TextField
+                fullWidth
+                label="Localidad"
+                {...register(`peatones.${index}.localidad`)}
+                error={!!getErrorMessage(errors, `peatones.${index}.localidad`)}
+                helperText={getErrorMessage(errors, `peatones.${index}.localidad`)}
+              />
             </Grid>
 
             <Grid size={{ xs: 12, md: 2 }}>
@@ -149,8 +179,8 @@ export const SeccionPeaton = ({ control, register }: SeccionPeatonProps) => {
                 name={`peatones.${index}.tipo`}
                 control={control}
                 defaultValue="DNI"
-                render={({ field }) => (
-                  <TextField {...field} select fullWidth label="Tipo doc.">
+                render={({ field, fieldState }) => (
+                  <TextField {...field} select fullWidth label="Tipo doc." error={!!fieldState.error} helperText={fieldState.error?.message}>
                     <MenuItem value="DNI">DNI</MenuItem>
                     <MenuItem value="LC">LC</MenuItem>
                     <MenuItem value="LE">LE</MenuItem>
@@ -161,7 +191,13 @@ export const SeccionPeaton = ({ control, register }: SeccionPeatonProps) => {
             </Grid>
 
             <Grid size={{ xs: 12, md: 3 }}>
-              <TextField fullWidth label="Número documento" {...register(`peatones.${index}.numeroDocumento`)} />
+              <TextField
+                fullWidth
+                label="Número documento"
+                {...register(`peatones.${index}.numeroDocumento`)}
+                error={!!getErrorMessage(errors, `peatones.${index}.numeroDocumento`)}
+                helperText={getErrorMessage(errors, `peatones.${index}.numeroDocumento`)}
+              />
             </Grid>
 
             <Grid size={{ xs: 12, md: 3 }}>
@@ -171,11 +207,19 @@ export const SeccionPeaton = ({ control, register }: SeccionPeatonProps) => {
                 label="Fecha de nacimiento"
                 InputLabelProps={{ shrink: true }}
                 {...register(`peatones.${index}.fechaNacimiento`)}
+                error={!!getErrorMessage(errors, `peatones.${index}.fechaNacimiento`)}
+                helperText={getErrorMessage(errors, `peatones.${index}.fechaNacimiento`)}
               />
             </Grid>
 
             <Grid size={{ xs: 6, md: 2 }}>
-              <TextField fullWidth label="Edad" {...register(`peatones.${index}.edad`)} />
+              <TextField
+                fullWidth
+                label="Edad"
+                {...register(`peatones.${index}.edad`)}
+                error={!!getErrorMessage(errors, `peatones.${index}.edad`)}
+                helperText={getErrorMessage(errors, `peatones.${index}.edad`)}
+              />
             </Grid>
 
             <Grid size={{ xs: 12, md: 4 }}>
@@ -198,6 +242,8 @@ export const SeccionPeaton = ({ control, register }: SeccionPeatonProps) => {
                 multiline
                 minRows={2}
                 {...register(`peatones.${index}.trasladado`)}
+                error={!!getErrorMessage(errors, `peatones.${index}.trasladado`)}
+                helperText={getErrorMessage(errors, `peatones.${index}.trasladado`)}
               />
             </Grid>
 
@@ -206,8 +252,8 @@ export const SeccionPeaton = ({ control, register }: SeccionPeatonProps) => {
                 name={`peatones.${index}.estadoSalud`}
                 control={control}
                 defaultValue=""
-                render={({ field }) => (
-                  <TextField {...field} select fullWidth label="Estado de salud">
+                render={({ field, fieldState }) => (
+                  <TextField {...field} select fullWidth label="Estado de salud" error={!!fieldState.error} helperText={fieldState.error?.message}>
                     <MenuItem value="SIN LESIONES">Sin lesiones</MenuItem>
                     <MenuItem value="HERIDO LEVE">Herido leve</MenuItem>
                     <MenuItem value="HERIDO GRAVE">Herido grave</MenuItem>

@@ -112,7 +112,7 @@ export interface Protagonista {
   //articuladoRef: number[];
   // Lista anidada
   acompanantes: Acompanante[];
-  licenciaRequest?: LicenciaRequest;
+  licenciaRequest?: LicenciaRequest | null;
   actasNoCargadas: ActaSalienteDetalleRequest[];
   domicilio: string;
   provincia: string;

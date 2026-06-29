@@ -1,5 +1,6 @@
 import type { ActaRequest } from "../models/ActaRequest";
 import type { ActaResumenDto } from "../models/ActaResumenDto";
+import type { TestigoRequest } from "../models/FirmaDTO";
 
 const splitApellidoNombrePorComa = (
   value: string | null | undefined,
@@ -46,6 +47,13 @@ export const actaResumenToActaRequest = (
     parseUnidadRegionalId(acta.ubicacionResponse?.idUr) ??
     parseUnidadRegionalId(acta.ubicacionResponse?.unidadRegional);
 
+  const testigos: TestigoRequest[] | undefined = acta.testigos?.map((testigo) => ({
+    nombre: testigo.nombre ?? "",
+    apellido: testigo.apellido ?? "",
+    dni: testigo.dni ?? "",
+    domicilio: testigo.domicilio,
+  }));
+
   return {
     idActa: acta.idActa,
     idGrupo: acta.idGrupo,
@@ -62,6 +70,7 @@ export const actaResumenToActaRequest = (
     graduacionAlcoholica: acta.graduacionAlcoholica,
     infractorFugado: acta.infractorFugado,
     retencionVehiculo: acta.retencionVehiculo,
+    testigos,
     ubicacionRequest: {
       departamento: acta.ubicacionResponse.departamento,
       lat: acta.ubicacionResponse.lat,
@@ -71,5 +80,6 @@ export const actaResumenToActaRequest = (
       localidad: acta.ubicacionResponse.localidad
     },
     fecha: acta.fecha,
+    
   };
 };
