@@ -11,6 +11,6 @@ export interface InfractorSolicitud {
   localidad?: string;
   provincia: string;
   //licencia
-  licencia: LicenciaRequest;
+  licencia: LicenciaRequest | null;
   propietario: boolean;
 }

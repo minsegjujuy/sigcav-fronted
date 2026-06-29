@@ -125,6 +125,7 @@ const initialState: ActaRequest = {
   infractorFugado: false,
   juzgado: 0,
   retencionVehiculo: false,
+  testigos: [],
   ubicacionRequest: {lat:0,lng:0,departamento:'', unidadRegional:0, descripcion:'', localidad: 0},
   articulos: [],
   infractor: {
@@ -206,14 +207,7 @@ export default function ActaForm() {
         ...prev,
         infractor: {
           ...prev.infractor,
-          licencia: {
-            id: undefined,
-            clase: "",
-            numero: "",
-            autoridadExpedicion: "",
-            fechaExpedicion: "",
-            fechaVencimiento: "",
-          },
+          licencia: null,
         },
       }));
       return;
@@ -284,7 +278,7 @@ export default function ActaForm() {
   const navigate = useNavigate();
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     if (newValue >= 2 && !hasValidInfractorDni) return;
-    if (newValue === 3 && isEditingActa) return;
+    if (newValue === 3 && !usesTestigosOnly && isEditingActa) return;
     setActiveTab(newValue);
   };
 
@@ -294,7 +288,7 @@ export default function ActaForm() {
 
   const goNextTab = () => {
     setActiveTab((prev) => {
-      const maxTab = isEditingActa ? 2 : 3;
+      const maxTab = usesTestigosOnly ? 3 : (isEditingActa ? 2 : 3);
       const next = Math.min(maxTab, prev + 1);
       if (next >= 2 && !hasValidInfractorDni) {
         SnackbarUtilities.error("Ingresa un DNI valido para avanzar");
@@ -335,6 +329,14 @@ export default function ActaForm() {
     if (!actaSeleccionada?.idActa) return;
     setFirma((prev) => ({ ...prev, actaId: actaSeleccionada.idActa }));
   }, [actaSeleccionada?.idActa]);
+
+  useEffect(() => {
+    if (!actaSeleccionada) return;
+    setFirma((prev) => ({
+      ...prev,
+      testigos: ensureTwoTestigos(actaSeleccionada.testigos),
+    }));
+  }, [actaSeleccionada]);
 
   useEffect(() => {
     if (!isEditingActa) return;
@@ -618,7 +620,7 @@ export default function ActaForm() {
           delete (actaToSend as Partial<ActaRequest>).firma;
         }*/
         
-        console.log('acta ', actaToSend);
+        //console.log('acta ', actaToSend);
         let response: ActaRequest | null = null;
         if(actaSeleccionada){
           response = await actualizarActa(actaToSend);
@@ -972,6 +974,7 @@ export default function ActaForm() {
       setSelectedGrupo(actaSeleccionada.idGrupo)
       setSelectedPuesto(actaSeleccionada.idPuesto ?? '');
       const mappedActa = actaResumenToActaRequest(actaSeleccionada);
+      const mappedTestigos = ensureTwoTestigos(mappedActa.testigos ?? actaSeleccionada.testigos);
 
       setForm({
         ...mappedActa,
@@ -996,6 +999,7 @@ export default function ActaForm() {
           tipoRodado:
             actaSeleccionada.vehiculo.tipoRodado ?? mappedActa.vehiculo.tipoRodado ?? "",
         },
+        testigos: mappedTestigos,
       });
       setArticulosSeleccionados(articulos);
       setSelectedLey(1);
@@ -1057,7 +1061,7 @@ export default function ActaForm() {
             <Tab label="Acta" sx={activeTab !== 0 ? tabPulseSx : undefined} />
             <Tab label="Infractor" sx={activeTab !== 1 ? tabPulseSx : undefined} />
             <Tab label="Vehiculo" disabled={!hasValidInfractorDni} sx={activeTab !== 2 && hasValidInfractorDni ? tabPulseSx : undefined} />
-            <Tab label={usesTestigosOnly ? "Testigos" : "Firmas"} disabled={!hasValidInfractorDni || isEditingActa} sx={activeTab !== 3 && hasValidInfractorDni ? tabPulseSx : undefined} />
+            <Tab label={usesTestigosOnly ? "Testigos" : "Firmas"} sx={activeTab !== 3 && hasValidInfractorDni ? tabPulseSx : undefined} />
           </Tabs>
 
           {activeTab === 0 && (
@@ -1500,73 +1504,68 @@ export default function ActaForm() {
               </FormControl>
             )}
               {/*Licencias*/}
-              {( 
-                (form.adjunta.includes('LICENCIA EXTRANJERA') || form.adjunta.includes('LICENCIA MUNICIPAL DE CONDUCIR')
-                || form.adjunta.includes('LICENCIA NACIONAL DE CONDUCIR'))
-              ) && (
-                <>
-                    {licencias && <FormControl fullWidth margin="normal">
-                      <InputLabel id="licencia-label">Licencia</InputLabel>
-                      <Select
-                        labelId="licencia-label"
-                        value={form.infractor.licencia.id?.toString() || "0"}
-                        onChange={(e) => handleLicenciaChange(Number(e.target.value))}
-                        label="Licencia"
-                      >
-                        <MenuItem value={0}>
-                          <em>Nueva licencia</em>
-                        </MenuItem>
+              <>
+                {licencias && <FormControl fullWidth margin="normal">
+                  <InputLabel id="licencia-label">Licencia</InputLabel>
+                  <Select
+                    labelId="licencia-label"
+                    value={form.infractor.licencia?.id?.toString() || "0"}
+                    onChange={(e) => handleLicenciaChange(Number(e.target.value))}
+                    label="Licencia"
+                  >
+                    <MenuItem value={0}>
+                      <em>Nueva licencia</em>
+                    </MenuItem>
 
-                        {licencias.map((licencia) => (
-                          <MenuItem key={licencia.id} value={licencia.id}>
-                            {licencia.numero} - Clase {licencia.clase} - Vto.{" "}
-                            {licencia.fechaVencimiento}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>}
-                    <TextField
-                      label="Clase de licencia"
-                      fullWidth
-                      margin="normal"
-                      value={form.infractor.licencia.clase ?? ""}
-                      onChange={(e) => handleChange("infractor.licencia.clase", e.target.value)}
-                    />
-                    <TextField
-                      label="Numero de licencia"
-                      fullWidth
-                      margin="normal"
-                      value={form.infractor.licencia.numero ?? ""}
-                      onChange={(e) => handleChange("infractor.licencia.numero", e.target.value)}
-                    />
-                    <TextField
-                      label="Autoridad de expedicion"
-                      fullWidth
-                      margin="normal"
-                      sx={{ gridColumn: "1 / -1" }}
-                      value={form.infractor.licencia.autoridadExpedicion ?? ""}
-                      onChange={(e) => handleChange("infractor.licencia.autoridadExpedicion", e.target.value)}
-                    />
-                    <TextField
-                      label="Fecha de expedicion"
-                      type="date"
-                      fullWidth
-                      margin="normal"
-                      InputLabelProps={{ shrink: true }}
-                      value={form.infractor.licencia.fechaExpedicion ?? ""}
-                      onChange={(e) => handleChange("infractor.licencia.fechaExpedicion", e.target.value)}
-                    />
-                    <TextField
-                      label="Fecha de vencimiento"
-                      type="date"
-                      fullWidth
-                      margin="normal"
-                      InputLabelProps={{ shrink: true }}
-                      value={form.infractor.licencia.fechaVencimiento ?? ""}
-                      onChange={(e) => handleChange("infractor.licencia.fechaVencimiento", e.target.value)}
-                    />
-                </>
-              )}
+                    {licencias.map((licencia) => (
+                      <MenuItem key={licencia.id} value={licencia.id}>
+                        {licencia.numero} - Clase {licencia.clase} - Vto.{" "}
+                        {licencia.fechaVencimiento}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>}
+                  <TextField
+                  label="Clase de licencia"
+                  fullWidth
+                  margin="normal"
+                  value={form.infractor.licencia?.clase ?? ""}
+                  onChange={(e) => handleChange("infractor.licencia.clase", e.target.value)}
+                />
+                <TextField
+                  label="Numero de licencia"
+                  fullWidth
+                  margin="normal"
+                  value={form.infractor.licencia?.numero ?? ""}
+                  onChange={(e) => handleChange("infractor.licencia.numero", e.target.value)}
+                />
+                <TextField
+                  label="Autoridad de expedicion"
+                  fullWidth
+                  margin="normal"
+                  sx={{ gridColumn: "1 / -1" }}
+                  value={form.infractor.licencia?.autoridadExpedicion ?? ""}
+                  onChange={(e) => handleChange("infractor.licencia.autoridadExpedicion", e.target.value)}
+                />
+                <TextField
+                  label="Fecha de expedicion"
+                  type="date"
+                  fullWidth
+                  margin="normal"
+                  InputLabelProps={{ shrink: true }}
+                  value={form.infractor.licencia?.fechaExpedicion ?? ""}
+                  onChange={(e) => handleChange("infractor.licencia.fechaExpedicion", e.target.value)}
+                />
+                <TextField
+                  label="Fecha de vencimiento"
+                  type="date"
+                  fullWidth
+                  margin="normal"
+                  InputLabelProps={{ shrink: true }}
+                  value={form.infractor.licencia?.fechaVencimiento ?? ""}
+                  onChange={(e) => handleChange("infractor.licencia.fechaVencimiento", e.target.value)}
+                />
+              </>
             </Box>
           )}
 
@@ -1681,7 +1680,7 @@ export default function ActaForm() {
                   </Typography>
 
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    El infractor se fug&oacute;, por lo que no se cargan firmas. Completa los dos testigos obligatorios.
+                    El infractor se fugó por lo que no se cargan firmas. Completa los dos testigos obligatorios.
                   </Typography>
 
                   <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" }, gap: 2 }}>

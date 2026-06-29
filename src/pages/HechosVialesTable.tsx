@@ -71,7 +71,7 @@ export default function HechosVialesTable() {
   }
 
   const editar = (hecho: HechoVialListDto) => {
-    //console.log('hv selected ' , hecho)
+    console.log('hv selected ' , hecho)
     setHechoVial(mapHechoVialListDtoToForm(hecho));
     navigate(`/dashboard/hechos-viales/modificacion/${hecho.id}`);
   };
@@ -235,7 +235,7 @@ export default function HechosVialesTable() {
                 <TableCell>{row.zona}</TableCell>
                 <TableCell>{row.tipoSiniestro}</TableCell>
                 <TableCell>{row.victimaFatal}</TableCell>
-                <TableCell>{row.protagonistas.map(data => data.graduacionAlcoholica)}</TableCell>
+                <TableCell>{row.protagonistas?.map(data => data.graduacionAlcoholica)}</TableCell>
                 <TableCell>
                   <Button onClick={() => handleDetails(row)}>Ver informe</Button>
                   <Button onClick={() => editar(row)}><EditIcon/></Button>

@@ -1,4 +1,6 @@
-﻿import type { UnidadInterviniente } from "./PersonalInterviniente";
+﻿import type { ActaSalienteDetalleRequest } from "./ActaSalienteDetalleRequest";
+import type { LicenciaRequest } from "./LicenciaRequest";
+import type { UnidadInterviniente } from "./PersonalInterviniente";
 import type { UbicacionRequest } from "./UbicacionRequest";
 
 export interface HechoVialForm {
@@ -28,6 +30,24 @@ export interface HechoVialForm {
   sintesis: string; //obligatorio
   protagonistas: Protagonista[]; //obligatorio
   unidades: UnidadInterviniente[];
+  peatones: Peaton[]
+}
+
+export interface Peaton {
+  id?: number;
+  nombre: string;
+  genero: string;
+  nacionalidad: string;
+  provincia: string;
+  domicilio: string;
+  localidad: string;
+  tipo: 'DNI' | 'LC' | 'LE' | 'CI';
+  numeroDocumento: string;
+  fechaNacimiento: string;
+  edad: string;
+  dispositivoRetencion: boolean;
+  trasladado: string;
+  estadoSalud: string;
 }
 
 export interface Involucrado {
@@ -42,6 +62,8 @@ export interface Acompanante {
   genero: string;
   nacionalidad: string;
   provincia: string;
+  domicilio: string;
+  localidad: string;
   tipo: 'DNI' | 'LC' | 'LE' | 'CI';
   numeroDocumento: string;
   fechaNacimiento: string;
@@ -71,10 +93,10 @@ export interface Protagonista {
   conductorNacionalidad: string;
   conductorEdad: string;
   conductorFechaNacimiento: string;
-  licenciaNro: string;
+  //licenciaNro: string;
   municipio: string;
-  licenciaTipo: string;
-  licenciaClase: string;
+  //licenciaTipo: string;
+  //licenciaClase: string;
   licenciaEstado: 'VIGENTE' | 'VENCIDA' | 'NO_POSEE' | 'NO POSEE' | 'SD';
   // Personal de Seguridad (Opcional)
   esFuerzaSeguridad: boolean;
@@ -85,9 +107,14 @@ export interface Protagonista {
   trasladoConductor: string;
   graduacionAlcoholica: number | null; // si es null no se realizÃ³ ningun test
   estadoSalud: string;
-  actaRef: string;
-  actaRetencionRef: string;
-  articuladoRef: number[];
+  //actaRef: string;
+  //actaRetencionRef: string;
+  //articuladoRef: number[];
   // Lista anidada
   acompanantes: Acompanante[];
+  licenciaRequest?: LicenciaRequest | null;
+  actasNoCargadas: ActaSalienteDetalleRequest[];
+  domicilio: string;
+  provincia: string;
+  localidad: string;
 }

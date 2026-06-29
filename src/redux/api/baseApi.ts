@@ -21,7 +21,8 @@ export const baseApi = createApi({
         'Grupos',
         'TiposActa',
         'Juzgados',
-        'Leyes'
+        'Leyes',
+        'Articulos'
     ],
 
     endpoints: () => ({})

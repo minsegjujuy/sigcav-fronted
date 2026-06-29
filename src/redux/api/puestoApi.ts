@@ -14,7 +14,7 @@ export const brandApi = baseApi.injectEndpoints({
         }),
         getjuzgados: builder.query<Juzgado[], void>({
             query: () => '/juzgados/actas',
-            keepUnusedDataFor: Infinity,
+            keepUnusedDataFor: 1800,
             providesTags: ['Juzgados']
         }),
         getGrupos: builder.query<Grupo[], void>({
@@ -24,13 +24,18 @@ export const brandApi = baseApi.injectEndpoints({
         }),
         getTipos: builder.query<Tipo[], void>({
             query: () => '/tipo-actas',
-            keepUnusedDataFor: Infinity,
+            keepUnusedDataFor: 1800,
             providesTags: ['TiposActa']
         }),
         getLeyes: builder.query<Ley[], void>({
             query: () => '/ley',
-            keepUnusedDataFor: Infinity,
+            keepUnusedDataFor: 1800,
             providesTags: ['Leyes']
+        }),
+        getArticulos: builder.query<Ley[], void>({
+            query: () => '/articulo/',
+            keepUnusedDataFor: 1800,
+            providesTags: ['Articulos']
         }),
     })
 });
@@ -40,5 +45,6 @@ export const {
     useGetGruposQuery,
     useGetjuzgadosQuery,
     useGetLeyesQuery,
-    useGetTiposQuery
+    useGetTiposQuery,
+    useGetArticulosQuery
 } = brandApi;
