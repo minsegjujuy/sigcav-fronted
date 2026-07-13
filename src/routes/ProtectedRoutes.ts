@@ -17,6 +17,7 @@ const PrintTestButton = React.lazy(() =>
 );
 const TwoFactorSetup = lazy(() => import('../pages/TwoFactorSetup'));
 const Talonario = lazy(() => import('../pages/Talonario'));
+const Usuario = lazy(() => import('../pages/UsuarioTable'));
 
 export const protectedRoutes: RouteConfig[] = [
 
@@ -32,6 +33,7 @@ export const protectedRoutes: RouteConfig[] = [
   //{ path: "/dashboard/talonarios",                   component: Talonario,           allowedRoles: ["ADMIN", "REPAT", "SECRETARIO", "JEFE"] },
   { path: "/dashboard/talonarios/registros",         component: RegistroTalonario,   allowedRoles: ["ADMIN", "REPAT", "SECRETARIO", "JEFE"] },
   { path: "/dashboard/actas-salientes",              component: ActaSalienteTable,   allowedRoles: ["ADMIN", "DICTAMEN"] },
+  { path: "/dashboard/users",              component: Usuario,   allowedRoles: ["ADMIN"] },
 
   // Modificación
   { path: "/dashboard/modificacion",                 component: ActaForm,            allowedRoles: ["ADMIN", "REPAT", "SECRETARIO", "PERSONAL"] },
