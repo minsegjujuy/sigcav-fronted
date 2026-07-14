@@ -1,8 +1,10 @@
+import type { Articulo } from '../../models/Articulo';
 import type { Grupo } from '../../models/Grupo';
 import type { Juzgado } from '../../models/Juzgado';
 import type { Ley } from '../../models/Ley';
 import type { Puesto } from '../../models/Puesto';
 import type { Tipo } from '../../models/Tipo';
+import type { Jerarquia, Role } from '../../models/User';
 import { baseApi } from './baseApi';
 
 export const brandApi = baseApi.injectEndpoints({
@@ -32,10 +34,20 @@ export const brandApi = baseApi.injectEndpoints({
             keepUnusedDataFor: 1800,
             providesTags: ['Leyes']
         }),
-        getArticulos: builder.query<Ley[], void>({
+        getArticulos: builder.query<Articulo[], void>({
             query: () => '/articulo/',
             keepUnusedDataFor: 1800,
             providesTags: ['Articulos']
+        }),
+        getJerarquias: builder.query<Jerarquia[], void>({
+            query: () => '/jerarquia/',
+            keepUnusedDataFor: 1800,
+            providesTags: ['Jerarquias']
+        }),
+        getRoles: builder.query<Role[], void>({
+            query: () => '/role/',
+            keepUnusedDataFor: 1800,
+            providesTags: ['Roles']
         }),
     })
 });
@@ -46,5 +58,7 @@ export const {
     useGetjuzgadosQuery,
     useGetLeyesQuery,
     useGetTiposQuery,
-    useGetArticulosQuery
+    useGetArticulosQuery,
+    useGetJerarquiasQuery,
+    useGetRolesQuery
 } = brandApi;

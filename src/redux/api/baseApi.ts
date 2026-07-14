@@ -22,7 +22,9 @@ export const baseApi = createApi({
         'TiposActa',
         'Juzgados',
         'Leyes',
-        'Articulos'
+        'Articulos',
+        'Jerarquias',
+        'Roles',
     ],
 
     endpoints: () => ({})

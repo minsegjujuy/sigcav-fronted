@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -49,7 +49,7 @@ const ActaSalienteTable: React.FC = () => {
   const [nombre, setNombre] = useState("");
   const [recibo, setRecibo] = useState("");
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     //setLoading(true);
     try {
       //console.log("ANTES", dniFilter);
@@ -72,7 +72,7 @@ const ActaSalienteTable: React.FC = () => {
     } finally {
       //setLoading(false);
     }
-  };
+  }, [page, rowsPerPage, dniFilter, nroActaFilter, recibo, nombre]);
 
   const fetchJuzgados = async () => {
     const data = await obtenerJuzgados();
@@ -85,11 +85,18 @@ const ActaSalienteTable: React.FC = () => {
   }
 
   const handleSubmit = async (acta: ActaSalienteRequest) => {
-    console.log(acta);
+    const actaParaEnviar: ActaSalienteRequest = {
+      ...acta,
+      actas: acta.actas.map((detalle) => ({
+        ...detalle,
+        fechaActa: detalle.fechaActa ? `${detalle.fechaActa}T00:00:00` : detalle.fechaActa,
+      })),
+    };
+
     if(action === 'edit'){
-      await actualizarActaSaliente(acta)
+      await actualizarActaSaliente(actaParaEnviar)
     }else{
-      await crearActaSaliente(acta);
+      await crearActaSaliente(actaParaEnviar);
     }
     SnackbarUtilities.success('acta guardada correctamente')
     fetchData();
@@ -110,7 +117,7 @@ const ActaSalienteTable: React.FC = () => {
   useEffect(() => {
     fetchData();
     fetchJuzgados();
-  }, [page, rowsPerPage]);
+  }, [fetchData]);
 
   const handleSearch = () => {
     setPage(0);

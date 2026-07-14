@@ -21,6 +21,7 @@ import FullscreenMultiSelect from "../components/containers/MultiSelect";
 import type { Articulo } from "../models/Articulo";
 import { getArticulos } from "../services/ArticuloService";
 import type { ActaSalienteDetalleRequest } from "../models/ActaSalienteDetalleRequest";
+import DeleteIcon from '@mui/icons-material/Delete';
 
 export interface ActaSalienteRequest {
     id: number | null; // null para nuevas actas
@@ -207,12 +208,12 @@ const FormActaSaliente: React.FC<Props> = ({
                       name={`actas.${index}.fechaActa`}
                       control={control}
                       render={({ field }) => (
-                        <TextField {...field} label="Fecha Acta" type="datetime-local" fullWidth size="small" InputLabelProps={{ shrink: true }} />
+                        <TextField {...field} label="Fecha Acta" type="date" fullWidth size="small" InputLabelProps={{ shrink: true }} />
                       )}
                     />
                   </Grid>
                   <Grid size={{ xs: 12, md: 3 }}>
-                    <Button color="error" onClick={() => remove(index)}>Eliminar</Button>
+                    <Button color="error" onClick={() => remove(index)}><DeleteIcon /></Button>
                   </Grid>
                   <Grid size={{ xs: 12 }}>
                     <Controller

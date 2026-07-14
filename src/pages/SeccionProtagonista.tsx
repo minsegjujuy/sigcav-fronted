@@ -782,11 +782,26 @@ export const SeccionProtagonistas = ({ control, register, setValue, watch, error
               <Grid size={{ xs: 12, md: 12 }}>
                 <TextField
                   fullWidth
+                  label="Descripcion"
+                  placeholder="Colocar descripción de la persona solo si no se cuenta con todos los datos, por ej. dni, nombre, nacionalidad, etc."
+                  multiline
+                  minRows={3}
+                  {...register(`protagonistas.${index}.descripcion`)}
+                  error={!!getErrorMessage(errors, `protagonistas.${index}.descripcion`)}
+                  helperText={getErrorMessage(errors, `protagonistas.${index}.descripcion`)}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 12 }}>
+                <TextField
+                  fullWidth
                   label="Traslado (Hospital/SAME)"
                   placeholder="Ej.: Sí, al hospital Pablo Soria por personal de SAME (interno Nro. - Enfermero / Chofer). Estado de salud: herido leve / herido grave."
                   multiline
                   minRows={3}
                   {...register(`protagonistas.${index}.trasladoConductor`)}
+                  error={!!getErrorMessage(errors, `protagonistas.${index}.trasladoConductor`)}
+                  helperText={getErrorMessage(errors, `protagonistas.${index}.trasladoConductor`)}
                 />
               </Grid>
 

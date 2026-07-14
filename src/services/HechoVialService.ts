@@ -25,6 +25,36 @@ export const listarHechosViales = async (params: {
   return data;
 };
 
+export const descargarHechosVialesExcel = async (params: {
+  fechaInicio?: string;
+  fechaFin?: string;
+  grupoId?: string;
+  danosMateriales?: string;
+  victimaFatal?: string;
+  soloLesionados?: boolean;
+}) => {
+  const { data } = await api.get(
+    `${baseURL}/hechos-viales/exportacion-excel`,
+    {
+      params,
+      responseType: "blob",
+      ...getAuthHeader(),
+    }
+  );
+
+  const url = window.URL.createObjectURL(new Blob([data]));
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "hechos_viales.xlsx";
+
+  document.body.appendChild(link);
+  link.click();
+
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
+
 export const dashboardHechosViales= async (params: {
   fechaInicio: string;
   fechaFin: string

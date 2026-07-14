@@ -292,6 +292,18 @@ export const SeccionAcompanantes = ({ pIndex, control, register, errors }: Acomp
                 multiline
                 minRows={3}
                 {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.trasladado`)}
+                error={!!getErrorMessage(errors, `protagonistas.${pIndex}.acompanantes.${aIndex}.trasladado`)}
+                helperText={getErrorMessage(errors, `protagonistas.${pIndex}.acompanantes.${aIndex}.trasladado`)}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 12 }}>
+            <TextField
+                fullWidth
+                label="Descripcion"
+                placeholder="Colocar descripción de la persona solo si no se cuenta con todos los datos, por ej. dni, nombre, nacionalidad, etc."
+                multiline
+                minRows={3}
+                {...register(`protagonistas.${pIndex}.acompanantes.${aIndex}.descripcion`)}
             />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>

@@ -247,6 +247,19 @@ export const SeccionPeaton = ({ control, register, errors }: SeccionPeatonProps)
               />
             </Grid>
 
+            <Grid size={{ xs: 12, md: 8 }}>
+              <TextField
+                fullWidth
+                label="Descripcion"
+                placeholder="Colocar descripción de la persona solo si no se cuenta con todos los datos, por ej. dni, nombre, nacionalidad, etc."
+                multiline
+                minRows={2}
+                {...register(`peatones.${index}.descripcion`)}
+                error={!!getErrorMessage(errors, `peatones.${index}.descripcion`)}
+                helperText={getErrorMessage(errors, `peatones.${index}.descripcion`)}
+              />
+            </Grid>
+
             <Grid size={{ xs: 12, md: 4 }}>
               <Controller
                 name={`peatones.${index}.estadoSalud`}

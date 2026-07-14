@@ -81,6 +81,7 @@ const mapAcompanante = (a: Acompanante | AnyRecord): Acompanante => {
     dispositivoRetencion: toBool(raw["dispositivoRetencion"]),
     trasladado: str(raw["trasladado"]),
     estadoSalud: str(raw["estadoSalud"]),
+    descripcion: str(raw["descripcion"]),
   };
 };
 
@@ -160,6 +161,7 @@ const mapPeaton = (raw: AnyRecord) => ({
   dispositivoRetencion: toBool(raw["dispositivoRetencion"]),
   trasladado: str(raw["trasladado"]),
   estadoSalud: str(raw["estadoSalud"]),
+  descripcion: str(raw["descripcion"]),
 });
 
 const mapProtagonista = (p: Protagonista | AnyRecord): Protagonista => {
@@ -185,6 +187,7 @@ const mapProtagonista = (p: Protagonista | AnyRecord): Protagonista => {
     localidad: str(raw["localidad"]),
     provincia: str(raw["provincia"]),
     conductorEdad: str(raw["conductorEdad"]),
+    descripcion: str(raw["descripcion"]),
     conductorFechaNacimiento: str(
       raw["conductorFechaNacimiento"] ?? raw["fechaNacimiento"] ?? raw["fecha_nacimiento"]
     ),
@@ -257,5 +260,7 @@ export function mapHechoVialListDtoToForm(dto: HechoVialListDto): HechoVialForm 
     peatones: Array.isArray((dto as unknown as AnyRecord)["peatones"])
       ? ((dto as unknown as AnyRecord)["peatones"] as AnyRecord[]).map(mapPeaton)
       : [],
+    nota: dto.nota,
+    deLosHechos: dto.deLosHechos,
   };
 }

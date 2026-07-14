@@ -62,52 +62,56 @@ export const unidadIntervinienteSchema = z.object({
 
 export const peatonSchema = z.object({
   id: z.coerce.number().optional().nullable(),
-  nombre: z.string().trim().min(1, "El nombre del peatón es obligatorio").max(30, "El nombre del peatón no puede superar los 30 caracteres"),
+  nombre: optionalText(30, "El nombre del peatón no puede superar los 30 caracteres"),
   genero: z
     .string()
     .trim()
     .min(1, "El género es obligatorio")
     .regex(/^[A-Za-z]$/, "El género debe contener una única letra"),
-  nacionalidad: z.string().trim().min(1, "La nacionalidad es obligatoria").max(30, "La nacionalidad no puede superar los 30 caracteres"),
+  nacionalidad: optionalText(30, "La nacionalidad no puede superar los 30 caracteres"),
   provincia: z.string().trim().max(30, "La provincia no puede superar los 30 caracteres").optional().nullable().or(z.literal("")),
-  domicilio: z.string().trim().min(1, "El domicilio es obligatorio").max(30, "El domicilio no puede superar los 30 caracteres"),
-  localidad: z.string().trim().min(1, "La localidad es obligatoria").max(30, "La localidad no puede superar los 30 caracteres"),
+  domicilio: optionalText(30, "El domicilio no puede superar los 30 caracteres"),
+  localidad: optionalText(30, "La localidad no puede superar los 30 caracteres"),
   tipo: z.enum(["DNI", "LC", "LE", "CI"]),
   numeroDocumento: z
     .string()
     .trim()
-    .min(1, "El número de documento es obligatorio")
-    .regex(/^\d{1,8}$/, "El número de documento debe contener hasta 8 dígitos"),
+    .regex(/^\d{1,8}$/, "El número de documento debe contener hasta 8 dígitos")
+    .optional()
+    .nullable()
+    .or(z.literal("")),
   fechaNacimiento: z.string().optional().nullable().or(z.literal("")),
   edad: optionalNumericText("La edad debe ser numérica"),
   dispositivoRetencion: z.boolean(),
-  trasladado: z.string().trim().max(255, "El traslado no puede superar los 255 caracteres").optional().nullable().or(z.literal("")),
+  trasladado: requiredText(255, "El traslado es obligatorio", "El traslado no puede superar los 255 caracteres"),
   estadoSalud: z.string().trim().min(1, "El estado de salud es obligatorio").max(20, "El estado de salud no puede superar los 20 caracteres"),
 }).passthrough();
 
 export const acompananteSchema = z.object({
   id: z.coerce.number().optional().nullable(),
-  nombre: z.string().trim().min(1, "El nombre del acompañante es obligatorio").max(30, "El nombre del acompañante no puede superar los 30 caracteres"),
+  nombre: optionalText(30, "El nombre del acompañante no puede superar los 30 caracteres"),
   genero: z
     .string()
     .trim()
     .min(1, "El género es obligatorio")
     .regex(/^[A-Za-z]$/, "El género debe contener una única letra"),
-  nacionalidad: z.string().trim().min(1, "La nacionalidad es obligatoria").max(30, "La nacionalidad no puede superar los 30 caracteres"),
+  nacionalidad: optionalText(30, "La nacionalidad no puede superar los 30 caracteres"),
   provincia: z.string().trim().max(30, "La provincia no puede superar los 30 caracteres").optional().nullable().or(z.literal("")),
-  localidad: z.string().trim().min(1, "La localidad es obligatoria").max(30, "La localidad no puede superar los 30 caracteres"),
-  domicilio: z.string().trim().min(1, "El domicilio es obligatorio").max(30, "El domicilio no puede superar los 30 caracteres"),
+  localidad: optionalText(30, "La localidad no puede superar los 30 caracteres"),
+  domicilio: optionalText(30, "El domicilio no puede superar los 30 caracteres"),
   tipo: z.enum(["DNI", "LC", "LE", "CI"]),
   numeroDocumento: z
     .string()
     .trim()
-    .min(1, "El DNI es obligatorio")
-    .regex(/^\d{1,8}$/, "El DNI debe contener hasta 8 dígitos"),
+    .regex(/^\d{1,8}$/, "El DNI debe contener hasta 8 dígitos")
+    .optional()
+    .nullable()
+    .or(z.literal("")),
   fechaNacimiento: z.string().optional().nullable().or(z.literal("")),
   edad: optionalNumericText("La edad debe ser numérica"),
   usoCinturonCasco: z.boolean(),
   dispositivoRetencion: z.boolean(),
-  trasladado: z.string().trim().max(255, "El traslado no puede superar los 255 caracteres").optional().nullable().or(z.literal("")),
+  trasladado: requiredText(255, "El traslado es obligatorio", "El traslado no puede superar los 255 caracteres"),
   estadoSalud: z.string().trim().min(1, "El estado de salud es obligatorio").max(20, "El estado de salud no puede superar los 20 caracteres"),
 }).passthrough();
 
@@ -123,7 +127,7 @@ export const protagonistaSchema = z.object({
   cedula: z.boolean(),
   airbagActivado: z.boolean(),
   usoSeguridad: z.boolean(),
-  conductorNombre: z.string().trim().min(1, "El nombre del conductor es obligatorio").max(30, "El nombre del conductor no puede superar los 30 caracteres"),
+  conductorNombre: optionalText(30, "El nombre del conductor no puede superar los 30 caracteres"),
   conductorGenero: z
     .string()
     .trim()
@@ -132,21 +136,23 @@ export const protagonistaSchema = z.object({
   conductorDni: z
     .string()
     .trim()
-    .min(1, "El DNI es obligatorio")
-    .regex(/^\d{1,8}$/, "El DNI debe contener hasta 8 dígitos"),
-  conductorNacionalidad: z.string().trim().min(1, "La nacionalidad es obligatoria"),
+    .regex(/^\d{1,8}$/, "El DNI debe contener hasta 8 dígitos")
+    .optional()
+    .nullable()
+    .or(z.literal("")),
+  conductorNacionalidad: optionalText(30, "La nacionalidad no puede superar los 30 caracteres"),
   conductorEdad: optionalNumericText("La edad debe ser numérica"),
   conductorFechaNacimiento: z.string().optional().nullable().or(z.literal("")),
-  municipio: z.string().trim().min(1, "El municipio es obligatorio").max(30, "El municipio del conductor no puede superar los 30 caracteres"),
-  domicilio: z.string().trim().min(1, "El domicilio es obligatorio").max(30, "El domicilio del conductor no puede superar los 30 caracteres"),
-  localidad: z.string().trim().min(1, "La localidad es obligatoria").max(30, "La localidad del conductor no puede superar los 30 caracteres"),
-  provincia: z.string().trim().min(1, "La provincia es obligatoria").max(30, "La provincia del conductor no puede superar los 30 caracteres"),
+  municipio: optionalText(30, "El municipio del conductor no puede superar los 30 caracteres"),
+  domicilio: optionalText(30, "El domicilio del conductor no puede superar los 30 caracteres"),
+  localidad: optionalText(30, "La localidad del conductor no puede superar los 30 caracteres"),
+  provincia: optionalText(30, "La provincia del conductor no puede superar los 30 caracteres"),
   licenciaEstado: z.string().trim().max(15, "Estado licencia del conductor no puede superar los 15 caracteres").optional().nullable().or(z.literal("")),
   esFuerzaSeguridad: z.boolean(),
   situacion: z.string().trim().max(30, "La situación no puede superar los 30 caracteres").optional().nullable().or(z.literal("")),
   jerarquia: z.string().trim().max(30, "La jerarquía no puede superar los 30 caracteres").optional().nullable().or(z.literal("")),
   legajo: z.string().trim().max(10, "El legajo no puede superar los 10 caracteres").optional().nullable().or(z.literal("")),
-  trasladoConductor: z.string().optional().nullable().or(z.literal("")),
+  trasladoConductor: requiredText(255, "El traslado es obligatorio", "El traslado no puede superar los 255 caracteres"),
   graduacionAlcoholica: z.number().nullable(),
   estadoSalud: z.string().trim().min(1, "El estado de salud es obligatorio").max(20, "El estado de salud no puede superar los 20 caracteres"),
   licenciaRequest: z.object({}).passthrough().optional().nullable(),
@@ -173,20 +179,20 @@ export const hechoVialFormSchema = z.object({
     message: "Daños materiales solo puede ser SI o NO",
   }),
   zona: z.string().trim().min(1, "La zona es obligatoria").max(10, "La zona no puede superar los 10 caracteres"),
-  tipoVia: z.string().trim().min(1, "El tipo de vía es obligatorio").max(15, "El tipo de via no puede superar los 15 caracteres"),
-  tipoViaOtro: optionalText(15, "El tipo de via no puede superar los 15 caracteres"),
+  tipoVia: z.string().trim().min(1, "El tipo de vía es obligatorio").max(30, "El tipo de via no puede superar los 30 caracteres"),
+  tipoViaOtro: optionalText(30, "El tipo de via no puede superar los 30 caracteres"),
   involucrados: z.array(involucradoSchema).min(1, "Debe cargar al menos un involucrado"),
-  configuracionVia: z.string().trim().min(1, "La configuración de vía es obligatoria").max(15, "La configuracion de via no puede superar los 15 caracteres"),
-  estadoCalzada: z.string().trim().min(1, "El estado de la calzada es obligatorio").max(20, "El estado de la calzada no puede superar los 20 caracteres"),
+  configuracionVia: z.string().trim().min(1, "La configuración de vía es obligatoria").max(40, "La configuracion de via no puede superar los 40 caracteres"),
+  estadoCalzada: z.string().trim().min(1, "El estado de la calzada es obligatorio").max(30, "El estado de la calzada no puede superar los 30 caracteres"),
   materialCalzada: z.string().trim().min(1, "El material de la calzada es obligatorio").max(20, "El material de la calzada no puede superar los 20 caracteres"),
-  estadoFisicoCalzada: z.string().trim().min(1, "El estado físico de la calzada es obligatorio").max(20, "El estado fisico no puede superar los 20 caracteres"),
-  estadoAmbiental: z.string().trim().min(1, "El estado ambiental es obligatorio").max(20, "El estado ambiental no puede superar los 20 caracteres"),
+  estadoFisicoCalzada: z.string().trim().min(1, "El estado físico de la calzada es obligatorio").max(30, "El estado fisico no puede superar los 30 caracteres"),
+  estadoAmbiental: z.string().trim().min(1, "El estado ambiental es obligatorio").max(30, "El estado ambiental no puede superar los 30 caracteres"),
   luzArtificial: z.string().trim().min(1, "Debe indicar si hay luz artificial").max(20, "La luz artificial no puede superar los 20 caracteres"),
   semaforo: z.string().trim().min(1, "Debe indicar si hay semáforo").max(20, "El semaforo no puede superar los 20 caracteres"),
-  tipoSiniestro: z.string().trim().min(1, "El tipo de siniestro es obligatorio").max(20, "El tipo de siniestro no puede superar los 20 caracteres"),
+  tipoSiniestro: z.string().trim().min(1, "El tipo de siniestro es obligatorio").max(50, "El tipo de siniestro no puede superar los 50 caracteres"),
   tipoColision: optionalText(20, "El tipo colision no puede superar los 20 caracteres"),
   posiblesCausas: z.array(z.string()).min(1, "Debe cargar al menos una posible causa"),
-  sintesis: z.string().trim().min(10, "La síntesis es obligatoria"),
+  sintesis: z.string().trim().min(10, "La síntesis es obligatoria").max(255, "La sintesis no puede superar los 255 caracteres"),
   protagonistas: z.array(protagonistaSchema).min(1, "Debe cargar al menos un protagonista"),
   unidades: z.array(unidadIntervinienteSchema).min(1, "Debe cargar al menos una unidad interviniente").default([]),
   peatones: z.array(peatonSchema).default([]),

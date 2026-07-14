@@ -31,6 +31,8 @@ export interface HechoVialForm {
   protagonistas: Protagonista[]; //obligatorio
   unidades: UnidadInterviniente[];
   peatones: Peaton[]
+  nota: string;
+  deLosHechos: string;
 }
 
 export interface Peaton {
@@ -48,6 +50,7 @@ export interface Peaton {
   dispositivoRetencion: boolean;
   trasladado: string;
   estadoSalud: string;
+  descripcion?: string;
 }
 
 export interface Involucrado {
@@ -72,6 +75,7 @@ export interface Acompanante {
   dispositivoRetencion: boolean;
   trasladado: string;
   estadoSalud: string;
+  descripcion?: string;
 }
 
 export interface Protagonista {
@@ -105,7 +109,7 @@ export interface Protagonista {
   legajo?: string;
   // Salud y Alcohol
   trasladoConductor: string;
-  graduacionAlcoholica: number | null; // si es null no se realizÃ³ ningun test
+  graduacionAlcoholica: number | null; // si es null no se realizó ningun test
   estadoSalud: string;
   //actaRef: string;
   //actaRetencionRef: string;
@@ -117,4 +121,5 @@ export interface Protagonista {
   domicilio: string;
   provincia: string;
   localidad: string;
+  descripcion?: string;
 }
