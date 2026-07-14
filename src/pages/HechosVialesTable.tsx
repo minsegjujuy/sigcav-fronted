@@ -19,8 +19,8 @@ import {
   Select,
   Grid
 } from "@mui/material";
-import { useEffect, useState } from "react";
-import { deleteHechoVial, listarHechosViales } from "../services/HechoVialService";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { deleteHechoVial, descargarHechosVialesExcel, listarHechosViales } from "../services/HechoVialService";
 import type { HechoVialListDto } from "../models/HechoVialListDto";
 import ReusableModal from "../components/ui/modal/ReusableModal";
 import { HechoVialDetalle } from "./HechoVialInforme";
@@ -30,6 +30,7 @@ import { useHechoVial } from "../context/HechoVialContext";
 import { mapHechoVialListDtoToForm } from "../utilities/mapHechoVialListToDto";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DownloadIcon from '@mui/icons-material/Download';
 import { SnackbarUtilities } from "../utilities/SnackbarUtilities";
 
 export default function HechosVialesTable() {
@@ -48,22 +49,26 @@ export default function HechosVialesTable() {
   const navigate = useNavigate();
   const { setHechoVial } = useHechoVial();
 
-  const fetchData = async () => {
+  const filterParams = useMemo(() => ({
+    fechaInicio: fechaInicio ? `${fechaInicio}T00:00:00` : undefined,
+    fechaFin: fechaFin ? `${fechaFin}T23:59:59` : undefined,
+    grupoId,
+    danosMateriales,
+    victimaFatal,
+    soloLesionados,
+  }), [fechaInicio, fechaFin, grupoId, danosMateriales, victimaFatal, soloLesionados]);
+
+  const fetchData = useCallback(async () => {
     const response = await listarHechosViales({
       page,
       size: rowsPerPage,
-      fechaInicio: fechaInicio ? `${fechaInicio}T00:00:00` : undefined,
-      fechaFin: fechaFin ? `${fechaFin}T23:59:59` : undefined,
-      grupoId: grupoId,
-      danosMateriales: danosMateriales,
-      victimaFatal: victimaFatal,
-      soloLesionados: soloLesionados
+      ...filterParams,
     });
     //console.log('res ', response)
     //console.log('params ', fechaInicio, ' ', fechaFin)
     setData(response.content);
     setTotal(response.totalElements);
-  };
+  }, [page, rowsPerPage, filterParams]);
 
   const handleDetails = (hv: HechoVialListDto) => {
     setOpen(true);
@@ -86,6 +91,10 @@ export default function HechosVialesTable() {
     await fetchData();
   };
 
+  const descargarExcel = async () => {
+    await descargarHechosVialesExcel(filterParams);
+  };
+
   /*const limpiarFiltros = () => {
     setFechaInicio(undefined);
     setFechaFin(undefined);
@@ -97,7 +106,7 @@ export default function HechosVialesTable() {
 
   useEffect(() => {
     fetchData();
-  }, [page, rowsPerPage]);
+  }, [fetchData]);
 
   return (
     <Paper sx={{ p: 2 }}>
@@ -202,6 +211,13 @@ export default function HechosVialesTable() {
           }}
         >
           Filtrar
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<DownloadIcon />}
+          onClick={() => void descargarExcel()}
+        >
+          Descargar Excel
         </Button>
         </Grid>
         <ReusableModal children={<HechoVialDetalle hecho={selectedItem!} />} onClose={()=>setOpen(false)} 

@@ -3,7 +3,22 @@ import type { HechoVialListDto } from "../models/HechoVialListDto";
 const siNo = (valor?: boolean): string =>
   valor === true ? "SI" : valor === false ? "NO" : "SD";
 
+const textoSiExiste = (label: string, value?: string | number | null): string => {
+  if (value === null || value === undefined) return "";
+  const texto = String(value).trim();
+  if (!texto) return "";
+  if (texto === "0") return "";
+  return `${label}: ${texto}\n`;
+};
+
+const textoDescripcion = (value?: string | null): string => {
+  const texto = String(value ?? "").trim();
+  return texto ? `Descripción: ${texto}\n` : "-\n";
+};
+
 export const generarTextoHechoVial = (hecho: HechoVialListDto): string => {
+  const extras = hecho as unknown as { nota?: string; deLosHechos?: string };
+
   let texto = `
 DESTACAMENTO: ${hecho.puesto}
 
@@ -29,16 +44,18 @@ ESTADO CALZADA: ${hecho.estadoCalzada}
 MATERIAL CALZADA: ${hecho.materialCalzada}
 ESTADO AMBIENTAL: ${hecho.estadoAmbiental}
 LUZ ARTIFICIAL: ${hecho.luzArtificial}
-SEMÁFORO: ${hecho.semaforo}
+SEMAFORO: ${hecho.semaforo}
 
 TIPO SINIESTRO: ${hecho.tipoSiniestro}
-TIPO COLISIÓN: ${hecho.tipoColision || 'N/A'}
+TIPO COLISIÓN: ${hecho.tipoColision || "N/A"}
 
 POSIBLES CAUSAS:
 ${hecho.posiblesCausas.join(" - ")}
 
 ${buildPersonalIntervinienteText(hecho)}
 
+${textoSiExiste("NOTA", extras.nota)}
+${textoSiExiste("DE LOS HECHOS", extras.deLosHechos)}
 
 SÍNTESIS:
 ${hecho.sintesis}
@@ -62,22 +79,14 @@ USO SEGURIDAD: ${siNo(p.usoSeguridad)}
 
 
 CONDUCTOR:
-Nombre: ${p.conductorNombre}
-Género: ${p.conductorGenero}
-DNI: ${p.conductorDni}
-Nacionalidad: ${p.conductorNacionalidad}
-Domicilio: ${p.domicilio}
-Localidad: ${p.localidad}
-Provincia: ${p.provincia}
-Edad: ${p.conductorEdad}
+${textoSiExiste("Nombre", p.conductorNombre)}${textoSiExiste("Género", p.conductorGenero)}${textoSiExiste("DNI", p.conductorDni)}${textoSiExiste("Nacionalidad", p.conductorNacionalidad)}${textoSiExiste("Domicilio", p.domicilio)}${textoSiExiste("Localidad", p.localidad)}${textoSiExiste("Provincia", p.provincia)}${textoSiExiste("Edad", p.conductorEdad)}
 ${p.licenciaRequest ? `
 Licencia: ${p.licenciaRequest.numero} clase: ${p.licenciaRequest.clase}
 Expedición: ${p.licenciaRequest.autoridadExpedicion}
 Vencimiento: ${p.licenciaRequest.fechaVencimiento}`
 : `NO PRESENTÓ LICENCIA O NO APLICA` }
 
-Traslado: ${p.trasladoConductor}
-Alcohol: ${p.graduacionAlcoholica || 'N/A'}
+${textoSiExiste("Traslado", p.trasladoConductor)}${textoDescripcion(p.descripcion)}Alcohol: ${p.graduacionAlcoholica || "N/A"}
 Fuerza de seguridad: ${siNo(p.esFuerzaSeguridad)}
 ${p.esFuerzaSeguridad && `
 Legajo: ${p.legajo}
@@ -99,16 +108,9 @@ Jerarquía: ${p.jerarquia}
       p.acompanantes.forEach((a, i) => {
         texto += `
 ${i + 1}º Acompañante
-Nombre: ${a.nombre}
-Documento: ${a.tipo} ${a.numeroDocumento}
-Nacionalidad: ${a.nacionalidad}
-Provincia: ${a.provincia}
-Localidad: ${a.localidad}
-Domicilio: ${a.domicilio}
-Fecha de nacimiento: ${a.fechaNacimiento}
-Edad: ${a.edad}
+${textoSiExiste("Nombre", a.nombre)}${textoSiExiste("Documento", `${a.tipo ?? ""} ${a.numeroDocumento ?? ""}`.trim())}${textoSiExiste("Nacionalidad", a.nacionalidad)}${textoSiExiste("Provincia", a.provincia)}${textoSiExiste("Localidad", a.localidad)}${textoSiExiste("Domicilio", a.domicilio)}${textoSiExiste("Fecha de nacimiento", a.fechaNacimiento)}${textoSiExiste("Edad", a.edad)}
 Cinturón/Casco: ${siNo(a.usoCinturonCasco)}
-Traslado: ${a.trasladado}
+${textoSiExiste("Traslado", a.trasladado)}${textoDescripcion(a.descripcion)}
 `;
       });
     }
@@ -126,25 +128,20 @@ PEATONES
     hecho.peatones.forEach((peaton, index) => {
       texto += `
 ${index + 1}º PEATÓN
-Nombre: ${peaton.nombre}
-Género: ${peaton.genero}
-Nacionalidad: ${peaton.nacionalidad}
-Provincia: ${peaton.provincia}
-Domicilio: ${peaton.domicilio}
-Localidad: ${peaton.localidad}
-Documento: ${peaton.tipo} ${peaton.numeroDocumento}
-Fecha de nacimiento: ${peaton.fechaNacimiento}
-Edad: ${peaton.edad}
+${textoSiExiste("Nombre", peaton.nombre)}${textoSiExiste("Género", peaton.genero)}${textoSiExiste("Nacionalidad", peaton.nacionalidad)}${textoSiExiste("Provincia", peaton.provincia)}${textoSiExiste("Domicilio", peaton.domicilio)}${textoSiExiste("Localidad", peaton.localidad)}${textoSiExiste("Documento", `${peaton.tipo ?? ""} ${peaton.numeroDocumento ?? ""}`.trim())}${textoSiExiste("Fecha de nacimiento", peaton.fechaNacimiento)}${textoSiExiste("Edad", peaton.edad)}
 Dispositivo de retención: ${siNo(peaton.dispositivoRetencion)}
-Traslado: ${peaton.trasladado}
-Estado de salud: ${peaton.estadoSalud}
+${textoSiExiste("Traslado", peaton.trasladado)}${textoDescripcion(peaton.descripcion)}Estado de salud: ${peaton.estadoSalud}
 `;
     });
   }
 
+  texto += `
+
+INFORMA: ${hecho.usuario || "-"}
+`;
+
   return texto;
 };
-
 
 const buildPersonalIntervinienteText = (hecho?: HechoVialListDto) => {
   if (!hecho?.unidades?.length) return "PERSONAL INTERVINIENTE: Sin datos";

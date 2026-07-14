@@ -1006,7 +1006,7 @@ const FormularioHechoVial = () => {
             Agregar otra unidad
           </Button>
 
-          {/* --- SÃƒÂNTESIS FINAL --- */}
+          {/* --- SINTESIS FINAL --- */}
           <Grid size={{ xs: 12 }}>
             <TextField 
               fullWidth 
@@ -1015,6 +1015,30 @@ const FormularioHechoVial = () => {
               label="Sintesis del Hecho" 
               placeholder="Ej. En fecha 09/12/2025 a hora 00:00 por comunicacion SAME/911/BASE OPERACIONAL/JEFE SUPERIOR/ AUTORIDAD/ (EJ. SGTO AYTE VILTE DE BASE OPERACIONAL), se toma conocimiento de un hecho de vial en SOBRE RUTA NAC 9 ALT INGRESO AV FORESTAL, se dirige movil K45 a cargo de SGTO AYTE ESCALERA con personal de servicio."
               {...register("sintesis")} 
+            />
+          </Grid>
+
+          {/* --- NOTA --- */}
+          <Grid size={{ xs: 12 }}>
+            <TextField 
+              fullWidth 
+              multiline 
+              rows={5} 
+              label="Nota" 
+              placeholder="Colocar si se adjuntó algo o se entregó alguna documentación a alguien"
+              {...register("nota")} 
+            />
+          </Grid>
+
+          {/* --- NOTA --- */}
+          <Grid size={{ xs: 12 }}>
+            <TextField 
+              fullWidth 
+              multiline 
+              rows={5} 
+              label="De Los Hechos" 
+              placeholder="Colocar si alguno de los involucrados tiene información relevante del hecho"
+              {...register("deLosHechos")} 
             />
           </Grid>
 

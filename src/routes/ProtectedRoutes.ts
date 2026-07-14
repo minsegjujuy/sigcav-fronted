@@ -24,7 +24,7 @@ export const protectedRoutes: RouteConfig[] = [
   // Todos
   { path: "/dashboard/mis-actas",                    component: ActaResumenTable,    allowedRoles: ["ADMIN", "REPAT", "SECRETARIO", "JEFE", "PERSONAL", "OFICIAL_DE_GUARDIA"] },
   { path: "/dashboard/talonarios",                    component: Talonario,    allowedRoles: ["ADMIN", "SECRETARIO"] },
-  { path: "/dashboard",                              component: Dashboard,           allowedRoles: ["ADMIN", "REPAT", "SECRETARIO", "JEFE", "PERSONAL", "OFICIAL_DE_GUARDIA", "DICTAMEN"] },
+  { path: "/dashboard",                              component: Dashboard,           allowedRoles: ["ADMIN", "REPAT", "SECRETARIO", "JEFE", "PERSONAL", "OFICIAL_DE_GUARDIA", "DICTAMEN", "HECHO_VIAL_PERSONAL"] },
   { path: "/dashboard/2fa-qr",                              component: TwoFactorSetup,           allowedRoles: ["ADMIN", "REPAT", "SECRETARIO", "JEFE", "PERSONAL", "OFICIAL_DE_GUARDIA", "DICTAMEN"] },
   { path: "/actas-salientes/:id",                    component: ActaSalienteDetalle, allowedRoles: ["ADMIN", "DICTAMEN"] },
   { path: "/print",                    component: PrintTestButton, allowedRoles: ["ADMIN", "DICTAMEN"] },
@@ -46,6 +46,6 @@ export const protectedRoutes: RouteConfig[] = [
   { path: "/dashboard/hechos-viales/mapa",           component: MapaJujuySource,     allowedRoles: ["ADMIN", "REPAT", "JEFE", "OFICIAL_DE_GUARDIA"] },
   { path: "/dashboard/hechos-viales/nuevo",          component: FormularioHechoVial, allowedRoles: ["ADMIN", "REPAT", "PERSONAL", "JEFE", "OFICIAL_DE_GUARDIA"] },
   { path: "/dashboard/informes",                     component: Reporte,             allowedRoles: ["ADMIN", "REPAT", "JEFE", "OFICIAL_DE_GUARDIA"] },
-  { path: "/dashboard/hechos-viales",                component: HechosVialesTable,   allowedRoles: ["ADMIN", "REPAT", "PERSONAL", "JEFE", "OFICIAL_DE_GUARDIA"] },
+  { path: "/dashboard/hechos-viales",                component: HechosVialesTable,   allowedRoles: ["ADMIN", "REPAT", "PERSONAL", "JEFE", "OFICIAL_DE_GUARDIA", "HECHO_VIAL_PERSONAL"] },
 
 ];

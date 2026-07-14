@@ -30,5 +30,7 @@ export interface HechoVialListDto {
   usuario: string;
   comisaria: string;
   destacamento: number;
-  peatones: Peaton[]
+  peatones: Peaton[];
+  nota: string;
+  deLosHechos: string;
 }
