@@ -25,4 +25,5 @@ export interface ActaRequest {
   graduacionAlcoholica: number,
   infractorFugado: boolean,
   retencionVehiculo: boolean,
+  identificacion: string,
 }

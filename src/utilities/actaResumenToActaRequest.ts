@@ -80,6 +80,6 @@ export const actaResumenToActaRequest = (
       localidad: acta.ubicacionResponse.localidad
     },
     fecha: acta.fecha,
-    
+    identificacion: acta.identificacion,
   };
 };
