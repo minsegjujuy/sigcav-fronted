@@ -24,5 +24,6 @@ export interface ActaResumenDto {
   retencionVehiculo: boolean;
   infractorFugado: boolean;
   graduacionAlcoholica: number;
-  testigos?: TestigoRequest[]
+  testigos?: TestigoRequest[];
+  identificacion: string;
 }

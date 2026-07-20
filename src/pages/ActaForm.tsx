@@ -38,6 +38,7 @@ import type { FirmaDTO, TestigoRequest } from "../models/FirmaDTO";
 import type { Juzgado } from "../models/Juzgado";
 import { useGetGruposQuery, useGetjuzgadosQuery, useGetLeyesQuery, useGetPuestosQuery, useGetTiposQuery } from "../redux/api/puestoApi";
 import type { Licencia } from "../models/Licencia";
+import { generarIdentificacion } from "../utilities/generarIdentificacion";
 
 const tabPulse = keyframes`
   0%, 100% {
@@ -125,6 +126,7 @@ const initialState: ActaRequest = {
   infractorFugado: false,
   juzgado: 0,
   retencionVehiculo: false,
+  identificacion: '',
   testigos: [],
   ubicacionRequest: {lat:0,lng:0,departamento:'', unidadRegional:0, descripcion:'', localidad: 0},
   articulos: [],
@@ -631,6 +633,7 @@ export default function ActaForm() {
           limpiarActa();
           SnackbarUtilities.success('Acta modificada exitasomente')
         }else{
+          actaToSend.identificacion = generarIdentificacion();
           response = await crearActa(actaToSend);
           {
             const nextActaId = response?.idActa;
