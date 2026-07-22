@@ -374,7 +374,7 @@ const ArticulosTable = () => {
               label="Precio actual de nafta súper"
               type="number"
               value={precioNafta}
-              helperText="Para modificar el precio de todos los artículos, primero muestra todas las filas de la tabla y luego aplica los cambios."
+              helperText="Para modificar el precio de todos los artículos, primero filtra todas las filas de la paginación en la tabla y luego aplica los cambios."
               onChange={(event) => setPrecioNafta(event.target.value)}
               size="small"
               fullWidth
