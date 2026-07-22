@@ -8,6 +8,7 @@ import ForwardToInboxIcon from "@mui/icons-material/ForwardToInbox";
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import PersonIcon from '@mui/icons-material/Person';
+import BalanceIcon from '@mui/icons-material/Balance';
 import { Box, Card, CardActionArea, CardContent, Container, Grid, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -31,6 +32,7 @@ const data: DashboardItem[] = [
   { id: 8, value: "Actas salientes", icon: ForwardToInboxIcon, color: "#85810e", path: "/dashboard/actas-salientes" },
   { id: 8, value: "Activar 2fa", icon: QrCodeScannerIcon, color: "#0ca2a2", path: "/dashboard/2fa-qr" },
   { id: 8, value: "Usuarios", icon: PersonIcon, color: "#0f4545", path: "/dashboard/users" },
+  { id: 8, value: "Articulado", icon: BalanceIcon, color: "#13c65e", path: "/dashboard/articulado" },
 ];
 
 const Dashboard = () => {
