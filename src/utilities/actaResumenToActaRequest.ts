@@ -28,7 +28,15 @@ const parseUnidadRegionalId = (value: unknown): number | undefined => {
 export const actaResumenToActaRequest = (
   acta: ActaResumenDto,
 ): ActaRequest => {
-  const infractor = { ...acta.infractor };
+  const infractor = {
+    ...acta.infractor,
+    provincia: acta.infractor.provincia ?? "",
+    licencia: acta.infractor.licencia
+      ? {
+          ...acta.infractor.licencia,
+        }
+      : null,
+  };
 
   const parsedFromNombre = splitApellidoNombrePorComa(infractor.nombre);
   if (parsedFromNombre) {
@@ -66,10 +74,15 @@ export const actaResumenToActaRequest = (
     vehiculo: acta.vehiculo,
     adjunta: acta.adjunta,
     retencion: acta.retencion,
+    observaciones: acta.observaciones,
     juzgado: acta.juzgado,
     graduacionAlcoholica: acta.graduacionAlcoholica,
     infractorFugado: acta.infractorFugado,
-    retencionVehiculo: acta.retencionVehiculo,
+    seNiegaAFirmar: acta.seNiegaAFirmar,
+    alcoholimetro: acta.alcoholimetroRequest ?? {
+      idImpresora: 0,
+      idAlcoholimetro: 0,
+    },
     testigos,
     ubicacionRequest: {
       departamento: acta.ubicacionResponse.departamento,

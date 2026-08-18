@@ -1,4 +1,5 @@
-﻿import type { ArticuloDto } from "./ArticuloDto";
+﻿import type { AlcoholimetroRequest } from "./ActaRequest";
+import type { ArticuloDto } from "./ArticuloDto";
 import type { TestigoRequest } from "./FirmaDTO";
 import type { InfractorSolicitud } from "./InfractorSolicitud";
 import type { UbicacionRsponse } from "./UbicacionResponse";
@@ -23,7 +24,10 @@ export interface ActaResumenDto {
   juzgado: number,
   retencionVehiculo: boolean;
   infractorFugado: boolean;
+  seNiegaAFirmar: boolean;
   graduacionAlcoholica: number;
   testigos?: TestigoRequest[];
   identificacion: string;
+  observaciones: string;
+  alcoholimetroRequest: AlcoholimetroRequest;
 }

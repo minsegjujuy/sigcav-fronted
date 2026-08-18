@@ -21,6 +21,7 @@ export interface HechoVialForm {
   estadoCalzada: string; //obligatorio
   materialCalzada: string; //obligatorio
   estadoFisicoCalzada: string; //obligatorio
+  estadoFisicoCalzadaOtro?: string;
   estadoAmbiental: string; //obligatorio
   luzArtificial: string; //obligatorio
   semaforo: string; //obligatorio

@@ -6,7 +6,7 @@ import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import DirectionsCarOutlinedIcon from "@mui/icons-material/DirectionsCarOutlined";
 import BorderColorOutlinedIcon from "@mui/icons-material/BorderColorOutlined";
 import type { ActaRequest } from "../models/ActaRequest";
-import { Box, Button, Checkbox, Container, FormControl, FormControlLabel, FormGroup, FormHelperText, FormLabel, Grid, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, Step, StepLabel, Stepper, Tab, Tabs, TextField, Typography, type SelectChangeEvent } from "@mui/material";
+import { Box, Button, Checkbox, Container, Divider, FormControl, FormControlLabel, FormGroup, FormHelperText, FormLabel, Grid, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, Step, StepLabel, Stepper, Tab, Tabs, TextField, Typography, type SelectChangeEvent } from "@mui/material";
 import type { Articulo } from "../models/Articulo";
 import { getArticulosByLey } from "../services/ArticuloService";
 import { SnackbarUtilities } from "../utilities/SnackbarUtilities";
@@ -36,7 +36,7 @@ import type { OcrDocumentType } from "../services/OcrService";
 import DocumentDataCapture from "../components/modules/DocumentDataCapture";
 import type { FirmaDTO, TestigoRequest } from "../models/FirmaDTO";
 import type { Juzgado } from "../models/Juzgado";
-import { useGetGruposQuery, useGetjuzgadosQuery, useGetLeyesQuery, useGetPuestosQuery, useGetTiposQuery } from "../redux/api/puestoApi";
+import { useGetAlcoholemiasQuery, useGetGruposQuery, useGetjuzgadosQuery, useGetLeyesQuery, useGetPuestosQuery, useGetTiposQuery } from "../redux/api/puestoApi";
 import type { Licencia } from "../models/Licencia";
 import { generarIdentificacion } from "../utilities/generarIdentificacion";
 
@@ -122,12 +122,17 @@ const initialState: ActaRequest = {
   nro: "",
   adjunta:"",
   retencion:"",
+  observaciones: "",
   graduacionAlcoholica: 0,
   infractorFugado: false,
+  seNiegaAFirmar: false,
   juzgado: 0,
-  retencionVehiculo: false,
   identificacion: '',
   testigos: [],
+  alcoholimetro: {
+    idImpresora: 0,
+    idAlcoholimetro: 0,
+  },
   ubicacionRequest: {lat:0,lng:0,departamento:'', unidadRegional:0, descripcion:'', localidad: 0},
   articulos: [],
   infractor: {
@@ -156,10 +161,13 @@ const initialState: ActaRequest = {
     motor: "",
     cuadro: "",
     tipoRodado: "",
+    infractorPropietario: false,
     propietario: {
       nombre: "",
       dni: "",
       direccion: "",
+      localidad: "",
+      provincia: "",
     },
   },
 };
@@ -180,6 +188,7 @@ export default function ActaForm() {
   const [unidadesRegionales, setUnidadesRegionales] = useState<UnidadRegional[]>();
   const [localidades, setLocalidades] = useState<Localidad[]>([]);
   const { actaSeleccionada, limpiarActa } = useActa();
+  const { data: alcoholemias = [] } = useGetAlcoholemiasQuery();
   const { data: puesto = []} = useGetPuestosQuery();
   const { data: grupo = []} = useGetGruposQuery();
   const { data: ley = []} = useGetLeyesQuery();
@@ -270,8 +279,18 @@ export default function ActaForm() {
   const [selected, setSelected] = useState<string[]>([]);
   const [otroTexto, setOtroTexto] = useState("");
   const [activeTab, setActiveTab] = useState(0);
-  const usesTestigosOnly = Boolean(form.infractorFugado);
+  const usesTestigosOnly = Boolean(form.infractorFugado || form.seNiegaAFirmar);
   const hasValidInfractorDni = /^[0-9]{8}$/.test(form.infractor.dni || "");
+  const alcoholimetros = Array.from(
+    new Map(alcoholemias.map((item) => [item.idAlcoholimetro, item])).values(),
+  );
+  const impresoras = Array.from(
+    new Map(
+      alcoholemias
+        .filter((item) => item.idImpresora !== null && item.idImpresora !== undefined)
+        .map((item) => [item.idImpresora as number, item]),
+    ).values(),
+  );
   const tipoRodadoActual = form.vehiculo.tipoRodado ?? "";
   const tipoRodadoFueraDeLista = Boolean(tipoRodadoActual) && !TIPO_RODADO.includes(tipoRodadoActual);
   const tipoActaDetalleSeleccionado =
@@ -402,18 +421,23 @@ export default function ActaForm() {
             vehiculo: {
               ...prev.vehiculo,
               propietario: {
+                ...prev.vehiculo.propietario,
                 idProp,
                 nombre,
                 dni,
                 direccion,
+                localidad: prev.vehiculo.propietario?.localidad ?? "",
+                provincia: prev.vehiculo.propietario?.provincia ?? "",
               },
             },
-          }));
+            }));
         } catch (err) {
           console.error("Propietario no encontrado");
         }
+        return;
       }else if (path === "vehiculo.propietario.dni" && value.length === 7){
         limpiarPropietario();
+        return;
       }
 
     setForm(prev => {
@@ -447,6 +471,8 @@ export default function ActaForm() {
                 apellido: '',
                 dni : '',
                 direccion : '',
+                localidad: '',
+                provincia: '',
               },
             },
           }));
@@ -543,13 +569,13 @@ export default function ActaForm() {
         }
         console.log('propietario ', actaToSend.vehiculo.propietario)
         actaToSend.infractor = normalizeInfractorNombreApellido(actaToSend.infractor);
-        actaToSend.infractor.propietario = propietario;
         actaToSend.idTipo = Number(selectedTipoActa);
         actaToSend.idGrupo = Number(selectedGrupo);
         actaToSend.idPuesto = Number(selectedPuesto);
         actaToSend.articulos = articulosSeleccionados;
+        actaToSend.seNiegaAFirmar = Boolean(form.seNiegaAFirmar);
 
-        if (actaToSend.infractorFugado) {
+        if (actaToSend.infractorFugado || actaToSend.seNiegaAFirmar) {
           const nextTestigos = ensureTwoTestigos(firma.testigos);
           const witnessErrors: Record<string, string> = {};
 
@@ -655,23 +681,44 @@ export default function ActaForm() {
         if (!id) {
           console.log('estado if ',event.target.value);
           setSelectedVehicle(null);
-          setForm((prevForm) => ({...prevForm, vehiculo:{dominio: '',
-            cuadro: '', marca: '', modelo: '', idVeh: null
-          }}));
+          setPropietario(false);
+          setForm((prevForm) => ({
+            ...prevForm,
+            vehiculo: {
+              ...prevForm.vehiculo,
+              dominio: "",
+              cuadro: "",
+              marca: "",
+              modelo: "",
+              idVeh: null,
+              infractorPropietario: false,
+              propietario: null,
+            },
+          }));
           return;
         }
 
         const vehiculo = vehiculos.find((v) => v.idVeh === id) || null;
         console.log('vehiculo seleccionado ',vehiculo)
         setSelectedVehicle(vehiculo);
-        setForm({...form, vehiculo: {dominio: vehiculo?.dominio!,
-          cuadro: vehiculo?.cuadro!, marca: vehiculo?.marca, modelo: vehiculo?.modelo, idVeh: vehiculo?.idVeh
-        }});
-        if (!vehiculo?.propietario) {
-          setPropietario(true);
-        } else {
-          setPropietario(!vehiculo.propietario); 
-        }
+        setPropietario(Boolean(vehiculo?.infractorPropietario));
+        setForm((prevForm) => ({
+          ...prevForm,
+          vehiculo: {
+            ...prevForm.vehiculo,
+            dominio: vehiculo?.dominio ?? "",
+            cuadro: vehiculo?.cuadro ?? "",
+            marca: vehiculo?.marca ?? "",
+            modelo: vehiculo?.modelo ?? "",
+            motor: vehiculo?.motor ?? prevForm.vehiculo.motor,
+            tipoRodado: vehiculo?.tipoRodado ?? prevForm.vehiculo.tipoRodado,
+            idVeh: vehiculo?.idVeh ?? null,
+            infractorPropietario: Boolean(vehiculo?.infractorPropietario),
+            propietario: vehiculo?.infractorPropietario
+              ? null
+              : (vehiculo?.propietario ?? prevForm.vehiculo.propietario ?? null),
+          },
+        }));
     };
     const handleUnidadRegionalChange = (id: number) => {
       refreshLocalidadesForUr(id, form.ubicacionRequest.departamento);
@@ -765,27 +812,36 @@ export default function ActaForm() {
       try {
         const data = await findByDni(dni);
         console.log("infractor encontrado", data);
-        const isInfractorOwner = data.propietario ?? true;
         const vehiculosFromBackend = data.vehiculos || [];
         if(data.idInfrac){
           setLicencias(data.licencias);
+          const licenciaPredeterminada = data.licencias?.[0] ?? null;
+          const defaultVehicle = vehiculosFromBackend.find((vehiculo) => vehiculo.infractorPropietario)
+            ?? (vehiculosFromBackend.length === 1 ? vehiculosFromBackend[0] : null);
+
           setForm((prev) => {
             const updatedInfractor = normalizeInfractorNombreApellido({
               ...prev.infractor,
               idInfrac: data.idInfrac || null,
               nombre: data.nombre || "",
               apellido: data.apellido || "",
-              //autoridadExpedicion: data.licencias[0]?.autoridadExpedicion || "",
-              //clase: data.licencias[0]?.clase,
               domicilio: data.domicilio,
-              //fechaExpedicion: data.licencias[0]?.fechaExpedicion,
-              //fechaVencimiento: data.licencias[0]?.fechaVencimiento,
-              //numero: data.licencias[0]?.numero,
+              fechaNacimiento: data.fechaNacimiento ?? prev.infractor.fechaNacimiento ?? "",
               dni: data.dni,
-              propietario: isInfractorOwner,
+              nacionalidad: data.nacionalidad ?? prev.infractor.nacionalidad,
+              provincia: data.provincia ?? prev.infractor.provincia,
+              localidad: data.localidad ?? prev.infractor.localidad,
+              licencia: licenciaPredeterminada
+                ? {
+                    id: licenciaPredeterminada.id,
+                    numero: licenciaPredeterminada.numero,
+                    clase: licenciaPredeterminada.clase,
+                    autoridadExpedicion: licenciaPredeterminada.autoridadExpedicion,
+                    fechaExpedicion: licenciaPredeterminada.fechaExpedicion,
+                    fechaVencimiento: licenciaPredeterminada.fechaVencimiento,
+                  }
+                : prev.infractor.licencia,
             });
-
-            const defaultVehicle = vehiculosFromBackend.length === 1 ? vehiculosFromBackend[0] : null;
 
             return {
               ...prev,
@@ -799,39 +855,24 @@ export default function ActaForm() {
                     modelo: defaultVehicle.modelo ?? prev.vehiculo.modelo,
                     motor: defaultVehicle.motor ?? prev.vehiculo.motor,
                     cuadro: defaultVehicle.cuadro ?? prev.vehiculo.cuadro,
-                    propietario: !isInfractorOwner
-                      ? (defaultVehicle.propietario ?? prev.vehiculo.propietario ?? null)
-                      : prev.vehiculo.propietario,
+                    infractorPropietario: Boolean(defaultVehicle.infractorPropietario),
+                    propietario: defaultVehicle.infractorPropietario
+                      ? null
+                      : (defaultVehicle.propietario ?? prev.vehiculo.propietario ?? null),
                   }
                 : prev.vehiculo,
             };
           });
 
-          setPropietario(isInfractorOwner);
           setVehiculos(vehiculosFromBackend);
-
-          const defaultVehicle = vehiculosFromBackend.length === 1 ? vehiculosFromBackend[0] : null;
           if (defaultVehicle) {
             setSelectedVehicle(defaultVehicle);
+            setPropietario(Boolean(defaultVehicle.infractorPropietario));
             return;
           }
 
           setSelectedVehicle(null);
-
-          if (!isInfractorOwner) {
-            const vehiculoConPropietario = vehiculosFromBackend.find((v) => v.propietario);
-            if (vehiculoConPropietario?.propietario) {
-              setForm((prev) => ({
-                ...prev,
-                vehiculo: {
-                  ...prev.vehiculo,
-                  propietario: prev.vehiculo.propietario?.dni
-                    ? prev.vehiculo.propietario
-                    : vehiculoConPropietario.propietario,
-                },
-              }));
-            }
-          }
+          setPropietario(false);
         }else{
           clearInfractor();
           setSelectedVehicle(null);
@@ -859,6 +900,7 @@ export default function ActaForm() {
         motor: vehiculo.motor ?? prev.vehiculo.motor,
         cuadro: vehiculo.cuadro ?? prev.vehiculo.cuadro,
         tipoRodado: vehiculo.tipoRodado ?? prev.vehiculo.tipoRodado,
+        infractorPropietario: vehiculo.infractorPropietario ?? prev.vehiculo.infractorPropietario ?? false,
         propietario: vehiculo.propietario
           ? {
               ...prev.vehiculo.propietario,
@@ -866,6 +908,8 @@ export default function ActaForm() {
               //apellido: vehiculo.propietario.apellido ?? prev.vehiculo.propietario?.apellido ?? '',
               dni: normalizeDni(vehiculo.propietario.dni) || prev.vehiculo.propietario?.dni || '',
               direccion: vehiculo.propietario.direccion ?? prev.vehiculo.propietario?.direccion ?? '',
+              localidad: vehiculo.propietario.localidad ?? prev.vehiculo.propietario?.localidad ?? '',
+              provincia: vehiculo.propietario.provincia ?? prev.vehiculo.propietario?.provincia ?? '',
             }
           : prev.vehiculo.propietario,
       },
@@ -896,6 +940,7 @@ export default function ActaForm() {
         nombre: licenciaData.nombre ?? prev.infractor.nombre,
         apellido: licenciaData.apellido ?? prev.infractor.apellido,
         dni: normalizeDni(licenciaData.dni) || prev.infractor.dni,
+        fechaNacimiento: licenciaData.fechaNacimiento ?? prev.infractor.fechaNacimiento ?? "",
         nacionalidad: licenciaData.nacionalidad ?? prev.infractor.nacionalidad,
         domicilio: licenciaData.domicilio ?? prev.infractor.domicilio,
         provincia: licenciaData.provincia ?? prev.infractor.provincia,
@@ -935,6 +980,8 @@ export default function ActaForm() {
           apellido: propietarioData.apellido ?? prev.vehiculo.propietario?.apellido ?? '',
           dni: normalizeDni(propietarioData.dni) || prev.vehiculo.propietario?.dni || '',
           direccion: propietarioData.direccion ?? prev.vehiculo.propietario?.direccion ?? '',
+          localidad: propietarioData.localidad ?? prev.vehiculo.propietario?.localidad ?? '',
+          provincia: propietarioData.provincia ?? prev.vehiculo.propietario?.provincia ?? '',
         },
       },
     }));
@@ -945,6 +992,8 @@ export default function ActaForm() {
       delete cleaned['vehiculo.propietario.apellido'];
       delete cleaned['vehiculo.propietario.dni'];
       delete cleaned['vehiculo.propietario.direccion'];
+      delete cleaned['vehiculo.propietario.localidad'];
+      delete cleaned['vehiculo.propietario.provincia'];
       return cleaned;
     });
   };
@@ -957,7 +1006,6 @@ export default function ActaForm() {
             idInfrac: null,
             nombre: "",
             apellido: "",
-            propietario: false,
           }
         }));
       setVehiculos([]);
@@ -990,6 +1038,8 @@ export default function ActaForm() {
         },
         infractor: {
           ...mappedActa.infractor,
+          provincia: actaSeleccionada.infractor.provincia ?? mappedActa.infractor.provincia ?? "",
+          licencia: actaSeleccionada.infractor.licencia ?? mappedActa.infractor.licencia ?? null,
           fechaNacimiento:
             actaSeleccionada.infractor.fechaNacimiento ??
             mappedActa.infractor.fechaNacimiento ??
@@ -1001,9 +1051,17 @@ export default function ActaForm() {
           ...mappedActa.vehiculo,
           tipoRodado:
             actaSeleccionada.vehiculo.tipoRodado ?? mappedActa.vehiculo.tipoRodado ?? "",
+          infractorPropietario: Boolean(
+            actaSeleccionada.vehiculo.infractorPropietario ?? mappedActa.vehiculo.infractorPropietario,
+          ),
+          propietario:
+            (actaSeleccionada.vehiculo.infractorPropietario ?? mappedActa.vehiculo.infractorPropietario)
+              ? null
+              : (actaSeleccionada.vehiculo.propietario ?? mappedActa.vehiculo.propietario ?? null),
         },
         testigos: mappedTestigos,
       });
+      setPropietario(Boolean(actaSeleccionada.vehiculo.infractorPropietario ?? mappedActa.vehiculo.infractorPropietario));
       setArticulosSeleccionados(articulos);
       setSelectedLey(1);
       fetchArticulosPorLey(1);
@@ -1037,7 +1095,7 @@ export default function ActaForm() {
         setPropietario(true);
       }
     }
-  }, [])
+  }, [actaSeleccionada])
   return (
     <Container maxWidth="md" sx={{ px: { xs: 1.5, sm: 2 } }}>
       <Paper sx={{ p: { xs: 2, sm: 3, md: 4 }, mt: { xs: 2, sm: 4 }, borderRadius: 3 }}>
@@ -1185,14 +1243,6 @@ export default function ActaForm() {
                   />
               </FormControl>
 
-                <TextField
-                label="Nº de Acta de retencion"
-                fullWidth
-                margin="normal"
-                value={form.retencion}
-                onChange={(e) => handleChange("retencion", e.target.value)}
-                />
-
               {/* Juzgado */}
               <FormControl fullWidth margin="normal" error={!!errors.juzgado}>
                 <InputLabel id="juzgado-label">Juzgado *</InputLabel>
@@ -1224,21 +1274,6 @@ export default function ActaForm() {
                 {!!errors.juzgado && <FormHelperText>{errors.juzgado}</FormHelperText>}
               </FormControl>
 
-              {/* Graduación alcohólica */}
-              <TextField
-                label="Graduación alcohólica"
-                fullWidth
-                margin="normal"
-                type="number"
-                inputProps={{ min: 0, step: "0.01" }}
-                value={Number.isFinite(form.graduacionAlcoholica) ? form.graduacionAlcoholica : 0}
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  const next = raw === "" ? 0 : Number(raw);
-                  handleChange("graduacionAlcoholica", Number.isFinite(next) ? next : 0);
-                }}
-              />
-
               {/* Checks */}
               <FormControl component="fieldset" sx={{ gridColumn: "1 / -1" }}>
                 <FormLabel component="legend">Opciones</FormLabel>
@@ -1246,11 +1281,11 @@ export default function ActaForm() {
                   <FormControlLabel
                     control={
                       <Checkbox
-                        checked={Boolean(form.retencionVehiculo)}
-                        onChange={(e) => handleChange("retencionVehiculo", e.target.checked)}
+                        checked={Boolean(form.seNiegaAFirmar)}
+                        onChange={(e) => handleChange("seNiegaAFirmar", e.target.checked)}
                       />
                     }
-                    label="Retención de vehículo"
+                    label="Se niega a firmar"
                   />
                   <FormControlLabel
                     control={
@@ -1372,6 +1407,102 @@ export default function ActaForm() {
                   )}
                 </Grid>
               )}
+
+              {(() => {
+                const articulosSeleccionadosDetalle = articulos
+                  .filter((articulo) => articulosSeleccionados.includes(articulo.idArt))
+                  .map((articulo) => `${articulo.nro} ${articulo.detalle}`.toUpperCase());
+
+                const mostrarCamposAlcohol = articulosSeleccionadosDetalle.some((texto) =>
+                  /ART\s*4\b/.test(texto) || /ART\s*2\b.*\b6\b/.test(texto) || /ART\s*2\s*Y\s*6\b/.test(texto),
+                );
+
+                if (!mostrarCamposAlcohol) return null;
+
+                return (
+                  <>
+                    <FormControl fullWidth sx={{ gridColumn: "1 / -1" }}>
+                      <InputLabel id="alcoholimetro-label">Alcoholímetro</InputLabel>
+                      <Select
+                        labelId="alcoholimetro-label"
+                        value={form.alcoholimetro?.idAlcoholimetro ? String(form.alcoholimetro.idAlcoholimetro) : ""}
+                        label="Alcoholímetro"
+                        onChange={(e) =>
+                          handleChange(
+                            "alcoholimetro.idAlcoholimetro",
+                            Number(e.target.value) || 0,
+                          )
+                        }
+                      >
+                        <MenuItem value="">Seleccione un alcoholímetro</MenuItem>
+                        {alcoholimetros.map((item) => (
+                          <MenuItem key={item.idAlcoholimetro} value={String(item.idAlcoholimetro)}>
+                            {item.numeroSerieAlcoholimetro}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <FormControl fullWidth sx={{ gridColumn: "1 / -1" }}>
+                      <InputLabel id="impresora-label">Impresora</InputLabel>
+                      <Select
+                        labelId="impresora-label"
+                        value={form.alcoholimetro?.idImpresora ? String(form.alcoholimetro.idImpresora) : ""}
+                        label="Impresora"
+                        onChange={(e) =>
+                          handleChange(
+                            "alcoholimetro.idImpresora",
+                            Number(e.target.value) || 0,
+                          )
+                        }
+                      >
+                        <MenuItem value="">Seleccione una impresora</MenuItem>
+                        {impresoras.map((item) => (
+                          <MenuItem key={item.idImpresora ?? item.idAlcoholimetro} value={String(item.idImpresora)}>
+                            {item.numeroSerieImpresora ?? "Sin número de serie"}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <TextField
+                      label="Graduación alcohólica"
+                      fullWidth
+                      margin="normal"
+                      type="number"
+                      inputProps={{ min: 0, step: "0.01" }}
+                      value={Number.isFinite(form.graduacionAlcoholica) ? form.graduacionAlcoholica : 0}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        const next = raw === "" ? 0 : Number(raw);
+                        handleChange("graduacionAlcoholica", Number.isFinite(next) ? next : 0);
+                      }}
+                    />
+                  </>
+                );
+              })()}
+
+              <Divider sx={{ gridColumn: "1 / -1", my: 1 }} />
+
+              <TextField
+                label="Número de acta de retención"
+                fullWidth
+                margin="normal"
+                sx={{ gridColumn: "1 / -1" }}
+                value={form.retencion ?? ""}
+                onChange={(e) => handleChange("retencion", e.target.value)}
+              />
+
+              <TextField
+                label="Observaciones"
+                fullWidth
+                margin="normal"
+                multiline
+                minRows={3}
+                sx={{ gridColumn: "1 / -1" }}
+                value={form.observaciones ?? ""}
+                onChange={(e) => handleChange("observaciones", e.target.value)}
+              />
             </Box>
           )}
 
@@ -1575,8 +1706,8 @@ export default function ActaForm() {
           {activeTab === 2 && (
             <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(3, minmax(0, 1fr))" }, columnGap: 3, rowGap: 2, gridColumn: "1 / -1" }}>
               <FormControlLabel
-              control={<Checkbox checked={propietario} onChange={(e) => { setPropietario(e.target.checked); if (!e.target.checked) setErrors((er) => { const c = { ...er }; delete c["vehiculo.propietario.nombre"]; delete c["vehiculo.propietario.apellido"]; delete c["vehiculo.propietario.dni"]; delete c["vehiculo.propietario.direccion"]; return c; }); }} />}
-              label="¿El infractor es propietario del vehiculo?"
+                control={<Checkbox checked={propietario} onChange={(e) => { setPropietario(e.target.checked); if (!e.target.checked) setErrors((er) => { const c = { ...er }; delete c["vehiculo.propietario.nombre"]; delete c["vehiculo.propietario.apellido"]; delete c["vehiculo.propietario.dni"]; delete c["vehiculo.propietario.direccion"]; delete c["vehiculo.propietario.localidad"]; delete c["vehiculo.propietario.provincia"]; return c; }); }} />}
+                label="¿El infractor es propietario del vehiculo?"
               />
             
             {/* Vehi­culo */}
@@ -1652,6 +1783,28 @@ export default function ActaForm() {
               <TextField label="DNI *" fullWidth margin="normal" value={form.vehiculo.propietario?.dni} onChange={(e) => handleChange("vehiculo.propietario.dni", e.target.value)} error={!!errors["vehiculo.propietario.dni"]} helperText={errors["vehiculo.propietario.dni"]} />
               <TextField label="Nombre *" fullWidth margin="normal" value={form.vehiculo.propietario?.nombre} onChange={(e) => handleChange("vehiculo.propietario.nombre", e.target.value)} error={!!errors["vehiculo.propietario.nombre"]} helperText={errors["vehiculo.propietario.nombre"]} />
               <TextField
+                label="Localidad"
+                fullWidth
+                margin="normal"
+                value={form.vehiculo.propietario?.localidad ?? ""}
+                onChange={(e) => handleChange("vehiculo.propietario.localidad", e.target.value)}
+              />
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Provincia</InputLabel>
+                <Select
+                  value={form.vehiculo.propietario?.provincia ?? ""}
+                  label="Provincia"
+                  onChange={(e) => handleChange("vehiculo.propietario.provincia", e.target.value)}
+                >
+                  <MenuItem value="">Seleccione una provincia</MenuItem>
+                  {argentinaProvinces.map((provincia) => (
+                    <MenuItem key={provincia} value={provincia}>
+                      {provincia}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <TextField
                 label="Direccion *"
                 fullWidth
                 margin="normal"
@@ -1683,7 +1836,7 @@ export default function ActaForm() {
                   </Typography>
 
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    El infractor se fugó por lo que no se cargan firmas. Completa los dos testigos obligatorios.
+                    El infractor se fugó o se negó a firmar. Completa los dos testigos obligatorios.
                   </Typography>
 
                   <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" }, gap: 2 }}>
@@ -1770,7 +1923,7 @@ export default function ActaForm() {
                 </Paper>
               ) : (
                 <>
-                <p>No hay testigos para cargar, el infractor no está fugado</p>
+                <p>No hay testigos para cargar, el infractor no se negó a firmar ni se fugó</p>
                   {/* Bloque original de firmas, se conserva para actas sin infractor fugado */}
               {/*<Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
                 <Typography variant="h6" sx={{ mb: 1 }}>

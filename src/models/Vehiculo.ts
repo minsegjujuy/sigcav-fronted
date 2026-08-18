@@ -8,5 +8,7 @@ export interface Vehiculo {
   dominio?: string | null;
   motor?: string | null;
   cuadro?: string | null;
-  propietario : Propietario | null
+  propietario : Propietario | null,
+  infractorPropietario: boolean,
+  tipoRodado: string
 }

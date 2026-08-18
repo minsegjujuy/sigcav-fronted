@@ -7,8 +7,11 @@ export interface Infractor {
   apellido?: string | null;
   dni: string;
   domicilio: string;
+  fechaNacimiento?: string | null;
   lugar?: string | null;
-  propietario?: boolean;
   vehiculos: Vehiculo[]
   licencias:  Licencia[]
+  localidad: string,
+  provincia: string,
+  nacionalidad: string,
 }

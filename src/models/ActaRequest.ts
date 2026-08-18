@@ -18,12 +18,26 @@ export interface ActaRequest {
   vehiculo: VehiculoSolicitud;
   adjunta: string,
   retencion: string,
+  observaciones: string,
   ubicacionRequest: UbicacionRequest,
   firma?: FirmaDTO,
   testigos?: TestigoRequest[],
   juzgado: number,
   graduacionAlcoholica: number,
   infractorFugado: boolean,
-  retencionVehiculo: boolean,
+  seNiegaAFirmar: boolean,
   identificacion: string,
+  alcoholimetro: AlcoholimetroRequest
+}
+
+export interface AlcoholimetroRequest{
+  idImpresora: number,
+  idAlcoholimetro: number,
+}
+
+export interface AlcoholimetroDto {
+  idAlcoholimetro: number;
+  numeroSerieAlcoholimetro: string;
+  idImpresora: number | null;
+  numeroSerieImpresora: string | null;
 }

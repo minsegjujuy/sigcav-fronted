@@ -41,6 +41,15 @@ import { hechoVialFormSchema } from "../validations/validationHechoVial";
 import { useNavigate } from "react-router-dom";
 
 const FormularioHechoVial = () => {
+  const tipoViaOptions = [
+    "CALLE",
+    "AVENIDA",
+    "SEMIAUTOPISTA",
+    "AUTOPISTA",
+    "RUTA NACIONAL",
+    "RUTA PROVINCIAL",
+  ];
+
   const {
     register,
     control,
@@ -59,6 +68,8 @@ const FormularioHechoVial = () => {
       zona: "URBANA",
       danosMateriales: "SI",
       comisaria: "",
+      tipoViaOtro: "",
+      estadoFisicoCalzadaOtro: "",
       grupo: 0,
       destacamento: 0,
       fecha: "",
@@ -117,11 +128,42 @@ const FormularioHechoVial = () => {
   const watchInvolucrados = useWatch({ control, name: "involucrados" });
   
   const tipoSiniestro = watch("tipoSiniestro");
+  const tipoVia = watch("tipoVia");
+  const estadoFisicoCalzada = watch("estadoFisicoCalzada");
+
+  useEffect(() => {
+    if (!tipoVia || tipoVia === "OTRO" || tipoViaOptions.includes(tipoVia)) return;
+
+    setValue("tipoViaOtro", tipoVia, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+    setValue("tipoVia", "OTRO", { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+  }, [tipoVia, setValue]);
+
+  useEffect(() => {
+    const estadoOptions = [
+      "APTO",
+      "CON BACHES",
+      "AHUELLAMIENTO",
+      "EN REPARACION",
+    ];
+
+    if (!estadoFisicoCalzada || estadoFisicoCalzada === "OTRO" || estadoOptions.includes(estadoFisicoCalzada)) return;
+
+    setValue("estadoFisicoCalzadaOtro", estadoFisicoCalzada, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+    setValue("estadoFisicoCalzada", "OTRO", { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+  }, [estadoFisicoCalzada, setValue]);
 
   const onSubmit = async (data: HechoVialForm) => {
     const payload: HechoVialForm = {
-        ...data,
-        ubicacionReq: ubicacion
+      ...data,
+      tipoVia:
+        data.tipoVia === "OTRO"
+          ? (data.tipoViaOtro ?? "").trim()
+          : data.tipoVia,
+      estadoFisicoCalzada:
+        data.estadoFisicoCalzada === "OTRO"
+          ? (data.estadoFisicoCalzadaOtro ?? "").trim()
+          : data.estadoFisicoCalzada,
+      ubicacionReq: ubicacion,
     };
     //danosMateriales, zona, y victimaFatal  son undefined si no los selcciono explicitamente
     console.log("Datos capturados:", payload);
@@ -524,17 +566,18 @@ const FormularioHechoVial = () => {
                   select
                   fullWidth
                   label="Tipo de Vi­a"
+                  value={tipoViaOptions.includes(field.value) || field.value === "OTRO" ? field.value : "OTRO"}
+                  onChange={(event) => {
+                    const nextValue = event.target.value;
+                    field.onChange(nextValue);
+                    if (nextValue !== "OTRO") {
+                      setValue("tipoViaOtro", "", { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+                    }
+                  }}
                   error={!!fieldState.error}
                   helperText={fieldState.error?.message}
                 >
-                  {[
-                    "CALLE",
-                    "AVENIDA",
-                    "SEMIAUTOPISTA",
-                    "AUTOPISTA",
-                    "RUTA NACIONAL",
-                    "RUTA PROVINCIAL",
-                  ].map((option) => (
+                  {tipoViaOptions.map((option) => (
                     <MenuItem key={option} value={option}>
                       {option}
                     </MenuItem>
@@ -545,6 +588,26 @@ const FormularioHechoVial = () => {
               )}
             />
           </Grid>
+          {tipoVia === "OTRO" && (
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Controller
+                name="tipoViaOtro"
+                control={control}
+                defaultValue=""
+                render={({ field, fieldState }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="Especificar tipo de vía"
+                    value={field.value ?? ""}
+                    onChange={(event) => field.onChange(event.target.value)}
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                  />
+                )}
+              />
+            </Grid>
+          )}
           {/* INVOLUCRADOS */}
           <Grid size={{ xs: 12 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -688,6 +751,18 @@ const FormularioHechoVial = () => {
                   select
                   fullWidth
                   label="Estado físico de la calzada"
+                  value={
+                    ["APTO", "CON BACHES", "AHUELLAMIENTO", "EN REPARACION"].includes(field.value)
+                      ? field.value
+                      : "OTRO"
+                  }
+                  onChange={(event) => {
+                    const nextValue = event.target.value;
+                    field.onChange(nextValue);
+                    if (nextValue !== "OTRO") {
+                      setValue("estadoFisicoCalzadaOtro", "", { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+                    }
+                  }}
                   error={!!fieldState.error}
                   helperText={fieldState.error?.message}
                 >
@@ -700,6 +775,26 @@ const FormularioHechoVial = () => {
               )}
             />
           </Grid>
+          {estadoFisicoCalzada === "OTRO" && (
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Controller
+                name="estadoFisicoCalzadaOtro"
+                control={control}
+                defaultValue=""
+                render={({ field, fieldState }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="Especificar estado físico de la calzada"
+                    value={field.value ?? ""}
+                    onChange={(event) => field.onChange(event.target.value)}
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                  />
+                )}
+              />
+            </Grid>
+          )}
 
         {/* --- SECCIÃƒâ€œN: ESTADO FÃƒÂSICO / AMBIENTAL DE LA CALZADA --- */}
         <Grid size={{ xs: 12 }}>
@@ -748,7 +843,7 @@ const FormularioHechoVial = () => {
                 error={!!fieldState.error}
                 helperText={fieldState.error?.message}
               >
-                {["DESPEJADO", "LLUVIA", "NIEBLA", "VIENTO", "POLVO"].map((val) => (
+                {["DESPEJADO", "NUBLADO", "LLUVIA", "GRANIZO", "NIEVE", "NIEBLA/NEBLINA", "POLVO", "VIENTO"].map((val) => (
                   <MenuItem key={val} value={val}>
                     {val}
                   </MenuItem>

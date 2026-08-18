@@ -9,4 +9,5 @@ export interface VehiculoSolicitud {
   cuadro?: string | undefined | null;
   tipoRodado?: string;
   propietario?: Propietario | null;
+  infractorPropietario?: boolean;
 }

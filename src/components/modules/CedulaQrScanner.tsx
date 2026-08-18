@@ -355,6 +355,8 @@ const toVehiculoSolicitud = (values: CedulaData): VehiculoSolicitud => {
     apellido: values.dorso.apellido,
     dni: values.dorso.dni,
     direccion: values.dorso.direccion,
+    localidad: '',
+    provincia: ''
   };
 
   return {

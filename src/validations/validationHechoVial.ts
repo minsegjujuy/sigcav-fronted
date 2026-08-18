@@ -186,6 +186,7 @@ export const hechoVialFormSchema = z.object({
   estadoCalzada: z.string().trim().min(1, "El estado de la calzada es obligatorio").max(30, "El estado de la calzada no puede superar los 30 caracteres"),
   materialCalzada: z.string().trim().min(1, "El material de la calzada es obligatorio").max(20, "El material de la calzada no puede superar los 20 caracteres"),
   estadoFisicoCalzada: z.string().trim().min(1, "El estado físico de la calzada es obligatorio").max(30, "El estado fisico no puede superar los 30 caracteres"),
+  estadoFisicoCalzadaOtro: optionalText(30, "El estado fisico no puede superar los 30 caracteres"),
   estadoAmbiental: z.string().trim().min(1, "El estado ambiental es obligatorio").max(30, "El estado ambiental no puede superar los 30 caracteres"),
   luzArtificial: z.string().trim().min(1, "Debe indicar si hay luz artificial").max(20, "La luz artificial no puede superar los 20 caracteres"),
   semaforo: z.string().trim().min(1, "Debe indicar si hay semáforo").max(20, "El semaforo no puede superar los 20 caracteres"),

@@ -1,3 +1,4 @@
+import type { AlcoholimetroDto } from '../../models/ActaRequest';
 import type { Articulo } from '../../models/Articulo';
 import type { Grupo } from '../../models/Grupo';
 import type { Juzgado } from '../../models/Juzgado';
@@ -49,6 +50,11 @@ export const brandApi = baseApi.injectEndpoints({
             keepUnusedDataFor: 1800,
             providesTags: ['Roles']
         }),
+        getAlcoholemias: builder.query<AlcoholimetroDto[], void>({
+            query: () => '/alcoholimetros',
+            keepUnusedDataFor: 1800,
+            providesTags: ['Alcoholemias']
+        }),
     })
 });
 
@@ -60,5 +66,6 @@ export const {
     useGetTiposQuery,
     useGetArticulosQuery,
     useGetJerarquiasQuery,
-    useGetRolesQuery
+    useGetRolesQuery,
+    useGetAlcoholemiasQuery
 } = brandApi;
