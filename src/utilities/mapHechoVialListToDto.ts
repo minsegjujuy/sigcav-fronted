@@ -33,6 +33,18 @@ const toBool = (value: unknown): boolean => {
   return Boolean(value);
 };
 
+const toNullableBool = (value: unknown): boolean | null => {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "null" || normalized === "sd") return null;
+    if (normalized === "true") return true;
+    if (normalized === "false") return false;
+  }
+  return Boolean(value);
+};
+
 const str = (value: unknown, fallback = ""): string => {
   if (value === null || value === undefined) return fallback;
   return String(value);
@@ -174,11 +186,11 @@ const mapProtagonista = (p: Protagonista | AnyRecord): Protagonista => {
     marca: str(raw["marca"]),
     modelo: str(raw["modelo"]),
     color: str(raw["color"]),
-    asegurado: toBool(raw["asegurado"]),
-    rto: toBool(raw["rto"]),
-    cedula: toBool(raw["cedula"]),
-    airbagActivado: toBool(raw["airbagActivado"]),
-    usoSeguridad: toBool(raw["usoSeguridad"]),
+    asegurado: toNullableBool(raw["asegurado"]),
+    rto: toNullableBool(raw["rto"]),
+    cedula: toNullableBool(raw["cedula"]),
+    airbagActivado: toNullableBool(raw["airbagActivado"]),
+    usoSeguridad: toNullableBool(raw["usoSeguridad"]),
     conductorNombre: str(raw["conductorNombre"]),
     conductorGenero: str(raw["conductorGenero"]),
     conductorDni: str(raw["conductorDni"]),

@@ -152,6 +152,12 @@ const FormularioHechoVial = () => {
     setValue("estadoFisicoCalzada", "OTRO", { shouldDirty: true, shouldTouch: true, shouldValidate: true });
   }, [estadoFisicoCalzada, setValue]);
 
+  useEffect(() => {
+    if (tipoSiniestro === "COLISIÓN ENTRE VEHÍCULOS") return;
+
+    setValue("tipoColision", "", { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+  }, [tipoSiniestro, setValue]);
+
   const onSubmit = async (data: HechoVialForm) => {
     const payload: HechoVialForm = {
       ...data,
@@ -953,11 +959,12 @@ const FormularioHechoVial = () => {
                   error={!!fieldState.error}
                   helperText={fieldState.error?.message}
                 >
-                  <MenuItem value="COLISION">COLISION ENTRE VEHICULOS</MenuItem>
+                  <MenuItem value="COLISIÓN ENTRE VEHÍCULOS">COLISION ENTRE VEHICULOS</MenuItem>
+                  <MenuItem value="COLISIÓN MÚLTIPLE ENTRE VEHÍCULOS">COLISION MULTIPLE ENTRE VEHICULOS</MenuItem>
                   <MenuItem value="VUELCO">VUELCO</MenuItem>
                   <MenuItem value="DESPEÑAMIENTO">DESPEÑAMIENTO</MenuItem>
-                  <MenuItem value="ATROPELLO_PEATON">ATROPELLO PEATON</MenuItem>
-                  <MenuItem value="ATROPELLO_ANIMAL">ATROPELLO ANIMAL</MenuItem>
+                  <MenuItem value="ATROPELLO PEATON">ATROPELLO PEATON</MenuItem>
+                  <MenuItem value="ATROPELLO ANIMAL">ATROPELLO ANIMAL</MenuItem>
                   <MenuItem value="SALIDA DE LA CALZADA">SALIDA DE LA CALZADA</MenuItem>
                   <MenuItem value="CHOQUE CONTRA OBJETO FIJO">CHOQUE CONTRA OBJETO FIJO</MenuItem>
                   <MenuItem value="DESPISTE">DESPISTE</MenuItem>
@@ -966,7 +973,7 @@ const FormularioHechoVial = () => {
               )}
             />
           </Grid>
-          {tipoSiniestro === "COLISION" && (
+          {tipoSiniestro === "COLISIÓN ENTRE VEHÍCULOS" && (
 
           <Grid size={{ xs: 12, md: 6 }}>
               <Controller

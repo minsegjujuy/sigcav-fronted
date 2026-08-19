@@ -86,11 +86,11 @@ export interface Protagonista {
   marca: string;
   modelo: string;
   color: string;
-  asegurado: boolean;
-  rto: boolean;
-  cedula: boolean;
-  airbagActivado: boolean;
-  usoSeguridad: boolean;
+  asegurado: boolean | null;
+  rto: boolean | null;
+  cedula: boolean | null;
+  airbagActivado: boolean | null;
+  usoSeguridad: boolean | null;
   // Datos del Conductor
   conductorNombre: string;
   conductorGenero: string;

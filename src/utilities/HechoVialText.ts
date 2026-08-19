@@ -1,6 +1,6 @@
 import type { HechoVialListDto } from "../models/HechoVialListDto";
 
-const siNo = (valor?: boolean): string =>
+const siNo = (valor: boolean | null): string =>
   valor === true ? "SI" : valor === false ? "NO" : "SD";
 
 const textoSiExiste = (label: string, value?: string | number | null): string => {

@@ -64,14 +64,23 @@ type SeccionLicenciaProps = {
   watch: UseFormWatch<HechoVialForm>;
 };
 
-const BooleanRadioField = ({ field }: { field: { value: boolean; onChange: (value: boolean) => void } }) => (
+const BooleanRadioField = ({
+  field,
+  allowUnknown = true,
+}: {
+  field: { value: boolean | null | undefined; onChange: (value: boolean | null) => void };
+  allowUnknown?: boolean;
+}) => (
   <RadioGroup
     row
-    value={String(Boolean(field.value))}
-    onChange={(_, value) => field.onChange(value === "true")}
+    value={field.value === true ? "true" : field.value === false ? "false" : "null"}
+    onChange={(_, value) =>
+      field.onChange(value === "true" ? true : value === "false" ? false : allowUnknown ? null : false)
+    }
   >
     <FormControlLabel value="true" control={<Radio />} label="Sí" />
     <FormControlLabel value="false" control={<Radio />} label="No" />
+    {allowUnknown ? <FormControlLabel value="null" control={<Radio />} label="SD" /> : null}
   </RadioGroup>
 );
 
@@ -440,11 +449,11 @@ export const SeccionProtagonistas = ({ control, register, setValue, watch, error
               marca: "",
               modelo: "",
               color: "",
-              asegurado: false,
-              rto: false,
-              cedula: false,
-              airbagActivado: false,
-              usoSeguridad: false,
+              asegurado: null,
+              rto: null,
+              cedula: null,
+              airbagActivado: null,
+              usoSeguridad: null,
               licenciaEstado: "SD",
               esFuerzaSeguridad: false,
               conductorNombre: "",
@@ -782,19 +791,6 @@ export const SeccionProtagonistas = ({ control, register, setValue, watch, error
               <Grid size={{ xs: 12, md: 12 }}>
                 <TextField
                   fullWidth
-                  label="Descripcion"
-                  placeholder="Colocar descripción de la persona solo si no se cuenta con todos los datos, por ej. dni, nombre, nacionalidad, etc."
-                  multiline
-                  minRows={3}
-                  {...register(`protagonistas.${index}.descripcion`)}
-                  error={!!getErrorMessage(errors, `protagonistas.${index}.descripcion`)}
-                  helperText={getErrorMessage(errors, `protagonistas.${index}.descripcion`)}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 12 }}>
-                <TextField
-                  fullWidth
                   label="Traslado (Hospital/SAME)"
                   placeholder="Ej.: Sí, al hospital Pablo Soria por personal de SAME (interno Nro. - Enfermero / Chofer). Estado de salud: herido leve / herido grave."
                   multiline
@@ -835,7 +831,7 @@ export const SeccionProtagonistas = ({ control, register, setValue, watch, error
                     name={`protagonistas.${index}.esFuerzaSeguridad`}
                     control={control}
                     defaultValue={false}
-                    render={({ field }) => <BooleanRadioField field={field} />}
+                    render={({ field }) => <BooleanRadioField field={field} allowUnknown={false} />}
                   />
                 </FormControl>
               </Grid>
@@ -1008,3 +1004,4 @@ export const SeccionProtagonistas = ({ control, register, setValue, watch, error
     </Box>
   );
 };
+

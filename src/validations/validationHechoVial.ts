@@ -122,11 +122,11 @@ export const protagonistaSchema = z.object({
   marca: z.string().trim().max(15, "La marca no puede superar los 15 caracteres").optional().nullable().or(z.literal("")),
   modelo: z.string().trim().max(35, "El modelo no puede superar los 35 caracteres").optional().nullable().or(z.literal("")),
   color: z.string().trim().min(1, "El color es obligatorio").max(15, "El color no puede superar los 15 caracteres"),
-  asegurado: z.boolean(),
-  rto: z.boolean(),
-  cedula: z.boolean(),
-  airbagActivado: z.boolean(),
-  usoSeguridad: z.boolean(),
+  asegurado: z.boolean().nullable().optional(),
+  rto: z.boolean().nullable().optional(),
+  cedula: z.boolean().nullable().optional(),
+  airbagActivado: z.boolean().nullable().optional(),
+  usoSeguridad: z.boolean().nullable().optional(),
   conductorNombre: optionalText(30, "El nombre del conductor no puede superar los 30 caracteres"),
   conductorGenero: z
     .string()
