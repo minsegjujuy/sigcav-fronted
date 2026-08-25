@@ -960,7 +960,6 @@ const FormularioHechoVial = () => {
                   helperText={fieldState.error?.message}
                 >
                   <MenuItem value="COLISIÓN ENTRE VEHÍCULOS">COLISION ENTRE VEHICULOS</MenuItem>
-                  <MenuItem value="COLISIÓN MÚLTIPLE ENTRE VEHÍCULOS">COLISION MULTIPLE ENTRE VEHICULOS</MenuItem>
                   <MenuItem value="VUELCO">VUELCO</MenuItem>
                   <MenuItem value="DESPEÑAMIENTO">DESPEÑAMIENTO</MenuItem>
                   <MenuItem value="ATROPELLO PEATON">ATROPELLO PEATON</MenuItem>
@@ -993,6 +992,7 @@ const FormularioHechoVial = () => {
                     <MenuItem value="ALCANCE">POR ALCANCE</MenuItem>
                     <MenuItem value="LATERAL">LATERAL</MenuItem>
                     <MenuItem value="ANGULO">EN ANGULO</MenuItem>
+                    <MenuItem value="MÚLTIPLE">MULTIPLE</MenuItem>
                   </TextField>
                 )}
               />

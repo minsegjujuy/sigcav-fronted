@@ -23,6 +23,7 @@ export interface ActaResumenDto {
   ubicacionResponse: UbicacionRsponse;
   juzgado: number,
   retencionVehiculo: boolean;
+  retencionLicencia: boolean | null;
   infractorFugado: boolean;
   seNiegaAFirmar: boolean;
   graduacionAlcoholica: number;

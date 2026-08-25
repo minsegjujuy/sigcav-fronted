@@ -419,6 +419,8 @@ export const SeccionProtagonistas = ({ control, register, setValue, watch, error
     name: "protagonistas",
   });
   const [jerarquias, setJerarquias] = useState<Jerarquia[]>([]);
+  const [jerarquiaManualVisible, setJerarquiaManualVisible] = useState<Record<number, boolean>>({});
+  const [jerarquiaManualValue, setJerarquiaManualValue] = useState<Record<number, string>>({});
 
   useEffect(() => {
     const fetchJerarquias = async () => {
@@ -846,29 +848,69 @@ export const SeccionProtagonistas = ({ control, register, setValue, watch, error
                     <Controller
                       name={`protagonistas.${index}.jerarquia`}
                       control={control}
-                      render={({ field, fieldState }) => (
-                        <FormControl fullWidth error={!!fieldState.error}>
-                          <InputLabel id={`jerarquia-label-${index}`}>Jerarquía</InputLabel>
-                          <Select
-                            {...field}
-                            labelId={`jerarquia-label-${index}`}
-                            label="Jerarquía"
-                            value={field.value ?? ""}
-                          >
-                            <MenuItem value="">
-                              <em>Seleccione una jerarquía</em>
-                            </MenuItem>
+                      render={({ field, fieldState }) => {
+                        const jerarquiaEsValida = jerarquias.some((jerarquia) => jerarquia.nombre === field.value);
+                        const mostrarJerarquiaManual =
+                          jerarquiaManualVisible[index] || (!!field.value && !jerarquiaEsValida);
+                        const valorSelect = mostrarJerarquiaManual ? "OTRA" : (field.value ?? "");
+                        const valorManual =
+                          jerarquiaManualValue[index] ?? (mostrarJerarquiaManual && !jerarquiaEsValida ? String(field.value ?? "") : "");
 
-                            {jerarquias.map((jerarquia) => (
-                              <MenuItem key={jerarquia.idJer} value={jerarquia.nombre}>
-                                {jerarquia.nombre}
+                        return (
+                          <FormControl fullWidth error={!!fieldState.error}>
+                            <InputLabel id={`jerarquia-label-${index}`}>Jerarquía</InputLabel>
+                            <Select
+                              {...field}
+                              labelId={`jerarquia-label-${index}`}
+                              label="Jerarquía"
+                              value={valorSelect}
+                              onChange={(event) => {
+                                const value = String(event.target.value);
+                                if (value === "OTRA") {
+                                  setJerarquiaManualVisible((prev) => ({ ...prev, [index]: true }));
+                                  setJerarquiaManualValue((prev) => ({ ...prev, [index]: "" }));
+                                  field.onChange("");
+                                  return;
+                                }
+
+                                setJerarquiaManualVisible((prev) => ({ ...prev, [index]: false }));
+                                setJerarquiaManualValue((prev) => ({ ...prev, [index]: "" }));
+                                field.onChange(value);
+                              }}
+                            >
+                              <MenuItem value="">
+                                <em>Seleccione una jerarquía</em>
                               </MenuItem>
-                            ))}
-                          </Select>
 
-                          {fieldState.error ? <FormHelperText>{fieldState.error.message}</FormHelperText> : null}
-                        </FormControl>
-                      )}
+                              {jerarquias.map((jerarquia) => (
+                                <MenuItem key={jerarquia.idJer} value={jerarquia.nombre}>
+                                  {jerarquia.nombre}
+                                </MenuItem>
+                              ))}
+
+                              <MenuItem value="OTRA">OTRA</MenuItem>
+                            </Select>
+
+                            {mostrarJerarquiaManual ? (
+                              <TextField
+                                fullWidth
+                                sx={{ mt: 2 }}
+                                label="Jerarquía manual"
+                                value={valorManual}
+                                onChange={(event) => {
+                                  const value = event.target.value;
+                                  setJerarquiaManualValue((prev) => ({ ...prev, [index]: value }));
+                                  field.onChange(value);
+                                }}
+                                error={!!fieldState.error}
+                                helperText={fieldState.error?.message}
+                              />
+                            ) : fieldState.error ? (
+                              <FormHelperText>{fieldState.error.message}</FormHelperText>
+                            ) : null}
+                          </FormControl>
+                        );
+                      }}
                     />
                   </Grid>
 

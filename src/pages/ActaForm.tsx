@@ -27,7 +27,7 @@ import { obtenerUnidadesRegionalesPorDepartamento } from "../services/UnidadRegi
 import type { UnidadRegional } from "../models/UnidadRegional";
 import type { Localidad } from "../models/Localidad";
 import { DateInput } from "../components/ui/datetime/FechaPicker.styles";
-import { TIPO_RODADO } from "../utilities/tipoRodado";
+import { TIPO_RODADO, TIPO_RODADO_ACTA } from "../utilities/tipoRodado";
 import FullscreenMultiSelect from "../components/containers/MultiSelect";
 import type { VehiculoSolicitud } from "../models/VehiculoSolicitud";
 import type { InfractorSolicitud } from "../models/InfractorSolicitud";
@@ -126,6 +126,7 @@ const initialState: ActaRequest = {
   graduacionAlcoholica: 0,
   infractorFugado: false,
   seNiegaAFirmar: false,
+  retencionLicencia: false,
   juzgado: 0,
   identificacion: '',
   testigos: [],
@@ -1296,6 +1297,15 @@ export default function ActaForm() {
                     }
                     label="Infractor fugado"
                   />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={Boolean(form.retencionLicencia)}
+                        onChange={(e) => handleChange("retencionLicencia", e.target.checked)}
+                      />
+                    }
+                    label="Retención de licencia"
+                  />
                 </FormGroup>
               </FormControl>
 
@@ -1755,7 +1765,7 @@ export default function ActaForm() {
                     {`OTRO (${tipoRodadoActual})`}
                   </MenuItem>
                 )}
-                {TIPO_RODADO.map((tr) => (
+                {TIPO_RODADO_ACTA.map((tr) => (
                   <MenuItem key={tr} value={tr}>
                     {tr}
                   </MenuItem>
@@ -1871,13 +1881,6 @@ export default function ActaForm() {
                         error={!!errors["testigos.0.dni"]}
                         helperText={errors["testigos.0.dni"]}
                       />
-                      <TextField
-                        label="Domicilio"
-                        fullWidth
-                        margin="normal"
-                        value={firma.testigos?.[0]?.domicilio ?? ""}
-                        onChange={(e) => handleTestigoChange(0, "domicilio", e.target.value)}
-                      />
                     </Box>
 
                     <Box sx={{ p: 1.5, border: 1, borderColor: "divider", borderRadius: 2 }}>
@@ -1910,13 +1913,6 @@ export default function ActaForm() {
                         onChange={(e) => handleTestigoChange(1, "dni", e.target.value)}
                         error={!!errors["testigos.1.dni"]}
                         helperText={errors["testigos.1.dni"]}
-                      />
-                      <TextField
-                        label="Domicilio"
-                        fullWidth
-                        margin="normal"
-                        value={firma.testigos?.[1]?.domicilio ?? ""}
-                        onChange={(e) => handleTestigoChange(1, "domicilio", e.target.value)}
                       />
                     </Box>
                   </Box>
@@ -1989,12 +1985,6 @@ export default function ActaForm() {
                           error={!!errors["testigos.0.dni"]}
                           helperText={errors["testigos.0.dni"]}
                         />
-                        <TextField
-                          label="Domicilio"
-                          sx={{ gridColumn: "1 / -1" }}
-                          value={firma.testigos?.[0]?.domicilio ?? ""}
-                          onChange={(e) => handleTestigoChange(0, "domicilio", e.target.value)}
-                        />
                       </Box>
                     </Box>
 
@@ -2023,12 +2013,6 @@ export default function ActaForm() {
                           onChange={(e) => handleTestigoChange(1, "dni", e.target.value)}
                           error={!!errors["testigos.1.dni"]}
                           helperText={errors["testigos.1.dni"]}
-                        />
-                        <TextField
-                          label="Domicilio"
-                          sx={{ gridColumn: "1 / -1" }}
-                          value={firma.testigos?.[1]?.domicilio ?? ""}
-                          onChange={(e) => handleTestigoChange(1, "domicilio", e.target.value)}
                         />
                       </Box>
                     </Box>

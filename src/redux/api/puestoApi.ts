@@ -36,7 +36,7 @@ export const brandApi = baseApi.injectEndpoints({
             providesTags: ['Leyes']
         }),
         getArticulos: builder.query<Articulo[], void>({
-            query: () => '/articulo/',
+            query: () => '/articulo/active',
             keepUnusedDataFor: 1800,
             providesTags: ['Articulos']
         }),

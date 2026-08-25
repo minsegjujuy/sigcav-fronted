@@ -1,17 +1,4 @@
-import {
-  Box,
-  Button,
-  FormControl,
-  FormControlLabel,
-  FormLabel,
-  Grid,
-  MenuItem,
-  Paper,
-  Radio,
-  RadioGroup,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Grid, MenuItem, Paper, TextField, Typography } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { Controller, useFieldArray, type Control, type FieldErrors, type UseFormRegister } from "react-hook-form";
@@ -22,13 +9,6 @@ type SeccionPeatonProps = {
   register: UseFormRegister<HechoVialForm>;
   errors: FieldErrors<HechoVialForm>;
 };
-
-const BooleanRadioField = ({ field }: { field: { value: boolean; onChange: (value: boolean) => void } }) => (
-  <RadioGroup row value={String(Boolean(field.value))} onChange={(_, value) => field.onChange(value === "true")}>
-    <FormControlLabel value="true" control={<Radio />} label="Sí" />
-    <FormControlLabel value="false" control={<Radio />} label="No" />
-  </RadioGroup>
-);
 
 const getErrorMessage = (errors: FieldErrors<HechoVialForm>, path: string) => {
   let current: unknown = errors;
@@ -220,18 +200,6 @@ export const SeccionPeaton = ({ control, register, errors }: SeccionPeatonProps)
                 error={!!getErrorMessage(errors, `peatones.${index}.edad`)}
                 helperText={getErrorMessage(errors, `peatones.${index}.edad`)}
               />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 4 }}>
-              <FormControl component="fieldset">
-                <FormLabel component="legend">¿Dispositivo de retención?</FormLabel>
-                <Controller
-                  name={`peatones.${index}.dispositivoRetencion`}
-                  control={control}
-                  defaultValue={false}
-                  render={({ field }) => <BooleanRadioField field={field} />}
-                />
-              </FormControl>
             </Grid>
 
             <Grid size={{ xs: 12, md: 8 }}>
