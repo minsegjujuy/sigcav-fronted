@@ -10,4 +10,8 @@ export interface VehiculoSolicitud {
   tipoRodado?: string;
   propietario?: Propietario | null;
   infractorPropietario?: boolean;
+  idTipoVehiculo?: number;
+  idMarca? : number;
+  idModelo? : number
+
 }

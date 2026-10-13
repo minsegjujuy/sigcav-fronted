@@ -22,11 +22,25 @@ import {
   type GridRowModesModel,
   type GridSortModel,
 } from "@mui/x-data-grid";
-import { listarArticulos } from "../services/ArticuloService";
+import { crearArticulo, listarArticulos } from "../services/ArticuloService";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 import { modificarArticulos } from "../services/ArticuloService";
 import { SnackbarUtilities } from "../utilities/SnackbarUtilities";
+import ReusableModal from "../components/ui/modal/ReusableModal";
+import ArticuloForm from "../components/containers/ArticuloForm";
+
+const toArticuloRequest = (articulo: ArticuloList): ArticuloRequest => ({
+  idArt: articulo.idArt,
+  nro: articulo.nro,
+  detalle: articulo.detalle,
+  velocidad: articulo.velocidad,
+  alcoholemia: articulo.alcoholemia,
+  idLey: articulo.idLey,
+  enabled: articulo.enabled,
+  unidadesFijas: articulo.unidadesFijas,
+  importe: articulo.importe,
+});
 
 const ArticulosTable = () => {
   const [articulos, setArticulos] = useState<ArticuloList[]>([]);
@@ -39,6 +53,7 @@ const ArticulosTable = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [crearModalAbierto, setCrearModalAbierto] = useState(false);
 
   const [paginationModel, setPaginationModel] =
     useState<GridPaginationModel>({
@@ -48,7 +63,7 @@ const ArticulosTable = () => {
 
   const [sortModel, setSortModel] = useState<GridSortModel>([
     {
-      field: "id",
+      field: "idArt",
       sort: "asc",
     },
   ]);
@@ -65,7 +80,7 @@ const ArticulosTable = () => {
       setLoading(true);
       setError("");
 
-      const sortField = sortModel[0]?.field ?? "id";
+      const sortField = sortModel[0]?.field ?? "idArt";
       const sortDirection = sortModel[0]?.sort ?? "asc";
 
       const response = await listarArticulos({
@@ -75,15 +90,7 @@ const ArticulosTable = () => {
         nro: filtroAplicado,
       });
       setArticulos(response.content);
-      setArticulosEditados(
-        response.content.map((articulo) => ({
-          idArt: articulo.idArt,
-          velocidad: articulo.velocidad,
-          alcoholemia: articulo.alcoholemia,
-          unidadesFijas: articulo.unidadesFijas,
-          importe: articulo.importe,
-        })),
-      );
+      setArticulosEditados(response.content.map(toArticuloRequest));
       setTotalElements(response.totalElements);
     } catch (err) {
       console.error(err);
@@ -185,7 +192,7 @@ const ArticulosTable = () => {
 
     setArticulosEditados((current) =>
       current.map((articulo) =>
-        idsSeleccionados.has(articulo.idArt)
+        idsSeleccionados.has(articulo.idArt!)
           ? {
               ...articulo,
               importe:
@@ -211,9 +218,22 @@ const ArticulosTable = () => {
     await cargarArticulos();
   };
 
+  const handleCrearArticulo = async (articulo: ArticuloRequest) => {
+    try {
+      const res = await crearArticulo(articulo);
+      console.log('articulo creado ', res)
+      SnackbarUtilities.success("Artículo creado correctamente");
+      setCrearModalAbierto(false);
+      await cargarArticulos();
+    } catch (error) {
+      SnackbarUtilities.error("No se pudo crear el artículo");
+      throw error;
+    }
+  };
+
   const columns: GridColDef<ArticuloList>[] = [
     {
-      field: "id",
+      field: "idArt",
       headerName: "ID",
       width: 90,
     },
@@ -222,12 +242,21 @@ const ArticulosTable = () => {
       headerName: "Número",
       minWidth: 180,
       flex: 1,
+      editable: true,
     },
     {
       field: "detalle",
       headerName: "Descripción",
-      minWidth: 180,
-      flex: 1,
+      minWidth: 280,
+      flex: 2,
+      editable: true,
+    },
+    {
+      field: "idLey",
+      headerName: "ID Ley",
+      minWidth: 110,
+      type: "number",
+      editable: true,
     },
     {
       field: "unidadesFijas",
@@ -251,6 +280,13 @@ const ArticulosTable = () => {
   {
     field: "velocidad",
     headerName: "Velocidad",
+    minWidth: 120,
+    type: "boolean",
+    editable: true,
+  },
+  {
+    field: "enabled",
+    headerName: "Habilitado",
     minWidth: 120,
     type: "boolean",
     editable: true,
@@ -311,16 +347,26 @@ const ArticulosTable = () => {
             overflow: "hidden",
           }}
         >
-          <Typography
-            variant="h5"
-            fontWeight={600}
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            justifyContent="space-between"
+            alignItems={{ xs: "stretch", sm: "center" }}
+            spacing={2}
             mb={3}
-            sx={{
-              fontSize: { xs: "1.3rem", sm: "1.5rem" },
-            }}
           >
-            Artículos
-          </Typography>
+            <Typography
+              variant="h5"
+              fontWeight={600}
+              sx={{
+                fontSize: { xs: "1.3rem", sm: "1.5rem" },
+              }}
+            >
+              Artículos
+            </Typography>
+            <Button variant="contained" onClick={() => setCrearModalAbierto(true)}>
+              Crear nuevo
+            </Button>
+          </Stack>
 
           <Stack
             direction={{ xs: "column", sm: "row" }}
@@ -479,13 +525,7 @@ const ArticulosTable = () => {
             setArticulosEditados((current) =>
               current.map((articulo) =>
                 articulo.idArt === updated.idArt
-                  ? {
-                      idArt: updated.idArt,
-                      velocidad: updated.velocidad,
-                      alcoholemia: updated.alcoholemia,
-                      unidadesFijas: updated.unidadesFijas,
-                      importe: updated.importe,
-                    }
+                  ? toArticuloRequest(updated)
                   : articulo,
               ),
             );
@@ -510,6 +550,15 @@ const ArticulosTable = () => {
           }}
         />
       </Box>
+
+      <ReusableModal
+        open={crearModalAbierto}
+        title="Crear artículo"
+        onClose={() => setCrearModalAbierto(false)}
+        maxWidth="md"
+      >
+        <ArticuloForm onSubmit={handleCrearArticulo} />
+      </ReusableModal>
     </Box>
   );
 };

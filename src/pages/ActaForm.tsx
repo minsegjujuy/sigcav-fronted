@@ -15,7 +15,6 @@ import { findByDni } from "../services/InfractorService";
 import type { Vehiculo } from "../models/Vehiculo";
 import { actualizarActa, crearActa } from "../services/ActaService";
 import { PropietarioService } from "../services/PropietarioService";
-import { southAmericanCountries } from "../utilities/Paises";
 import { argentinaProvinces } from "../utilities/Provincias";
 import { actaResumenToActaRequest } from "../utilities/actaResumenToActaRequest";
 import { useActa } from "../context/ActaResumenContext";
@@ -27,7 +26,6 @@ import { obtenerUnidadesRegionalesPorDepartamento } from "../services/UnidadRegi
 import type { UnidadRegional } from "../models/UnidadRegional";
 import type { Localidad } from "../models/Localidad";
 import { DateInput } from "../components/ui/datetime/FechaPicker.styles";
-import { TIPO_RODADO, TIPO_RODADO_ACTA } from "../utilities/tipoRodado";
 import FullscreenMultiSelect from "../components/containers/MultiSelect";
 import type { VehiculoSolicitud } from "../models/VehiculoSolicitud";
 import type { InfractorSolicitud } from "../models/InfractorSolicitud";
@@ -37,6 +35,7 @@ import DocumentDataCapture from "../components/modules/DocumentDataCapture";
 import type { FirmaDTO, TestigoRequest } from "../models/FirmaDTO";
 import type { Juzgado } from "../models/Juzgado";
 import { useGetAlcoholemiasQuery, useGetGruposQuery, useGetjuzgadosQuery, useGetLeyesQuery, useGetPuestosQuery, useGetTiposQuery } from "../redux/api/puestoApi";
+import { useGetCatalogosQuery } from "../redux/api/catalogosNuevosApi";
 import type { Licencia } from "../models/Licencia";
 import { generarIdentificacion } from "../utilities/generarIdentificacion";
 
@@ -134,7 +133,9 @@ const initialState: ActaRequest = {
     idImpresora: 0,
     idAlcoholimetro: 0,
   },
-  ubicacionRequest: {lat:0,lng:0,departamento:'', unidadRegional:0, descripcion:'', localidad: 0},
+  ubicacionRequest: {lat:0,lng:0,departamento:'', unidadRegional:0, descripcion:'', localidad: 0,
+    idProvinciaCatalogo: 0, idDepartamentoCatalogo: 0, idLocalidadCatalogo: 0
+  },
   articulos: [],
   infractor: {
     idInfrac: null,
@@ -143,9 +144,14 @@ const initialState: ActaRequest = {
     domicilio:"",
     fechaNacimiento:"",
     localidad:"",
+    idLocalidad: undefined,
     dni: "",
+    idPais: undefined,
     nacionalidad: "",
+    idProvincia: undefined,
     provincia: '',
+    idDepartamento: undefined,
+    departamento: '',
     licencia: {
       clase: "",
       numero: "",
@@ -162,6 +168,9 @@ const initialState: ActaRequest = {
     motor: "",
     cuadro: "",
     tipoRodado: "",
+    idTipoVehiculo: undefined,
+    idModelo: undefined,
+    idMarca: undefined,
     infractorPropietario: false,
     propietario: {
       nombre: "",
@@ -195,6 +204,7 @@ export default function ActaForm() {
   const { data: ley = []} = useGetLeyesQuery();
   const { data: juzgado = []} = useGetjuzgadosQuery();
   const { data: tipoActa = []} = useGetTiposQuery();
+  const { data: catalogos } = useGetCatalogosQuery();
   const isEditingActa = Boolean(actaSeleccionada?.idActa);
   //const firmaInfractorRef = useRef<FirmaCaptureHandle | null>(null);
   //const firmaOficialRef = useRef<FirmaCaptureHandle | null>(null);
@@ -292,8 +302,6 @@ export default function ActaForm() {
         .map((item) => [item.idImpresora as number, item]),
     ).values(),
   );
-  const tipoRodadoActual = form.vehiculo.tipoRodado ?? "";
-  const tipoRodadoFueraDeLista = Boolean(tipoRodadoActual) && !TIPO_RODADO.includes(tipoRodadoActual);
   const tipoActaDetalleSeleccionado =
     tipoActa.find((t) => t.idTipo === Number(selectedTipoActa))?.detalle?.toUpperCase() ?? "";
   const isTipoActaAutomatico = tipoActaDetalleSeleccionado === "AUTOMATICO";
@@ -318,30 +326,448 @@ export default function ActaForm() {
       }
       return next;
     });
-  };  const handleCountryChange = (e: SelectChangeEvent) => {
-    const pais = e.target.value;
+  };
+
+  const normalizeCatalogName = (value: string | null | undefined) =>
+    String(value ?? "").trim().toLocaleUpperCase("es-AR");
+  const normalizeDepartmentName = (value: string | null | undefined) =>
+    normalizeCatalogName(value)
+      .replace(/\s+/g, " ")
+      .replace(/^DOCTOR\s+/, "DR. ")
+      .replace(/^DR\.?\s+/, "DR. ");
+  const normalizeCatalogId = (value: unknown): number | undefined => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+  };
+
+  const selectedPaisId =
+    normalizeCatalogId(form.infractor.idPais) ??
+    normalizeCatalogId(
+      catalogos?.paises.find(
+        (pais) => normalizeCatalogName(pais.nombre) === normalizeCatalogName(form.infractor.nacionalidad),
+      )?.idPais,
+    );
+  const esArgentinaSeleccionada =
+    selectedPaisId === 1 || normalizeCatalogName(form.infractor.nacionalidad) === "ARGENTINA";
+  const provinciasDisponibles =
+    esArgentinaSeleccionada
+      ? catalogos?.provincias.filter((provincia) => normalizeCatalogId(provincia.idPais) === 1) ?? []
+      : [];
+  const selectedProvinciaId =
+    normalizeCatalogId(form.infractor.idProvincia) ??
+    normalizeCatalogId(
+      provinciasDisponibles.find(
+        (provincia) => normalizeCatalogName(provincia.nombre) === normalizeCatalogName(form.infractor.provincia),
+      )?.idProvincia,
+    );
+  const departamentosDisponibles =
+    catalogos?.departamentos.filter(
+      (departamento) => normalizeCatalogId(departamento.idProvincia) === selectedProvinciaId,
+    ) ?? [];
+  const selectedDepartamentoId =
+    normalizeCatalogId(form.infractor.idDepartamento) ??
+    normalizeCatalogId(
+      departamentosDisponibles.find(
+        (departamento) => normalizeCatalogName(departamento.nombre) === normalizeCatalogName(form.infractor.departamento),
+      )?.idDepartamento,
+    );
+  const localidadesInfractorDisponibles =
+    catalogos?.localidades.filter(
+      (localidad) => normalizeCatalogId(localidad.idDepartamento) === selectedDepartamentoId,
+    ) ?? [];
+  const selectedLocalidadId =
+    normalizeCatalogId(form.infractor.idLocalidad) ??
+    normalizeCatalogId(
+      localidadesInfractorDisponibles.find(
+        (localidad) => normalizeCatalogName(localidad.nombre) === normalizeCatalogName(form.infractor.localidad),
+      )?.idLocalidad,
+    );
+
+  const departamentoUbicacionCatalogo = catalogos?.departamentos.find(
+    (departamento) =>
+      normalizeCatalogId(departamento.idDepartamento) ===
+        normalizeCatalogId(form.ubicacionRequest.idDepartamentoCatalogo) ||
+      normalizeDepartmentName(departamento.nombre) ===
+        normalizeDepartmentName(form.ubicacionRequest.departamento),
+  );
+  const idDepartamentoUbicacionCatalogo = normalizeCatalogId(
+    departamentoUbicacionCatalogo?.idDepartamento,
+  );
+  const provinciaUbicacionCatalogo = catalogos?.provincias.find(
+    (provincia) =>
+      normalizeCatalogId(provincia.idProvincia) ===
+      (normalizeCatalogId(form.ubicacionRequest.idProvinciaCatalogo) ??
+        normalizeCatalogId(departamentoUbicacionCatalogo?.idProvincia)),
+  );
+  const idProvinciaUbicacionCatalogo = normalizeCatalogId(provinciaUbicacionCatalogo?.idProvincia);
+  const localidadesUbicacionCatalogo =
+    catalogos?.localidades.filter(
+      (localidad) => normalizeCatalogId(localidad.idDepartamento) === idDepartamentoUbicacionCatalogo,
+    ) ?? [];
+  const localidadUbicacionCatalogo = localidadesUbicacionCatalogo.find(
+    (localidad) =>
+      normalizeCatalogId(localidad.idLocalidad) ===
+        normalizeCatalogId(form.ubicacionRequest.idLocalidadCatalogo) ||
+      normalizeCatalogName(localidad.nombre) === normalizeCatalogName(form.ubicacionRequest.localidadNombre),
+  );
+  const idLocalidadUbicacionCatalogo = normalizeCatalogId(localidadUbicacionCatalogo?.idLocalidad);
+
+  const handleCountryChange = (e: SelectChangeEvent) => {
+    const nombrePais = String(e.target.value);
+    const pais = catalogos?.paises.find(
+      (item) => normalizeCatalogName(item.nombre) === normalizeCatalogName(nombrePais),
+    );
+    const idPais = normalizeCatalogId(pais?.idPais);
 
     setForm((prev) => ({
       ...prev,
       infractor: {
         ...prev.infractor,
-        nacionalidad: pais,
-        provincia: pais === "ARGENTINA" ? prev.infractor.provincia : "" // si no es Argentina, provincia en blanco
-      }
+        idPais,
+        nacionalidad: pais?.nombre ?? nombrePais,
+        idProvincia: undefined,
+        provincia: "",
+        idDepartamento: undefined,
+        departamento: "",
+        idLocalidad: undefined,
+        localidad: "",
+      },
     }));
   };
 
   const handleProvinceChange = (e: SelectChangeEvent) => {
-    const provincia = e.target.value;
+    const idProvincia = normalizeCatalogId(e.target.value);
+    const provincia = provinciasDisponibles.find(
+      (item) => normalizeCatalogId(item.idProvincia) === idProvincia,
+    );
 
     setForm((prev) => ({
       ...prev,
       infractor: {
         ...prev.infractor,
-        provincia
-      }
+        idProvincia,
+        provincia: provincia?.nombre ?? "",
+        idDepartamento: undefined,
+        departamento: "",
+        idLocalidad: undefined,
+        localidad: "",
+      },
     }));
   };
+
+  const handleDepartamentoChange = (e: SelectChangeEvent) => {
+    const idDepartamento = normalizeCatalogId(e.target.value);
+    const departamento = departamentosDisponibles.find(
+      (item) => normalizeCatalogId(item.idDepartamento) === idDepartamento,
+    );
+
+    setForm((prev) => ({
+      ...prev,
+      infractor: {
+        ...prev.infractor,
+        idDepartamento,
+        departamento: departamento?.nombre ?? "",
+        idLocalidad: undefined,
+        localidad: "",
+      },
+    }));
+  };
+
+  const handleLocalidadChange = (e: SelectChangeEvent) => {
+    const idLocalidad = normalizeCatalogId(e.target.value);
+    const localidad = localidadesInfractorDisponibles.find(
+      (item) => normalizeCatalogId(item.idLocalidad) === idLocalidad,
+    );
+
+    setForm((prev) => ({
+      ...prev,
+      infractor: {
+        ...prev.infractor,
+        idLocalidad,
+        localidad: localidad?.nombre ?? "",
+      },
+    }));
+  };
+
+  const selectedTipoVehiculoId =
+    normalizeCatalogId(form.vehiculo.idTipoVehiculo) ??
+    normalizeCatalogId(
+      catalogos?.tiposVehiculo.find(
+        (tipo) => normalizeCatalogName(tipo.nombre) === normalizeCatalogName(form.vehiculo.tipoRodado),
+      )?.idTipoVehiculo,
+    );
+  const marcasDelTipo =
+    catalogos?.marcas.filter(
+      (marca) => normalizeCatalogId(marca.idTipoVehiculo) === selectedTipoVehiculoId,
+    ) ?? [];
+  const selectedMarcaId =
+    normalizeCatalogId(form.vehiculo.idMarca) ??
+    normalizeCatalogId(
+      marcasDelTipo.find(
+        (marca) => normalizeCatalogName(marca.nombre) === normalizeCatalogName(form.vehiculo.marca),
+      )?.idMarca,
+    );
+  const modelosDeLaMarca =
+    catalogos?.modelos.filter((modelo) => normalizeCatalogId(modelo.idMarca) === selectedMarcaId) ?? [];
+  const selectedModeloId =
+    normalizeCatalogId(form.vehiculo.idModelo) ??
+    normalizeCatalogId(
+      modelosDeLaMarca.find(
+        (modelo) => normalizeCatalogName(modelo.nombre) === normalizeCatalogName(form.vehiculo.modelo),
+      )?.idModelo,
+    );
+
+  const handleTipoVehiculoChange = (e: SelectChangeEvent) => {
+    const nombreTipoVehiculo = String(e.target.value);
+    const tipoVehiculo = catalogos?.tiposVehiculo.find(
+      (tipo) => normalizeCatalogName(tipo.nombre) === normalizeCatalogName(nombreTipoVehiculo),
+    );
+    const idTipoVehiculo = normalizeCatalogId(tipoVehiculo?.idTipoVehiculo);
+
+    setForm((prev) => ({
+      ...prev,
+      vehiculo: {
+        ...prev.vehiculo,
+        idTipoVehiculo,
+        tipoRodado: tipoVehiculo?.nombre ?? nombreTipoVehiculo,
+        idModelo: undefined,
+        modelo: "",
+        idMarca: undefined,
+        marca: "",
+      },
+    }));
+  };
+
+  const handleModeloVehiculoChange = (e: SelectChangeEvent) => {
+    const idModelo = normalizeCatalogId(e.target.value);
+    const modelo = modelosDeLaMarca.find((item) => normalizeCatalogId(item.idModelo) === idModelo);
+
+    setForm((prev) => ({
+      ...prev,
+      vehiculo: {
+        ...prev.vehiculo,
+        idModelo,
+        modelo: modelo?.nombre ?? "",
+      },
+    }));
+  };
+
+  const handleMarcaVehiculoChange = (e: SelectChangeEvent) => {
+    const idMarca = normalizeCatalogId(e.target.value);
+    const marca = marcasDelTipo.find(
+      (item) => normalizeCatalogId(item.idMarca) === idMarca,
+    );
+
+    setForm((prev) => ({
+      ...prev,
+      vehiculo: {
+        ...prev.vehiculo,
+        idMarca,
+        marca: marca?.nombre ?? "",
+        idModelo: undefined,
+        modelo: "",
+      },
+    }));
+  };
+
+  useEffect(() => {
+    if (!catalogos) return;
+
+    setForm((prev) => {
+      const pais =
+        catalogos.paises.find(
+          (item) => normalizeCatalogName(item.nombre) === normalizeCatalogName(prev.infractor.nacionalidad),
+        ) ??
+        (normalizeCatalogId(prev.infractor.idPais)
+          ? catalogos.paises.find(
+              (item) => normalizeCatalogId(item.idPais) === normalizeCatalogId(prev.infractor.idPais),
+            )
+          : undefined);
+
+      if (!pais) return prev;
+
+      const provincia =
+        normalizeCatalogId(pais.idPais) === 1 || normalizeCatalogName(pais.nombre) === "ARGENTINA"
+          ? catalogos.provincias.find(
+              (item) =>
+                normalizeCatalogId(item.idPais) === normalizeCatalogId(pais.idPais) &&
+                (normalizeCatalogId(item.idProvincia) === normalizeCatalogId(prev.infractor.idProvincia) ||
+                  normalizeCatalogName(item.nombre) === normalizeCatalogName(prev.infractor.provincia)),
+            )
+          : undefined;
+      const departamento = provincia
+        ? catalogos.departamentos.find(
+            (item) =>
+              normalizeCatalogId(item.idProvincia) === normalizeCatalogId(provincia.idProvincia) &&
+              (normalizeCatalogId(item.idDepartamento) === normalizeCatalogId(prev.infractor.idDepartamento) ||
+                normalizeCatalogName(item.nombre) === normalizeCatalogName(prev.infractor.departamento)),
+          )
+        : undefined;
+      const localidad = departamento
+        ? catalogos.localidades.find(
+            (item) =>
+              normalizeCatalogId(item.idDepartamento) === normalizeCatalogId(departamento.idDepartamento) &&
+              (normalizeCatalogId(item.idLocalidad) === normalizeCatalogId(prev.infractor.idLocalidad) ||
+                normalizeCatalogName(item.nombre) === normalizeCatalogName(prev.infractor.localidad)),
+          )
+        : undefined;
+
+      const nextInfractor = {
+        ...prev.infractor,
+        idPais: normalizeCatalogId(pais.idPais),
+        nacionalidad: pais.nombre,
+        idProvincia: normalizeCatalogId(provincia?.idProvincia),
+        provincia: provincia?.nombre ?? "",
+        idDepartamento: normalizeCatalogId(departamento?.idDepartamento),
+        departamento: departamento?.nombre ?? "",
+        idLocalidad: normalizeCatalogId(localidad?.idLocalidad),
+        localidad: localidad?.nombre ?? "",
+      };
+
+      if (
+        nextInfractor.idPais === prev.infractor.idPais &&
+        nextInfractor.nacionalidad === prev.infractor.nacionalidad &&
+        nextInfractor.idProvincia === prev.infractor.idProvincia &&
+        nextInfractor.provincia === prev.infractor.provincia &&
+        nextInfractor.idDepartamento === prev.infractor.idDepartamento &&
+        nextInfractor.departamento === prev.infractor.departamento &&
+        nextInfractor.idLocalidad === prev.infractor.idLocalidad &&
+        nextInfractor.localidad === prev.infractor.localidad
+      ) {
+        return prev;
+      }
+
+      return { ...prev, infractor: nextInfractor };
+    });
+  }, [
+    catalogos,
+    form.infractor.idPais,
+    form.infractor.nacionalidad,
+    form.infractor.idProvincia,
+    form.infractor.provincia,
+    form.infractor.idDepartamento,
+    form.infractor.departamento,
+    form.infractor.idLocalidad,
+    form.infractor.localidad,
+  ]);
+
+  useEffect(() => {
+    if (!departamentoUbicacionCatalogo || !idDepartamentoUbicacionCatalogo) return;
+
+    setForm((prev) => {
+      const localidadUr = localidadUbicacionCatalogo
+        ? localidades.find(
+            (localidad) =>
+              normalizeCatalogName(localidad.nombre) === normalizeCatalogName(localidadUbicacionCatalogo.nombre),
+          )
+        : undefined;
+      const nextUbicacion = {
+        ...prev.ubicacionRequest,
+        idProvinciaCatalogo: idProvinciaUbicacionCatalogo ?? 0,
+        idDepartamentoCatalogo: idDepartamentoUbicacionCatalogo,
+        idLocalidadCatalogo: idLocalidadUbicacionCatalogo ?? 0,
+        localidadNombre: localidadUbicacionCatalogo?.nombre ?? prev.ubicacionRequest.localidadNombre,
+        localidad: localidadUr?.id ?? prev.ubicacionRequest.localidad,
+      };
+
+      if (
+        nextUbicacion.idProvinciaCatalogo === prev.ubicacionRequest.idProvinciaCatalogo &&
+        nextUbicacion.idDepartamentoCatalogo === prev.ubicacionRequest.idDepartamentoCatalogo &&
+        nextUbicacion.idLocalidadCatalogo === prev.ubicacionRequest.idLocalidadCatalogo &&
+        nextUbicacion.localidadNombre === prev.ubicacionRequest.localidadNombre &&
+        nextUbicacion.localidad === prev.ubicacionRequest.localidad
+      ) {
+        return prev;
+      }
+
+      return { ...prev, ubicacionRequest: nextUbicacion };
+    });
+  }, [
+    departamentoUbicacionCatalogo,
+    idDepartamentoUbicacionCatalogo,
+    idProvinciaUbicacionCatalogo,
+    localidadUbicacionCatalogo,
+    idLocalidadUbicacionCatalogo,
+    localidades,
+  ]);
+
+  useEffect(() => {
+    if (!catalogos) return;
+
+    setForm((prev) => {
+      const tipoVehiculo =
+        catalogos.tiposVehiculo.find(
+          (tipo) => normalizeCatalogName(tipo.nombre) === normalizeCatalogName(prev.vehiculo.tipoRodado),
+        ) ??
+        (normalizeCatalogId(prev.vehiculo.idTipoVehiculo)
+          ? catalogos.tiposVehiculo.find(
+              (tipo) =>
+                normalizeCatalogId(tipo.idTipoVehiculo) === normalizeCatalogId(prev.vehiculo.idTipoVehiculo),
+            )
+          : undefined);
+
+      if (!tipoVehiculo) return prev;
+
+      const marcasTipo = catalogos.marcas.filter(
+        (marca) =>
+          normalizeCatalogId(marca.idTipoVehiculo) === normalizeCatalogId(tipoVehiculo.idTipoVehiculo),
+      );
+      const marca =
+        marcasTipo.find(
+          (item) => normalizeCatalogName(item.nombre) === normalizeCatalogName(prev.vehiculo.marca),
+        ) ??
+        (normalizeCatalogId(prev.vehiculo.idMarca)
+          ? marcasTipo.find(
+              (item) => normalizeCatalogId(item.idMarca) === normalizeCatalogId(prev.vehiculo.idMarca),
+            )
+          : undefined);
+      const modelosMarca = marca
+        ? catalogos.modelos.filter(
+            (modelo) => normalizeCatalogId(modelo.idMarca) === normalizeCatalogId(marca.idMarca),
+          )
+        : [];
+      const modelo =
+        modelosMarca.find(
+          (item) => normalizeCatalogName(item.nombre) === normalizeCatalogName(prev.vehiculo.modelo),
+        ) ??
+        (normalizeCatalogId(prev.vehiculo.idModelo)
+          ? modelosMarca.find(
+              (item) => normalizeCatalogId(item.idModelo) === normalizeCatalogId(prev.vehiculo.idModelo),
+            )
+          : undefined);
+
+      const nextVehiculo = {
+        ...prev.vehiculo,
+        idTipoVehiculo: normalizeCatalogId(tipoVehiculo.idTipoVehiculo),
+        tipoRodado: tipoVehiculo.nombre,
+        idMarca: normalizeCatalogId(marca?.idMarca),
+        marca: marca?.nombre ?? prev.vehiculo.marca,
+        idModelo: normalizeCatalogId(modelo?.idModelo),
+        modelo: modelo?.nombre ?? prev.vehiculo.modelo,
+      };
+
+      if (
+        nextVehiculo.idTipoVehiculo === prev.vehiculo.idTipoVehiculo &&
+        nextVehiculo.tipoRodado === prev.vehiculo.tipoRodado &&
+        nextVehiculo.idModelo === prev.vehiculo.idModelo &&
+        nextVehiculo.modelo === prev.vehiculo.modelo &&
+        nextVehiculo.idMarca === prev.vehiculo.idMarca &&
+        nextVehiculo.marca === prev.vehiculo.marca
+      ) {
+        return prev;
+      }
+
+      return { ...prev, vehiculo: nextVehiculo };
+    });
+  }, [
+    catalogos,
+    form.vehiculo.idTipoVehiculo,
+    form.vehiculo.tipoRodado,
+    form.vehiculo.idModelo,
+    form.vehiculo.modelo,
+    form.vehiculo.idMarca,
+    form.vehiculo.marca,
+  ]);
 
   const joinSelected = (updatedSelected: string[]): string => {
     return updatedSelected.join(", ");
@@ -412,34 +838,6 @@ export default function ActaForm() {
 
   const handleChange = async (path: string, value: any) => {
     const keys = path.split(".");
-    if (path === "vehiculo.propietario.dni" && value.length === 8) {
-        try {
-          const { direccion, nombre, dni, idProp } =
-            await PropietarioService.obtenerPorDni(value);
-
-          setForm((prev) => ({
-            ...prev,
-            vehiculo: {
-              ...prev.vehiculo,
-              propietario: {
-                ...prev.vehiculo.propietario,
-                idProp,
-                nombre,
-                dni,
-                direccion,
-                localidad: prev.vehiculo.propietario?.localidad ?? "",
-                provincia: prev.vehiculo.propietario?.provincia ?? "",
-              },
-            },
-            }));
-        } catch (err) {
-          console.error("Propietario no encontrado");
-        }
-        return;
-      }else if (path === "vehiculo.propietario.dni" && value.length === 7){
-        limpiarPropietario();
-        return;
-      }
 
     setForm(prev => {
       const updated = structuredClone(prev); // copia profunda segura
@@ -459,6 +857,35 @@ export default function ActaForm() {
 
       return updated;
     });
+
+    if (path === "vehiculo.propietario.dni" && String(value).length === 8) {
+        try {
+          const { direccion, nombre, dni, idProp } =
+            await PropietarioService.obtenerPorDni(value);
+
+          setForm((prev) => {
+            if (prev.vehiculo.propietario?.dni !== value) return prev;
+
+            return {
+              ...prev,
+              vehiculo: {
+                ...prev.vehiculo,
+                propietario: {
+                  ...prev.vehiculo.propietario,
+                  idProp,
+                  nombre,
+                  dni,
+                  direccion,
+                  localidad: prev.vehiculo.propietario?.localidad ?? "",
+                  provincia: prev.vehiculo.propietario?.provincia ?? "",
+                },
+              },
+            };
+          });
+        } catch (err) {
+          console.error("Propietario no encontrado");
+        }
+      }
   };
 
   const limpiarPropietario = () => {
@@ -518,7 +945,9 @@ export default function ActaForm() {
 
     const depto = unidadesRegionales
       .find((u) => u.idUr === unidadRegionalId)
-      ?.departamentos.find((d) => d.nombre === departamento);
+      ?.departamentos.find(
+        (d) => normalizeDepartmentName(d.nombre) === normalizeDepartmentName(departamento),
+      );
 
     setLocalidades(depto?.localidades ?? []);
   };
@@ -564,6 +993,62 @@ export default function ActaForm() {
       e.preventDefault();
       if(validate()){
         const actaToSend: ActaRequest = structuredClone(form);
+
+        const paisSeleccionado = catalogos?.paises.find(
+          (pais) => normalizeCatalogId(pais.idPais) === selectedPaisId,
+        );
+        const provinciaSeleccionada = provinciasDisponibles.find(
+          (provincia) => normalizeCatalogId(provincia.idProvincia) === selectedProvinciaId,
+        );
+        const departamentoSeleccionado = departamentosDisponibles.find(
+          (departamento) => normalizeCatalogId(departamento.idDepartamento) === selectedDepartamentoId,
+        );
+        const localidadSeleccionada = localidadesInfractorDisponibles.find(
+          (localidad) => normalizeCatalogId(localidad.idLocalidad) === selectedLocalidadId,
+        );
+
+        actaToSend.infractor = {
+          ...actaToSend.infractor,
+          idPais: selectedPaisId,
+          nacionalidad: paisSeleccionado?.nombre ?? actaToSend.infractor.nacionalidad,
+          idProvincia: selectedProvinciaId,
+          provincia: provinciaSeleccionada?.nombre ?? actaToSend.infractor.provincia,
+          idDepartamento: selectedDepartamentoId,
+          departamento: departamentoSeleccionado?.nombre ?? actaToSend.infractor.departamento,
+          idLocalidad: selectedLocalidadId,
+          localidad: localidadSeleccionada?.nombre ?? actaToSend.infractor.localidad,
+        };
+
+        const tipoVehiculoSeleccionado = catalogos?.tiposVehiculo.find(
+          (tipoVehiculo) => normalizeCatalogId(tipoVehiculo.idTipoVehiculo) === selectedTipoVehiculoId,
+        );
+        const marcaSeleccionada = marcasDelTipo.find(
+          (marca) => normalizeCatalogId(marca.idMarca) === selectedMarcaId,
+        );
+        const modeloSeleccionado = modelosDeLaMarca.find(
+          (modelo) => normalizeCatalogId(modelo.idModelo) === selectedModeloId,
+        );
+
+        actaToSend.vehiculo = {
+          ...actaToSend.vehiculo,
+          idTipoVehiculo: selectedTipoVehiculoId,
+          tipoRodado: tipoVehiculoSeleccionado?.nombre ?? actaToSend.vehiculo.tipoRodado,
+          idMarca: selectedMarcaId,
+          marca: marcaSeleccionada?.nombre ?? actaToSend.vehiculo.marca,
+          idModelo: selectedModeloId,
+          modelo: modeloSeleccionado?.nombre ?? actaToSend.vehiculo.modelo,
+        };
+
+        actaToSend.ubicacionRequest = {
+          ...actaToSend.ubicacionRequest,
+          departamento:
+            departamentoUbicacionCatalogo?.nombre ?? actaToSend.ubicacionRequest.departamento,
+          idProvinciaCatalogo: idProvinciaUbicacionCatalogo ?? 0,
+          idDepartamentoCatalogo: idDepartamentoUbicacionCatalogo ?? 0,
+          idLocalidadCatalogo: idLocalidadUbicacionCatalogo ?? 0,
+          localidadNombre:
+            localidadUbicacionCatalogo?.nombre ?? actaToSend.ubicacionRequest.localidadNombre,
+        };
 
         if(propietario){
           actaToSend.vehiculo.propietario = null;
@@ -649,7 +1134,7 @@ export default function ActaForm() {
           delete (actaToSend as Partial<ActaRequest>).firma;
         }*/
         
-        //console.log('acta ', actaToSend);
+        console.log('acta ', actaToSend);
         let response: ActaRequest | null = null;
         if(actaSeleccionada){
           response = await actualizarActa(actaToSend);
@@ -691,6 +1176,10 @@ export default function ActaForm() {
               cuadro: "",
               marca: "",
               modelo: "",
+              tipoRodado: "",
+              idTipoVehiculo: undefined,
+              idMarca: undefined,
+              idModelo: undefined,
               idVeh: null,
               infractorPropietario: false,
               propietario: null,
@@ -711,6 +1200,9 @@ export default function ActaForm() {
             cuadro: vehiculo?.cuadro ?? "",
             marca: vehiculo?.marca ?? "",
             modelo: vehiculo?.modelo ?? "",
+            idTipoVehiculo: vehiculo?.idTipoVehiculo,
+            idMarca: vehiculo?.idMarca,
+            idModelo: vehiculo?.idModelo,
             motor: vehiculo?.motor ?? prevForm.vehiculo.motor,
             tipoRodado: vehiculo?.tipoRodado ?? prevForm.vehiculo.tipoRodado,
             idVeh: vehiculo?.idVeh ?? null,
@@ -730,6 +1222,8 @@ export default function ActaForm() {
           ...prevForm.ubicacionRequest,
           unidadRegional: id,
           localidad: undefined,
+          localidadNombre: "",
+          idLocalidadCatalogo: 0,
         },
       }));
 
@@ -802,8 +1296,44 @@ export default function ActaForm() {
   const handleMapSelect = async (point: UbicacionRequest) => {
     console.log('ubicacion ', point);
     await fetchUnidadesRegionales(point.departamento);
-    //const ubicacion : UbicacionRequest = {...point, unidadRegional: 1};
-    setForm((prevData) => ({...prevData, ubicacionRequest: point}));
+    const idDepartamentoRecibido = normalizeCatalogId(point.idDepartamentoCatalogo);
+    const departamentoCatalogo = catalogos?.departamentos.find(
+      (departamento) =>
+        normalizeCatalogId(departamento.idDepartamento) === idDepartamentoRecibido ||
+        normalizeDepartmentName(departamento.nombre) === normalizeDepartmentName(point.departamento),
+    );
+    const idDepartamentoCatalogo = normalizeCatalogId(departamentoCatalogo?.idDepartamento) ?? 0;
+    if (normalizeDepartmentName(point.departamento) === "EL CARMEN") {
+      const localidadesElCarmen =
+        catalogos?.localidades.filter(
+          (localidad) =>
+            normalizeCatalogId(localidad.idDepartamento) === idDepartamentoCatalogo,
+        ) ?? [];
+
+      console.log("[Ubicación ACTAS] Verificación de localidades de EL CARMEN", {
+        departamentoMapa: point.departamento,
+        departamentoCatalogo,
+        idDepartamentoCatalogo,
+        cantidadLocalidades: localidadesElCarmen.length,
+        localidades: localidadesElCarmen,
+      });
+    }
+    const provinciaCatalogo = catalogos?.provincias.find(
+      (provincia) =>
+        normalizeCatalogId(provincia.idProvincia) === normalizeCatalogId(departamentoCatalogo?.idProvincia),
+    );
+
+    setForm((prevData) => ({
+      ...prevData,
+      ubicacionRequest: {
+        ...point,
+        idProvinciaCatalogo: normalizeCatalogId(provinciaCatalogo?.idProvincia) ?? 0,
+        idDepartamentoCatalogo,
+        idLocalidadCatalogo: normalizeCatalogId(point.idLocalidadCatalogo) ?? 0,
+        localidad: point.localidad,
+        localidadNombre: point.localidadNombre ?? "",
+      },
+    }));
   }
 
   const fetchInfractorByDni = async () => {
@@ -813,26 +1343,37 @@ export default function ActaForm() {
       try {
         const data = await findByDni(dni);
         console.log("infractor encontrado", data);
-        const vehiculosFromBackend = data.vehiculos || [];
-        if(data.idInfrac){
-          setLicencias(data.licencias);
-          const licenciaPredeterminada = data.licencias?.[0] ?? null;
-          const defaultVehicle = vehiculosFromBackend.find((vehiculo) => vehiculo.infractorPropietario)
-            ?? (vehiculosFromBackend.length === 1 ? vehiculosFromBackend[0] : null);
+        const vehiculosFromBackend = data.vehiculos ?? [];
+        const licenciasFromBackend = data.licencias ?? [];
+        const licenciaPredeterminada =
+          licenciasFromBackend.find((licencia) => licencia.enabled) ?? licenciasFromBackend[0] ?? null;
+        const paisPorId = catalogos?.paises.find(
+          (pais) => normalizeCatalogId(pais.idPais) === normalizeCatalogId(data.idPais),
+        );
+        const defaultVehicle = data.idInfrac
+          ? (vehiculosFromBackend.find((vehiculo: Vehiculo) => vehiculo.infractorPropietario) ??
+            (vehiculosFromBackend.length === 1 ? vehiculosFromBackend[0] : null))
+          : null;
 
-          setForm((prev) => {
-            const updatedInfractor = normalizeInfractorNombreApellido({
-              ...prev.infractor,
-              idInfrac: data.idInfrac || null,
-              nombre: data.nombre || "",
-              apellido: data.apellido || "",
-              domicilio: data.domicilio,
-              fechaNacimiento: data.fechaNacimiento ?? prev.infractor.fechaNacimiento ?? "",
-              dni: data.dni,
-              nacionalidad: data.nacionalidad ?? prev.infractor.nacionalidad,
-              provincia: data.provincia ?? prev.infractor.provincia,
-              localidad: data.localidad ?? prev.infractor.localidad,
-              licencia: licenciaPredeterminada
+        setForm((prev) => {
+          const updatedInfractor = normalizeInfractorNombreApellido({
+            ...prev.infractor,
+            idInfrac: data.idInfrac ?? null,
+            nombre: data.nombre ?? "",
+            apellido: data.apellido ?? "",
+            domicilio: data.domicilio ?? "",
+            fechaNacimiento: data.fechaNacimiento ?? "",
+            dni: data.dni ?? dni,
+            idPais: normalizeCatalogId(data.idPais),
+            nacionalidad: data.nacionalidad ?? paisPorId?.nombre ?? "",
+            idProvincia: normalizeCatalogId(data.idProvincia),
+            provincia: data.provincia ?? "",
+            idDepartamento: normalizeCatalogId(data.idDepartamento),
+            departamento: data.departamento ?? "",
+            idLocalidad: normalizeCatalogId(data.idLocalidad),
+            localidad: data.localidad ?? "",
+            licencia:
+              data.idInfrac && licenciaPredeterminada
                 ? {
                     id: licenciaPredeterminada.id,
                     numero: licenciaPredeterminada.numero,
@@ -841,44 +1382,37 @@ export default function ActaForm() {
                     fechaExpedicion: licenciaPredeterminada.fechaExpedicion,
                     fechaVencimiento: licenciaPredeterminada.fechaVencimiento,
                   }
-                : prev.infractor.licencia,
-            });
-
-            return {
-              ...prev,
-              infractor: updatedInfractor,
-              vehiculo: defaultVehicle
-                ? {
-                    ...prev.vehiculo,
-                    idVeh: defaultVehicle.idVeh,
-                    dominio: defaultVehicle.dominio ?? prev.vehiculo.dominio,
-                    marca: defaultVehicle.marca ?? prev.vehiculo.marca,
-                    modelo: defaultVehicle.modelo ?? prev.vehiculo.modelo,
-                    motor: defaultVehicle.motor ?? prev.vehiculo.motor,
-                    cuadro: defaultVehicle.cuadro ?? prev.vehiculo.cuadro,
-                    infractorPropietario: Boolean(defaultVehicle.infractorPropietario),
-                    propietario: defaultVehicle.infractorPropietario
-                      ? null
-                      : (defaultVehicle.propietario ?? prev.vehiculo.propietario ?? null),
-                  }
-                : prev.vehiculo,
-            };
+                : null,
           });
 
-          setVehiculos(vehiculosFromBackend);
-          if (defaultVehicle) {
-            setSelectedVehicle(defaultVehicle);
-            setPropietario(Boolean(defaultVehicle.infractorPropietario));
-            return;
-          }
+          return {
+            ...prev,
+            infractor: updatedInfractor,
+            vehiculo: defaultVehicle
+              ? {
+                  ...prev.vehiculo,
+                  idVeh: defaultVehicle.idVeh,
+                  dominio: defaultVehicle.dominio ?? prev.vehiculo.dominio,
+                  marca: defaultVehicle.marca ?? prev.vehiculo.marca,
+                  modelo: defaultVehicle.modelo ?? prev.vehiculo.modelo,
+                  idTipoVehiculo: defaultVehicle.idTipoVehiculo ?? prev.vehiculo.idTipoVehiculo,
+                  idMarca: defaultVehicle.idMarca ?? prev.vehiculo.idMarca,
+                  idModelo: defaultVehicle.idModelo ?? prev.vehiculo.idModelo,
+                  motor: defaultVehicle.motor ?? prev.vehiculo.motor,
+                  cuadro: defaultVehicle.cuadro ?? prev.vehiculo.cuadro,
+                  infractorPropietario: Boolean(defaultVehicle.infractorPropietario),
+                  propietario: defaultVehicle.infractorPropietario
+                    ? null
+                    : (defaultVehicle.propietario ?? prev.vehiculo.propietario ?? null),
+                }
+              : prev.vehiculo,
+          };
+        });
 
-          setSelectedVehicle(null);
-          setPropietario(false);
-        }else{
-          clearInfractor();
-          setSelectedVehicle(null);
-          setVehiculos([]);
-        }
+        setLicencias(licenciasFromBackend);
+        setVehiculos(data.idInfrac ? vehiculosFromBackend : []);
+        setSelectedVehicle(defaultVehicle);
+        setPropietario(Boolean(defaultVehicle?.infractorPropietario));
       } catch (error) {
         SnackbarUtilities.info('Infractor no encontrado, continue completando los datos')
       }
@@ -897,6 +1431,9 @@ export default function ActaForm() {
         ...prev.vehiculo,
         marca: vehiculo.marca ?? prev.vehiculo.marca,
         modelo: vehiculo.modelo ?? prev.vehiculo.modelo,
+        idTipoVehiculo: vehiculo.idTipoVehiculo ?? prev.vehiculo.idTipoVehiculo,
+        idMarca: vehiculo.idMarca ?? prev.vehiculo.idMarca,
+        idModelo: vehiculo.idModelo ?? prev.vehiculo.idModelo,
         dominio: vehiculo.dominio ?? prev.vehiculo.dominio,
         motor: vehiculo.motor ?? prev.vehiculo.motor,
         cuadro: vehiculo.cuadro ?? prev.vehiculo.cuadro,
@@ -1077,6 +1614,19 @@ export default function ActaForm() {
         lng: actaSeleccionada.ubicacionResponse.lng,
         descripcion: actaSeleccionada.ubicacionResponse.descripcion,
         localidad: actaSeleccionada.ubicacionResponse.localidad,
+        localidadNombre: mappedActa.ubicacionRequest.localidadNombre,
+        idProvinciaCatalogo:
+          actaSeleccionada.ubicacionResponse.idProvinciaCatalogo ??
+          mappedActa.ubicacionRequest.idProvinciaCatalogo ??
+          0,
+        idDepartamentoCatalogo:
+          actaSeleccionada.ubicacionResponse.idDepartamentoCatalogo ??
+          mappedActa.ubicacionRequest.idDepartamentoCatalogo ??
+          0,
+        idLocalidadCatalogo:
+          actaSeleccionada.ubicacionResponse.idLocalidadCatalogo ??
+          mappedActa.ubicacionRequest.idLocalidadCatalogo ??
+          0,
         unidadRegional: typeof unidadRegional === "number"
           ? unidadRegional
           : Number.isFinite(unidadRegionalParsed)
@@ -1332,36 +1882,43 @@ export default function ActaForm() {
                     </RadioGroup>
                     {!!errors.ubicacionRequest && <FormHelperText>{errors.ubicacionRequest}</FormHelperText>}
                   </FormControl>
-                  {!!form.ubicacionRequest.unidadRegional && (
                     <FormControl fullWidth margin="normal" sx={{ gridColumn: "1 / -1" }}>
                       <InputLabel id="localidad-label">Localidad</InputLabel>
                       <Select
                         labelId="localidad-label"
                         id="localidad"
-                        value={form.ubicacionRequest.localidad ?? ""}
+                        value={idLocalidadUbicacionCatalogo?.toString() ?? ""}
                         label="Localidad"
                         onChange={(e) => {
-                          const raw = String(e.target.value ?? "");
-                          const localidadId = raw ? Number(raw) : undefined;
+                          const idLocalidadCatalogo = normalizeCatalogId(e.target.value) ?? 0;
+                          const localidadCatalogo = localidadesUbicacionCatalogo.find(
+                            (localidad) => normalizeCatalogId(localidad.idLocalidad) === idLocalidadCatalogo,
+                          );
+                          const localidadUr = localidades.find(
+                            (localidad) =>
+                              normalizeCatalogName(localidad.nombre) ===
+                              normalizeCatalogName(localidadCatalogo?.nombre),
+                          );
                           setForm((prev) => ({
                             ...prev,
                             ubicacionRequest: {
                               ...prev.ubicacionRequest,
-                              localidad: localidadId,
+                              idLocalidadCatalogo,
+                              localidadNombre: localidadCatalogo?.nombre ?? "",
+                              localidad: localidadUr?.id,
                             },
                           }));
                         }}
-                        disabled={!localidades.length}
+                        disabled={!idDepartamentoUbicacionCatalogo || !localidadesUbicacionCatalogo.length}
                       >
                         <MenuItem value="">Seleccione una localidad</MenuItem>
-                        {localidades.map((loc) => (
-                          <MenuItem key={loc.id} value={loc.id}>
-                            {loc.nombre}
+                        {localidadesUbicacionCatalogo.map((localidad) => (
+                          <MenuItem key={localidad.idLocalidad} value={localidad.idLocalidad.toString()}>
+                            {localidad.nombre}
                           </MenuItem>
                         ))}
                       </Select>
                     </FormControl>
-                  )}
 
                   <TextField
                     label="Descripcion"
@@ -1605,48 +2162,83 @@ export default function ActaForm() {
                 value={form.infractor.fechaNacimiento ?? ""}
                 onChange={(e) => handleChange("infractor.fechaNacimiento", e.target.value)}
               />
-              <TextField
-                label="Localidad"
-                fullWidth
-                margin="normal"
-                value={form.infractor.localidad ?? ""}
-                onChange={(e) => handleChange("infractor.localidad", e.target.value)}
-              />
-              <FormControl fullWidth  error={!!errors["infractor.nacionalidad"]}>
-              <InputLabel>Pais *</InputLabel>
-              <Select
-                value={form.infractor.nacionalidad}
-                label="Pais"
-                onChange={(e) => {
-                handleCountryChange(e);
-                  setErrors(({ country: _, ...rest }) => rest);
-                  }}
-              >
-                {southAmericanCountries.map((p) => (
-                  <MenuItem key={p} value={p}>
-                    {p}
-                  </MenuItem>
-                ))}
-              </Select>
-              {!!errors.nacionalidad && <FormHelperText>{errors.nacionalidad}</FormHelperText>}
-            </FormControl>
-
-            {form.infractor.nacionalidad === "ARGENTINA" && (
-              <FormControl fullWidth>
-                <InputLabel>Provincia</InputLabel>
+              <FormControl fullWidth error={!!errors["infractor.nacionalidad"]}>
+                <InputLabel>País *</InputLabel>
                 <Select
-                  value={form.infractor.provincia}
-                  label="Provincia"
-                  onChange={handleProvinceChange}
+                  value={form.infractor.nacionalidad ?? ""}
+                  label="País *"
+                  onChange={(e) => {
+                    handleCountryChange(e);
+                    setErrors((currentErrors) => {
+                      const nextErrors = { ...currentErrors };
+                      delete nextErrors["infractor.nacionalidad"];
+                      return nextErrors;
+                    });
+                  }}
                 >
-                  {argentinaProvinces.map((prov) => (
-                    <MenuItem key={prov} value={prov}>
-                      {prov}
+                  <MenuItem value="">Seleccione un país</MenuItem>
+                  {(catalogos?.paises ?? []).map((pais) => (
+                    <MenuItem key={`${pais.idPais}-${pais.nombre}`} value={pais.nombre}>
+                      {pais.nombre}
                     </MenuItem>
                   ))}
                 </Select>
+                {!!errors["infractor.nacionalidad"] && (
+                  <FormHelperText>{errors["infractor.nacionalidad"]}</FormHelperText>
+                )}
               </FormControl>
-            )}
+
+              {esArgentinaSeleccionada && (
+                <>
+                  <FormControl fullWidth>
+                    <InputLabel>Provincia</InputLabel>
+                    <Select
+                      value={selectedProvinciaId?.toString() ?? ""}
+                      label="Provincia"
+                      onChange={handleProvinceChange}
+                    >
+                      <MenuItem value="">Seleccione una provincia</MenuItem>
+                      {provinciasDisponibles.map((provincia) => (
+                        <MenuItem key={provincia.idProvincia} value={provincia.idProvincia.toString()}>
+                          {provincia.nombre}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl fullWidth disabled={!selectedProvinciaId}>
+                    <InputLabel>Departamento</InputLabel>
+                    <Select
+                      value={selectedDepartamentoId?.toString() ?? ""}
+                      label="Departamento"
+                      onChange={handleDepartamentoChange}
+                    >
+                      <MenuItem value="">Seleccione un departamento</MenuItem>
+                      {departamentosDisponibles.map((departamento) => (
+                        <MenuItem key={departamento.idDepartamento} value={departamento?.idDepartamento?.toString()}>
+                          {departamento.nombre}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl fullWidth disabled={!selectedDepartamentoId}>
+                    <InputLabel>Localidad</InputLabel>
+                    <Select
+                      value={selectedLocalidadId?.toString() ?? ""}
+                      label="Localidad"
+                      onChange={handleLocalidadChange}
+                    >
+                      <MenuItem value="">Seleccione una localidad</MenuItem>
+                      {localidadesInfractorDisponibles.map((localidad) => (
+                        <MenuItem key={localidad.idLocalidad} value={localidad?.idLocalidad?.toString()}>
+                          {localidad.nombre}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </>
+              )}
               {/*Licencias*/}
               <>
                 {licencias && <FormControl fullWidth margin="normal">
@@ -1751,27 +2343,58 @@ export default function ActaForm() {
               <Box sx={{ gridColumn: "1 / -1" }}>
                 <DocumentDataCapture titulo="cedula (frente)" tipo="cedulaFrente" onVehiculoDetected={handleVehiculoDetected} />
               </Box>
-              <TextField label="Marca" fullWidth margin="normal" value={form.vehiculo.marca} onChange={(e) => handleChange("vehiculo.marca", e.target.value)} error={!!errors["vehiculo.marca"]} helperText={errors["vehiculo.marca"]} />
-              <TextField label="Modelo" fullWidth margin="normal" value={form.vehiculo.modelo} onChange={(e) => handleChange("vehiculo.modelo", e.target.value)} error={!!errors["vehiculo.modelo"]} helperText={errors["vehiculo.modelo"]} />
               <FormControl fullWidth>
-              <InputLabel>Tipo rodado</InputLabel>
-              <Select
-                value={tipoRodadoActual}
-                label="Tipo rodado"
-                onChange={(e)=>handleChange("vehiculo.tipoRodado", e.target.value)}
-              >
-                {tipoRodadoFueraDeLista && (
-                  <MenuItem value={tipoRodadoActual}>
-                    {`OTRO (${tipoRodadoActual})`}
-                  </MenuItem>
-                )}
-                {TIPO_RODADO_ACTA.map((tr) => (
-                  <MenuItem key={tr} value={tr}>
-                    {tr}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                <InputLabel>Tipo de vehículo</InputLabel>
+                <Select
+                  value={form.vehiculo.tipoRodado ?? ""}
+                  label="Tipo de vehículo"
+                  onChange={handleTipoVehiculoChange}
+                >
+                  <MenuItem value="">Seleccione un tipo de vehículo</MenuItem>
+                  {(catalogos?.tiposVehiculo ?? []).map((tipoVehiculo) => (
+                    <MenuItem
+                      key={`${tipoVehiculo.idTipoVehiculo}-${tipoVehiculo.nombre}`}
+                      value={tipoVehiculo.nombre}
+                    >
+                      {tipoVehiculo.nombre}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth disabled={!selectedTipoVehiculoId} error={!!errors["vehiculo.marca"]}>
+                <InputLabel>Marca</InputLabel>
+                <Select
+                  value={selectedMarcaId?.toString() ?? ""}
+                  label="Marca"
+                  onChange={handleMarcaVehiculoChange}
+                >
+                  <MenuItem value="">Seleccione una marca</MenuItem>
+                  {marcasDelTipo.map((marca) => (
+                    <MenuItem key={marca.idMarca} value={marca.idMarca.toString()}>
+                      {marca.nombre}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {!!errors["vehiculo.marca"] && <FormHelperText>{errors["vehiculo.marca"]}</FormHelperText>}
+              </FormControl>
+
+              <FormControl fullWidth disabled={!selectedMarcaId} error={!!errors["vehiculo.modelo"]}>
+                <InputLabel>Modelo</InputLabel>
+                <Select
+                  value={selectedModeloId?.toString() ?? ""}
+                  label="Modelo"
+                  onChange={handleModeloVehiculoChange}
+                >
+                  <MenuItem value="">Seleccione un modelo</MenuItem>
+                  {modelosDeLaMarca.map((modelo) => (
+                    <MenuItem key={modelo.idModelo} value={modelo.idModelo.toString()}>
+                      {modelo.nombre}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {!!errors["vehiculo.modelo"] && <FormHelperText>{errors["vehiculo.modelo"]}</FormHelperText>}
+              </FormControl>
               <TextField label="Dominio *" fullWidth margin="normal" value={form.vehiculo.dominio} onChange={(e) => {
                 handleChange("vehiculo.dominio", e.target.value);
                 setErrors(({ ["vehiculo.dominio"]: _, ...rest }) => rest);

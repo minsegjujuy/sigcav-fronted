@@ -25,7 +25,8 @@ export const baseApi = createApi({
         'Articulos',
         'Jerarquias',
         'Roles',
-        'Alcoholemias'
+        'Alcoholemias',
+        'Catalogos'
     ],
 
     endpoints: () => ({})

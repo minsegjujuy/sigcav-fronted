@@ -10,4 +10,7 @@
   idUr?: number;
   localidad: number;
   descripcion: string
+  idProvinciaCatalogo?: number;
+  idDepartamentoCatalogo?: number;
+  idLocalidadCatalogo?: number;
 }

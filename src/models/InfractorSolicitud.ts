@@ -5,11 +5,16 @@ export interface InfractorSolicitud {
   nombre: string;
   apellido: string;
   dni: string;
+  idPais?: number;
   nacionalidad: string;
   domicilio: string;
   fechaNacimiento?: string;
   localidad?: string;
+  idLocalidad? : number;
+  idProvincia?: number;
   provincia: string;
+  idDepartamento?: number;
+  departamento?: string
   //licencia
   licencia: LicenciaRequest | null;
   propietario: boolean;

@@ -49,6 +49,16 @@ export const modificarArticulos = async (
   return data;
 };
 
+export const crearArticulo = async (
+  articulos: ArticuloRequest
+): Promise<ArticuloRequest> => {
+  const { data } = await api.post<ArticuloRequest>(
+    `${baseURL}/articulo`,
+    articulos
+  );
+  return data;
+};
+
 export const getArticulos = async (): Promise<Articulo[]> => {
   const response = await api.get<Articulo[]>(`${baseURL}/articulo/`, getAuthHeader());
   return response.data;

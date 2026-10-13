@@ -91,7 +91,10 @@ export const actaResumenToActaRequest = (
       lng: acta.ubicacionResponse.lng,
       unidadRegional,
       descripcion: acta.ubicacionResponse.descripcion,
-      localidad: acta.ubicacionResponse.localidad
+      localidad: acta.ubicacionResponse.localidad,
+      idProvinciaCatalogo: acta.ubicacionResponse.idProvinciaCatalogo ?? 0,
+      idDepartamentoCatalogo: acta.ubicacionResponse.idDepartamentoCatalogo ?? 0,
+      idLocalidadCatalogo: acta.ubicacionResponse.idLocalidadCatalogo ?? 0,
     },
     fecha: acta.fecha,
     identificacion: acta.identificacion,

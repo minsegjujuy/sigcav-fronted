@@ -10,5 +10,8 @@ export interface Vehiculo {
   cuadro?: string | null;
   propietario : Propietario | null,
   infractorPropietario: boolean,
-  tipoRodado: string
+  tipoRodado: string;
+  idTipoVehiculo?: number;
+  idMarca?: number;
+  idModelo?: number;
 }

@@ -9,4 +9,8 @@
   unidadRegionalNombre?: string;
   localidadNombre?: string;
   descripcion: string;
+  idProvinciaCatalogo: number;
+  idDepartamentoCatalogo: number;
+  idLocalidadCatalogo: number;
+  
 }

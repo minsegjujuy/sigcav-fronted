@@ -114,6 +114,9 @@ export default function MapaJujuy({ onSelect, initialValue }: MapaJujuyProps) {
               descripcion: "",
               unidadRegional: undefined,
               localidad: undefined,
+              idProvinciaCatalogo: 0,
+              idDepartamentoCatalogo: 0,
+              idLocalidadCatalogo: 0,
             };
             setPoint(next);
             onSelect(next);

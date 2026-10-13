@@ -74,6 +74,6 @@ export const guardarhechoVial = async (hv: HechoVialForm) => {
 };
 
 export const deleteHechoVial = async (id: number): Promise<void> => {
-    await api.patch(`${baseURL}/hechos-viales/${id}/status`, null, getAuthHeader()
+    await api.delete(`${baseURL}/hechos-viales/${id}/status`, getAuthHeader()
     );
 };
