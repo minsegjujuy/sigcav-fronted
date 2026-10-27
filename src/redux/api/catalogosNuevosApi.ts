@@ -1,4 +1,4 @@
-import type { CatalogoNuevoDto } from "../../models/CatalogosNuevos";
+import type { CatalogoNuevoDto, ModeloDto } from "../../models/CatalogosNuevos";
 import { baseApi } from "./baseApi";
 
 const getCatalogId = (item: object, ...keys: string[]): number => {
@@ -16,18 +16,18 @@ const normalizeCatalogos = (catalogos: CatalogoNuevoDto): CatalogoNuevoDto => ({
     })),
     provincias: (catalogos.provincias ?? []).map((provincia) => ({
         ...provincia,
-        idProvincia: getCatalogId(provincia, "idProvincia", "id_provincia"),
-        idPais: getCatalogId(provincia, "idPais", "id_pais"),
+        idProvincia: getCatalogId(provincia, "idProvincia", "id_provincia", "idProvinciaCatalogo", "id_provincia_catalogo"),
+        idPais: getCatalogId(provincia, "idPais", "id_pais", "idPaisCatalogo", "id_pais_catalogo"),
     })),
     departamentos: (catalogos.departamentos ?? []).map((departamento) => ({
         ...departamento,
-        idDepartamento: getCatalogId(departamento, "idDepartamento", "id_departamento"),
-        idProvincia: getCatalogId(departamento, "idProvincia", "id_provincia"),
+        idDepartamento: getCatalogId(departamento, "idDepartamento", "id_departamento", "idDepartamentoCatalogo", "id_departamento_catalogo"),
+        idProvincia: getCatalogId(departamento, "idProvincia", "id_provincia", "idProvinciaCatalogo", "id_provincia_catalogo"),
     })),
     localidades: (catalogos.localidades ?? []).map((localidad) => ({
         ...localidad,
-        idLocalidad: getCatalogId(localidad, "idLocalidad", "id_localidad"),
-        idDepartamento: getCatalogId(localidad, "idDepartamento", "id_departamento"),
+        idLocalidad: getCatalogId(localidad, "idLocalidad", "id_localidad", "idLocalidadCatalogo", "id_localidad_catalogo"),
+        idDepartamento: getCatalogId(localidad, "idDepartamento", "id_departamento", "idDepartamentoCatalogo", "id_departamento_catalogo"),
     })),
     tiposVehiculo: (catalogos.tiposVehiculo ?? []).map((tipoVehiculo) => ({
         ...tipoVehiculo,
@@ -48,11 +48,6 @@ const normalizeCatalogos = (catalogos: CatalogoNuevoDto): CatalogoNuevoDto => ({
             "id_tipo_vehiculo",
         ),
     })),
-    modelos: (catalogos.modelos ?? []).map((modelo) => ({
-        ...modelo,
-        idModelo: getCatalogId(modelo, "idModelo", "id_modelo"),
-        idMarca: getCatalogId(modelo, "idMarca", "id_marca"),
-    })),
     tiposDocumento: (catalogos.tiposDocumento ?? []).map((tipoDocumento) => ({
         ...tipoDocumento,
         idTipoDocumento: getCatalogId(tipoDocumento, "idTipoDocumento", "id_tipo_documento"),
@@ -71,9 +66,21 @@ export const catalogoApi = baseApi.injectEndpoints({
             keepUnusedDataFor: 1800,
             providesTags: ['Catalogos']
         }),
+        getModelos: builder.query<ModeloDto[], void>({
+            query: () => '/catalogos/nuevo/modelos',
+            transformResponse: (modelos: ModeloDto[]) =>
+                (modelos ?? []).map((modelo) => ({
+                    ...modelo,
+                    idModelo: getCatalogId(modelo, "idModelo", "id_modelo"),
+                    idMarca: getCatalogId(modelo, "idMarca", "id_marca"),
+                })),
+            keepUnusedDataFor: 1800,
+            providesTags: ['Modelos']
+        }),
     })
 });
 
 export const {
     useGetCatalogosQuery,
+    useGetModelosQuery
 } = catalogoApi;

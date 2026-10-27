@@ -80,6 +80,7 @@ export const actaResumenToActaRequest = (
     infractorFugado: acta.infractorFugado,
     seNiegaAFirmar: acta.seNiegaAFirmar,
     retencionLicencia: Boolean(acta.retencionLicencia),
+    idExterno: acta.idExterno,
     alcoholimetro: acta.alcoholimetroRequest ?? {
       idImpresora: 0,
       idAlcoholimetro: 0,

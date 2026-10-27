@@ -28,7 +28,8 @@ export interface ActaRequest {
   seNiegaAFirmar: boolean,
   retencionLicencia: boolean;
   identificacion: string,
-  alcoholimetro: AlcoholimetroRequest
+  alcoholimetro: AlcoholimetroRequest,
+  idExterno?: number,
 }
 
 export interface AlcoholimetroRequest{

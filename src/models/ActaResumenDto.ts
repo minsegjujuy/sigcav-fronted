@@ -31,4 +31,5 @@ export interface ActaResumenDto {
   identificacion: string;
   observaciones: string;
   alcoholimetroRequest: AlcoholimetroRequest;
+  idExterno? : number;
 }

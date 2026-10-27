@@ -35,7 +35,7 @@ import DocumentDataCapture from "../components/modules/DocumentDataCapture";
 import type { FirmaDTO, TestigoRequest } from "../models/FirmaDTO";
 import type { Juzgado } from "../models/Juzgado";
 import { useGetAlcoholemiasQuery, useGetGruposQuery, useGetjuzgadosQuery, useGetLeyesQuery, useGetPuestosQuery, useGetTiposQuery } from "../redux/api/puestoApi";
-import { useGetCatalogosQuery } from "../redux/api/catalogosNuevosApi";
+import { useGetCatalogosQuery, useGetModelosQuery } from "../redux/api/catalogosNuevosApi";
 import type { Licencia } from "../models/Licencia";
 import { generarIdentificacion } from "../utilities/generarIdentificacion";
 
@@ -152,6 +152,7 @@ const initialState: ActaRequest = {
     provincia: '',
     idDepartamento: undefined,
     departamento: '',
+    sexo: "",
     licencia: {
       clase: "",
       numero: "",
@@ -178,6 +179,9 @@ const initialState: ActaRequest = {
       direccion: "",
       localidad: "",
       provincia: "",
+      nacionalidadId: 0,
+      fechaNacimiento: "",
+      sexo: "",
     },
   },
 };
@@ -205,6 +209,7 @@ export default function ActaForm() {
   const { data: juzgado = []} = useGetjuzgadosQuery();
   const { data: tipoActa = []} = useGetTiposQuery();
   const { data: catalogos } = useGetCatalogosQuery();
+  const { data: modelos = [] } = useGetModelosQuery();
   const isEditingActa = Boolean(actaSeleccionada?.idActa);
   //const firmaInfractorRef = useRef<FirmaCaptureHandle | null>(null);
   //const firmaOficialRef = useRef<FirmaCaptureHandle | null>(null);
@@ -329,7 +334,13 @@ export default function ActaForm() {
   };
 
   const normalizeCatalogName = (value: string | null | undefined) =>
-    String(value ?? "").trim().toLocaleUpperCase("es-AR");
+    String(value ?? "")
+      .replace(/\u00a0/g, " ")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLocaleUpperCase("es-AR")
+      .replace(/\s+/g, " ");
   const normalizeDepartmentName = (value: string | null | undefined) =>
     normalizeCatalogName(value)
       .replace(/\s+/g, " ")
@@ -508,7 +519,7 @@ export default function ActaForm() {
       )?.idMarca,
     );
   const modelosDeLaMarca =
-    catalogos?.modelos.filter((modelo) => normalizeCatalogId(modelo.idMarca) === selectedMarcaId) ?? [];
+    modelos.filter((modelo) => normalizeCatalogId(modelo.idMarca) === selectedMarcaId);
   const selectedModeloId =
     normalizeCatalogId(form.vehiculo.idModelo) ??
     normalizeCatalogId(
@@ -722,7 +733,7 @@ export default function ActaForm() {
             )
           : undefined);
       const modelosMarca = marca
-        ? catalogos.modelos.filter(
+        ? modelos.filter(
             (modelo) => normalizeCatalogId(modelo.idMarca) === normalizeCatalogId(marca.idMarca),
           )
         : [];
@@ -761,6 +772,7 @@ export default function ActaForm() {
     });
   }, [
     catalogos,
+    modelos,
     form.vehiculo.idTipoVehiculo,
     form.vehiculo.tipoRodado,
     form.vehiculo.idModelo,
@@ -860,8 +872,8 @@ export default function ActaForm() {
 
     if (path === "vehiculo.propietario.dni" && String(value).length === 8) {
         try {
-          const { direccion, nombre, dni, idProp } =
-            await PropietarioService.obtenerPorDni(value);
+          const propietarioEncontrado = await PropietarioService.obtenerPorDni(value);
+          const propietarioNormalizado = normalizePropietarioNombreApellido(propietarioEncontrado);
 
           setForm((prev) => {
             if (prev.vehiculo.propietario?.dni !== value) return prev;
@@ -872,12 +884,16 @@ export default function ActaForm() {
                 ...prev.vehiculo,
                 propietario: {
                   ...prev.vehiculo.propietario,
-                  idProp,
-                  nombre,
-                  dni,
-                  direccion,
-                  localidad: prev.vehiculo.propietario?.localidad ?? "",
-                  provincia: prev.vehiculo.propietario?.provincia ?? "",
+                  idProp: propietarioNormalizado.idProp,
+                  nombre: propietarioNormalizado.nombre,
+                  apellido: propietarioNormalizado.apellido ?? "",
+                  dni: propietarioEncontrado.dni,
+                  direccion: propietarioEncontrado.direccion,
+                  localidad: propietarioEncontrado.localidad ?? "",
+                  provincia: propietarioEncontrado.provincia ?? "",
+                  nacionalidadId: propietarioEncontrado.nacionalidadId ?? 0,
+                  fechaNacimiento: propietarioEncontrado.fechaNacimiento ?? "",
+                  sexo: propietarioEncontrado.sexo ?? "",
                 },
               },
             };
@@ -901,6 +917,9 @@ export default function ActaForm() {
                 direccion : '',
                 localidad: '',
                 provincia: '',
+                nacionalidadId: 0,
+                fechaNacimiento: '',
+                sexo: '',
               },
             },
           }));
@@ -989,6 +1008,43 @@ export default function ActaForm() {
 
     return infractor;
   };
+
+  const normalizePropietarioNombreApellido = (
+    propietarioData: Propietario,
+  ): Propietario => {
+    const parsed = splitPropietarioNombre(propietarioData.nombre);
+    if (!parsed) return propietarioData;
+
+    return {
+      ...propietarioData,
+      apellido: parsed.apellido || propietarioData.apellido || "",
+      nombre: parsed.nombre || propietarioData.nombre,
+    };
+  };
+
+  const splitPropietarioNombre = (
+    value: string | null | undefined,
+  ): { apellido: string; nombre: string } | null => {
+    const parsed = splitApellidoNombrePorComa(value);
+    if (parsed) return parsed;
+
+    const parts = (value ?? "").trim().split(/\s+/).filter(Boolean);
+    if (parts.length < 2) return null;
+
+    return {
+      apellido: parts[0],
+      nombre: parts.slice(1).join(" "),
+    };
+  };
+
+  const formatPropietarioNombre = (propietarioData: Propietario): string => {
+    const apellido = propietarioData.apellido?.trim() ?? "";
+    const nombre = propietarioData.nombre?.trim() ?? "";
+
+    if (apellido && nombre) return `${apellido}, ${nombre}`;
+    return apellido || nombre;
+  };
+
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       if(validate()){
@@ -1052,6 +1108,11 @@ export default function ActaForm() {
 
         if(propietario){
           actaToSend.vehiculo.propietario = null;
+        } else if (actaToSend.vehiculo.propietario) {
+          actaToSend.vehiculo.propietario = {
+            ...actaToSend.vehiculo.propietario,
+            nombre: formatPropietarioNombre(actaToSend.vehiculo.propietario),
+          };
         }
         console.log('propietario ', actaToSend.vehiculo.propietario)
         actaToSend.infractor = normalizeInfractorNombreApellido(actaToSend.infractor);
@@ -1363,6 +1424,7 @@ export default function ActaForm() {
             apellido: data.apellido ?? "",
             domicilio: data.domicilio ?? "",
             fechaNacimiento: data.fechaNacimiento ?? "",
+            sexo: data.sexo ?? "",
             dni: data.dni ?? dni,
             idPais: normalizeCatalogId(data.idPais),
             nacionalidad: data.nacionalidad ?? paisPorId?.nombre ?? "",
@@ -1448,6 +1510,11 @@ export default function ActaForm() {
               direccion: vehiculo.propietario.direccion ?? prev.vehiculo.propietario?.direccion ?? '',
               localidad: vehiculo.propietario.localidad ?? prev.vehiculo.propietario?.localidad ?? '',
               provincia: vehiculo.propietario.provincia ?? prev.vehiculo.propietario?.provincia ?? '',
+              nacionalidadId:
+                vehiculo.propietario.nacionalidadId ?? prev.vehiculo.propietario?.nacionalidadId ?? 0,
+              fechaNacimiento:
+                vehiculo.propietario.fechaNacimiento ?? prev.vehiculo.propietario?.fechaNacimiento ?? '',
+              sexo: vehiculo.propietario.sexo ?? prev.vehiculo.propietario?.sexo ?? '',
             }
           : prev.vehiculo.propietario,
       },
@@ -1506,6 +1573,7 @@ export default function ActaForm() {
     if (!propietarioData) return;
 
     const normalizeDni = (dni?: string | null) => (dni ?? '').replace(/\D/g, '').slice(0, 8);
+    const nombrePropietario = splitPropietarioNombre(propietarioData.nombre);
     setPropietario(false);
 
     setForm((prev) => ({
@@ -1514,12 +1582,19 @@ export default function ActaForm() {
         ...prev.vehiculo,
         propietario: {
           ...prev.vehiculo.propietario,
-          nombre: propietarioData.nombre ?? prev.vehiculo.propietario?.nombre ?? '',
-          apellido: propietarioData.apellido ?? prev.vehiculo.propietario?.apellido ?? '',
+          nombre:
+            nombrePropietario?.nombre ?? propietarioData.nombre ?? prev.vehiculo.propietario?.nombre ?? '',
+          apellido:
+            propietarioData.apellido ?? nombrePropietario?.apellido ?? prev.vehiculo.propietario?.apellido ?? '',
           dni: normalizeDni(propietarioData.dni) || prev.vehiculo.propietario?.dni || '',
           direccion: propietarioData.direccion ?? prev.vehiculo.propietario?.direccion ?? '',
           localidad: propietarioData.localidad ?? prev.vehiculo.propietario?.localidad ?? '',
           provincia: propietarioData.provincia ?? prev.vehiculo.propietario?.provincia ?? '',
+          nacionalidadId:
+            propietarioData.nacionalidadId ?? prev.vehiculo.propietario?.nacionalidadId ?? 0,
+          fechaNacimiento:
+            propietarioData.fechaNacimiento ?? prev.vehiculo.propietario?.fechaNacimiento ?? '',
+          sexo: propietarioData.sexo ?? prev.vehiculo.propietario?.sexo ?? '',
         },
       },
     }));
@@ -1595,7 +1670,13 @@ export default function ActaForm() {
           propietario:
             (actaSeleccionada.vehiculo.infractorPropietario ?? mappedActa.vehiculo.infractorPropietario)
               ? null
-              : (actaSeleccionada.vehiculo.propietario ?? mappedActa.vehiculo.propietario ?? null),
+              : (() => {
+                  const propietarioEditado =
+                    actaSeleccionada.vehiculo.propietario ?? mappedActa.vehiculo.propietario;
+                  return propietarioEditado
+                    ? normalizePropietarioNombreApellido(propietarioEditado)
+                    : null;
+                })(),
         },
         testigos: mappedTestigos,
       });
@@ -2143,6 +2224,19 @@ export default function ActaForm() {
                 error={!!errors["infractor.apellido"]}
                 helperText={errors["infractor.apellido"]}
               />
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Sexo</InputLabel>
+                <Select
+                  value={form.infractor.sexo ?? ""}
+                  label="Sexo"
+                  onChange={(e) => handleChange("infractor.sexo", e.target.value)}
+                >
+                  <MenuItem value="">Seleccione un sexo</MenuItem>
+                  <MenuItem value="M">M</MenuItem>
+                  <MenuItem value="F">F</MenuItem>
+                  <MenuItem value="X">X</MenuItem>
+                </Select>
+              </FormControl>
               <TextField
                 label="Domicilio"
                 fullWidth
@@ -2414,7 +2508,66 @@ export default function ActaForm() {
                 <DocumentDataCapture titulo="cedula (dorso)" tipo="cedulaDorso" onDataCaptured={handleDocumentDataCaptured} />
               </Box>
               <TextField label="DNI *" fullWidth margin="normal" value={form.vehiculo.propietario?.dni} onChange={(e) => handleChange("vehiculo.propietario.dni", e.target.value)} error={!!errors["vehiculo.propietario.dni"]} helperText={errors["vehiculo.propietario.dni"]} />
-              <TextField label="Nombre *" fullWidth margin="normal" value={form.vehiculo.propietario?.nombre} onChange={(e) => handleChange("vehiculo.propietario.nombre", e.target.value)} error={!!errors["vehiculo.propietario.nombre"]} helperText={errors["vehiculo.propietario.nombre"]} />
+              <TextField
+                label="Apellido *"
+                fullWidth
+                margin="normal"
+                value={form.vehiculo.propietario?.apellido ?? ""}
+                onChange={(e) => handleChange("vehiculo.propietario.apellido", e.target.value)}
+                error={!!errors["vehiculo.propietario.apellido"]}
+                helperText={errors["vehiculo.propietario.apellido"]}
+              />
+              <TextField
+                label="Nombre *"
+                fullWidth
+                margin="normal"
+                value={form.vehiculo.propietario?.nombre ?? ""}
+                onChange={(e) => handleChange("vehiculo.propietario.nombre", e.target.value)}
+                error={!!errors["vehiculo.propietario.nombre"]}
+                helperText={errors["vehiculo.propietario.nombre"]}
+              />
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Nacionalidad</InputLabel>
+                <Select
+                  value={form.vehiculo.propietario?.nacionalidadId?.toString() ?? ""}
+                  label="Nacionalidad"
+                  onChange={(e) =>
+                    handleChange(
+                      "vehiculo.propietario.nacionalidadId",
+                      normalizeCatalogId(e.target.value) ?? 0,
+                    )
+                  }
+                >
+                  <MenuItem value="">Seleccione una nacionalidad</MenuItem>
+                  {(catalogos?.paises ?? []).map((pais) => (
+                    <MenuItem key={`${pais.idPais}-${pais.nombre}`} value={pais.idPais}>
+                      {pais.nombre}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Sexo</InputLabel>
+                <Select
+                  value={form.vehiculo.propietario?.sexo ?? ""}
+                  label="Sexo"
+                  onChange={(e) => handleChange("vehiculo.propietario.sexo", e.target.value)}
+                >
+                  <MenuItem value="">Seleccione un sexo</MenuItem>
+                  <MenuItem value="M">M</MenuItem>
+                  <MenuItem value="F">F</MenuItem>
+                  <MenuItem value="X">X</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
+                label="Fecha de nacimiento"
+                type="date"
+                fullWidth
+                margin="normal"
+                InputLabelProps={{ shrink: true }}
+                value={form.vehiculo.propietario?.fechaNacimiento ?? ""}
+                onChange={(e) => handleChange("vehiculo.propietario.fechaNacimiento", e.target.value)}
+              />
               <TextField
                 label="Localidad"
                 fullWidth

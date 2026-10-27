@@ -4,7 +4,6 @@ export interface CatalogoNuevoDto {
   localidades: LocalidadDto[];
   tiposVehiculo: TipoVehiculoDto[];
   marcas: MarcaDto[];
-  modelos: ModeloDto[];
   tiposDocumento: TipoDocumentoDto[];
   paises: PaisDto[];
   destacamentos: DestacamentoDto[];

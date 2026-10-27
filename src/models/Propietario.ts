@@ -6,4 +6,7 @@ export interface Propietario {
   direccion: string;
   localidad: string;
   provincia: string;
+  nacionalidadId: number;
+  fechaNacimiento?: string;
+  sexo?:string
 }

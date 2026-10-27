@@ -19,4 +19,5 @@ export interface Infractor {
   idDepartamento?: number | null;
   departamento?: string | null;
   nacionalidad: string | null,
+  sexo?: string | null;
 }

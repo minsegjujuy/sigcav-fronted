@@ -18,4 +18,5 @@ export interface InfractorSolicitud {
   //licencia
   licencia: LicenciaRequest | null;
   propietario: boolean;
+  sexo?: string;
 }
